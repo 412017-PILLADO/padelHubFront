@@ -269,26 +269,19 @@
   left: 50%;
   bottom: 22px;
   transform: translateX(-50%);
-  width: 34px;
-  height: 60px;
+  width: 40px;
+  height: 74px;
   z-index: 2;
 }
 .scroll-ball {
   position: absolute;
   left: 50%;
-  bottom: 9px;
-  width: 17px;
-  height: 17px;
-  margin-left: -8.5px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 32% 28%,
-    #6f86ff 0 16%,
-    var(--court) 56%,
-    var(--court-deep) 100%
-  );
-  box-shadow: inset -2px -3px 4px rgba(17, 22, 43, 0.35);
+  bottom: 10px;
+  width: 25px;
+  height: 25px;
+  margin-left: -12.5px;
   transform-origin: 50% 100%;
+  filter: drop-shadow(0 2px 3px rgba(17, 22, 43, 0.25));
   animation: ballBounce 1.15s cubic-bezier(0.3, 0, 0.7, 1) infinite;
   will-change: transform;
 }
@@ -296,12 +289,12 @@
   position: absolute;
   left: 50%;
   bottom: 6px;
-  width: 17px;
-  height: 5px;
-  margin-left: -8.5px;
+  width: 24px;
+  height: 6px;
+  margin-left: -12px;
   border-radius: 50%;
   background: rgba(17, 22, 43, 0.3);
-  filter: blur(1px);
+  filter: blur(1.5px);
   transform-origin: 50% 50%;
   animation: ballShadow 1.15s cubic-bezier(0.3, 0, 0.7, 1) infinite;
 }
@@ -309,21 +302,21 @@
    desacelera al subir (ease-out 55→100%); sin costura: 0% == 100% */
 @keyframes ballBounce {
   0% {
-    transform: translateY(-32px);
+    transform: translateY(-38px);
     animation-timing-function: cubic-bezier(0.35, 0, 0.7, 0.45);
   }
   45% {
     transform: translateY(0) scaleX(1) scaleY(1);
   }
   50% {
-    transform: translateY(0) scaleX(1.28) scaleY(0.72);
+    transform: translateY(0) scaleX(1.26) scaleY(0.74);
   }
   55% {
     transform: translateY(0) scaleX(1) scaleY(1);
     animation-timing-function: cubic-bezier(0.3, 0.55, 0.7, 1);
   }
   100% {
-    transform: translateY(-32px);
+    transform: translateY(-38px);
   }
 }
 @keyframes ballShadow {
