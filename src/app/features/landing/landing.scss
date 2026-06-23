@@ -148,7 +148,7 @@
   will-change: transform;
 }
 .hero-paleta {
-  width: clamp(340px, 32vw, 520px);
+  width: clamp(355px, 33vw, 540px);
   height: auto;
   margin-right: clamp(-130px, -5vw, -50px);
   transform-origin: 45% 45%;
@@ -425,6 +425,9 @@
 /* ===================== SECCIONES (base) ===================== */
 .section {
   padding: clamp(64px, 9vw, 120px) 0;
+}
+.producto {
+  padding-top: clamp(32px, 5vw, 64px);
 }
 .sec-head {
   max-width: 640px;
