@@ -105,7 +105,7 @@ export class Landing {
   readonly whatsappUrl =
     'https://wa.me/5493517505281?text=' +
     encodeURIComponent(
-      '¡Hola! Me interesa Padel HUB para mi club. ¿Me pasás más información? 🎾'
+      '¡Hola! Me interesa Padel-HUB para mi club. ¿Me pasás más información? 🎾'
     );
 
   readonly anio = 2026;
