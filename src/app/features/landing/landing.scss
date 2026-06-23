@@ -123,7 +123,10 @@
   grid-template-columns: 0.98fr 1.02fr;
   align-items: center;
   gap: clamp(16px, 4vw, 48px);
-  min-height: clamp(560px, 84vh, 840px);
+  /* el nav queda scrolleado fuera de vista, así que el hero ocupa el alto
+     completo del viewport: la sección de abajo no asoma. */
+  min-height: 100svh;
+  padding-block: clamp(40px, 7vh, 96px);
 }
 
 /* — Paleta protagonista a la DERECHA (sangra por la derecha; el overflow del hero la recorta) — */
@@ -260,6 +263,90 @@
   background: var(--surface);
 }
 
+/* — Indicador de scroll: pelotita que pica — */
+.hero-scroll {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 60px;
+  z-index: 2;
+}
+.scroll-ball {
+  position: absolute;
+  left: 50%;
+  bottom: 9px;
+  width: 17px;
+  height: 17px;
+  margin-left: -8.5px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 32% 28%,
+    #6f86ff 0 16%,
+    var(--court) 56%,
+    var(--court-deep) 100%
+  );
+  box-shadow: inset -2px -3px 4px rgba(17, 22, 43, 0.35);
+  transform-origin: 50% 100%;
+  animation: ballBounce 1.15s cubic-bezier(0.3, 0, 0.7, 1) infinite;
+  will-change: transform;
+}
+.scroll-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 6px;
+  width: 17px;
+  height: 5px;
+  margin-left: -8.5px;
+  border-radius: 50%;
+  background: rgba(17, 22, 43, 0.3);
+  filter: blur(1px);
+  transform-origin: 50% 50%;
+  animation: ballShadow 1.15s cubic-bezier(0.3, 0, 0.7, 1) infinite;
+}
+/* acelera al caer (ease-in 0→45%), achata en el piso (45→55%),
+   desacelera al subir (ease-out 55→100%); sin costura: 0% == 100% */
+@keyframes ballBounce {
+  0% {
+    transform: translateY(-32px);
+    animation-timing-function: cubic-bezier(0.35, 0, 0.7, 0.45);
+  }
+  45% {
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+  50% {
+    transform: translateY(0) scaleX(1.28) scaleY(0.72);
+  }
+  55% {
+    transform: translateY(0) scaleX(1) scaleY(1);
+    animation-timing-function: cubic-bezier(0.3, 0.55, 0.7, 1);
+  }
+  100% {
+    transform: translateY(-32px);
+  }
+}
+@keyframes ballShadow {
+  0%,
+  100% {
+    transform: scaleX(0.55);
+    opacity: 0.16;
+  }
+  50% {
+    transform: scaleX(1);
+    opacity: 0.4;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-ball,
+  .scroll-shadow {
+    animation: none;
+  }
+  .scroll-ball {
+    transform: translateY(0);
+  }
+}
+
 /* ===================== RESPONSIVE ===================== */
 @media (max-width: 1024px) {
   .hero-paleta {
@@ -306,6 +393,11 @@
   }
   .pulse {
     animation: none;
+  }
+  /* el indicador de scroll vive en el hero full-height de desktop;
+     en mobile (hero de alto natural) lo ocultamos para no chocar con los pills */
+  .hero-scroll {
+    display: none;
   }
 }
 
