@@ -43,9 +43,9 @@ export class Landing {
   ];
 
   readonly heroFeatures = [
+    'Fácil de usar',
+    'Casi auto-gestionado',
     'Reservas online',
-    'Agenda por cancha',
-    'Avisos automáticos',
   ];
 
   // ── Producto: mock de agenda ─────────────────────────────────────

@@ -372,17 +372,17 @@
   }
   .hero-paleta-float {
     position: absolute;
-    top: 92px; /* a la altura de la 2ª línea del título (HUB) */
-    right: -52px; /* sangra por la derecha */
+    top: 84px; /* a la altura de la 2ª línea del título (HUB) */
+    right: -104px; /* bien a la derecha: solo la cabeza entra en el hueco */
     animation: none;
     will-change: auto;
   }
   .hero-paleta {
-    width: 256px;
+    width: 286px;
     margin: 0;
     transition: none;
     /* inclinación mobile; en touch no hay tilt 3D, así que pisa el inline */
-    transform: rotate(42deg) !important;
+    transform: rotate(48deg) !important;
   }
   .hero-copy {
     max-width: none;
@@ -392,6 +392,20 @@
   .hero-brand {
     font-size: clamp(3.6rem, 18.5vw, 5rem);
     margin-bottom: 18px;
+  }
+  /* el texto se acota a la izquierda, conforme a la estructura de la paleta:
+     así nada queda debajo de la paleta y todo se lee */
+  .hero-tag {
+    max-width: 15ch;
+  }
+  .hero-sub {
+    max-width: 23ch;
+  }
+  .hero-actions {
+    max-width: 23ch;
+  }
+  .hero-feats {
+    max-width: 25ch;
   }
   /* en mobile el topbar no aporta: lo ocultamos por completo */
   .nav {
