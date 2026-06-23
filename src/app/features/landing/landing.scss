@@ -378,17 +378,17 @@
   .hero-paleta-float {
     position: absolute;
     top: auto;
-    bottom: -48px;
-    right: -70px;
+    bottom: -132px; /* mucho más abajo: solo asoma la mitad de la paleta */
+    right: -78px;
     animation: none;
     will-change: auto;
   }
   .hero-paleta {
-    width: 300px;
+    width: 330px;
     margin: 0;
     transition: none;
     /* inclinación mobile; en touch no hay tilt 3D, así que pisa el inline */
-    transform: rotate(34deg) !important;
+    transform: rotate(38deg) !important;
   }
   .hero-copy {
     max-width: none;
