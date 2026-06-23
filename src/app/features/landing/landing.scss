@@ -351,38 +351,51 @@
 }
 
 @media (max-width: 760px) {
-  /* una sola columna: la paleta arriba (en diagonal, sangrando), texto debajo */
+  /* Mobile (Variante A): título grande arriba; la paleta muy inclinada con la
+     cabeza metida en el hueco que deja "HUB", sangrando por la derecha. */
   .hero-inner {
     grid-template-columns: 1fr;
     min-height: 0;
-    gap: 4px;
-    padding-block: 20px 52px;
+    gap: 0;
+    padding-block: 24px 44px;
+    position: relative;
   }
+  /* la paleta se posiciona absoluta detrás del texto */
   .hero-visual {
-    order: -1; /* en mobile la paleta vuelve arriba, centrada y completa */
-    align-self: auto;
-    justify-content: center;
+    position: absolute;
+    inset: 0;
+    order: 0;
+    display: block;
     overflow: visible;
-    padding: 6px 0 2px;
+    padding: 0;
+    z-index: 1;
   }
-  .hero-paleta {
-    width: clamp(210px, 62vw, 290px);
-    margin: 0;
-  }
-  .hero-copy {
-    max-width: none;
-  }
-  /* en mobile el topbar no aporta: lo ocultamos por completo */
-  .nav {
-    display: none;
-  }
-  /* mobile: sin animaciones innecesarias (mejor performance/batería) */
   .hero-paleta-float {
+    position: absolute;
+    top: 92px; /* a la altura de la 2ª línea del título (HUB) */
+    right: -52px; /* sangra por la derecha */
     animation: none;
     will-change: auto;
   }
   .hero-paleta {
+    width: 256px;
+    margin: 0;
     transition: none;
+    /* inclinación mobile; en touch no hay tilt 3D, así que pisa el inline */
+    transform: rotate(42deg) !important;
+  }
+  .hero-copy {
+    max-width: none;
+    position: relative;
+    z-index: 2; /* el texto siempre por encima de la paleta */
+  }
+  .hero-brand {
+    font-size: clamp(3.6rem, 18.5vw, 5rem);
+    margin-bottom: 18px;
+  }
+  /* en mobile el topbar no aporta: lo ocultamos por completo */
+  .nav {
+    display: none;
   }
   .pulse {
     animation: none;
