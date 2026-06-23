@@ -148,9 +148,9 @@
   will-change: transform;
 }
 .hero-paleta {
-  width: clamp(360px, 40vw, 620px);
+  width: clamp(340px, 32vw, 520px);
   height: auto;
-  margin-right: clamp(-200px, -8vw, -60px);
+  margin-right: clamp(-130px, -5vw, -50px);
   transform-origin: 45% 45%;
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
   filter: drop-shadow(0 38px 42px rgba(17, 22, 43, 0.32));
@@ -378,8 +378,8 @@
   .hero-paleta-float {
     position: absolute;
     top: auto;
-    bottom: -44px; /* sube: ahora se ve la cara entera de la paleta */
-    right: -52px;
+    bottom: 1px;
+    right: 1px;
     animation: floaty 9s ease-in-out infinite; /* flota como en desktop */
     will-change: transform;
   }
