@@ -1,17 +1,124 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-AR">
 <head>
   <meta charset="utf-8">
-  <title>Padel-HUB · El turnero de tu club de pádel</title>
+  <title>Padel-HUB · Software de gestión de turnos para clubes de pádel</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Padel-HUB es el gestor de turnos para tu club de pádel: reservas, canchas y horarios en un solo panel.">
-  <meta name="theme-color" content="#0E8C84">
+
+  <!-- ===== SEO base ===== -->
+  <meta name="description" content="Padel-HUB es el software para gestionar los turnos de tu club de pádel: reservas online 24/7, agenda por cancha y panel en tiempo real. Simple, casi se gestiona solo. Córdoba, Argentina.">
+  <meta name="keywords" content="software gestión de turnos pádel, turnero pádel, reservas canchas de pádel, gestión club de pádel, agenda de canchas, reservas online pádel, Córdoba">
+  <meta name="author" content="Padel-HUB">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <meta name="theme-color" content="#2747ff">
+  <link rel="canonical" href="https://padel-hub.com.ar/">
+
+  <!-- ===== Open Graph (Facebook / WhatsApp / LinkedIn) ===== -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Padel-HUB">
+  <meta property="og:locale" content="es_AR">
+  <meta property="og:url" content="https://padel-hub.com.ar/">
+  <meta property="og:title" content="Padel-HUB · El turnero fácil de tu club de pádel">
+  <meta property="og:description" content="Reservas online 24/7, agenda por cancha y panel en tiempo real. Tan simple que tu club se gestiona casi solo.">
+  <meta property="og:image" content="https://padel-hub.com.ar/images/og-cover.png">
+  <meta property="og:image:secure_url" content="https://padel-hub.com.ar/images/og-cover.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Padel-HUB — el turnero de tu club de pádel">
+
+  <!-- ===== Twitter / X ===== -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Padel-HUB · El turnero fácil de tu club de pádel">
+  <meta name="twitter:description" content="Reservas online 24/7, agenda por cancha y panel en tiempo real. Tan simple que tu club se gestiona casi solo.">
+  <meta name="twitter:image" content="https://padel-hub.com.ar/images/og-cover.png">
+  <meta name="twitter:image:alt" content="Padel-HUB — el turnero de tu club de pádel">
+
+  <!-- ===== Iconos / PWA ===== -->
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="icon" type="image/x-icon" href="favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="site.webmanifest">
+
+  <!-- ===== Tipografías ===== -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- ===== Datos estructurados (JSON-LD) ===== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://padel-hub.com.ar/#organization",
+        "name": "Padel-HUB",
+        "url": "https://padel-hub.com.ar/",
+        "logo": "https://padel-hub.com.ar/icon-512.png",
+        "image": "https://padel-hub.com.ar/images/og-cover.png",
+        "description": "Software de gestión de turnos para clubes de pádel.",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "Córdoba",
+          "addressRegion": "Córdoba",
+          "addressCountry": "AR"
+        },
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "+54-9-351-750-5281",
+          "contactType": "sales",
+          "areaServed": "AR",
+          "availableLanguage": ["Spanish"]
+        }
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://padel-hub.com.ar/#website",
+        "url": "https://padel-hub.com.ar/",
+        "name": "Padel-HUB",
+        "inLanguage": "es-AR",
+        "publisher": { "@id": "https://padel-hub.com.ar/#organization" }
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://padel-hub.com.ar/#app",
+        "name": "Padel-HUB",
+        "applicationCategory": "BusinessApplication",
+        "applicationSubCategory": "Gestión de turnos y reservas para clubes de pádel",
+        "operatingSystem": "Web",
+        "url": "https://padel-hub.com.ar/",
+        "inLanguage": "es-AR",
+        "description": "Padel-HUB junta reservas, canchas y horarios de tu club de pádel en un solo panel: reservas online 24/7, agenda por cancha, avisos automáticos por WhatsApp y ocupación en tiempo real.",
+        "featureList": [
+          "Reservas online 24/7",
+          "Agenda por cancha en una sola grilla",
+          "Avisos automáticos por WhatsApp",
+          "Ocupación y horarios en tiempo real"
+        ],
+        "publisher": { "@id": "https://padel-hub.com.ar/#organization" },
+        "offers": {
+          "@type": "Offer",
+          "priceCurrency": "ARS",
+          "price": "0",
+          "description": "Demostración sin compromiso para tu club."
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://padel-hub.com.ar/#webpage",
+        "url": "https://padel-hub.com.ar/",
+        "name": "Padel-HUB · Software de gestión de turnos para clubes de pádel",
+        "isPartOf": { "@id": "https://padel-hub.com.ar/#website" },
+        "about": { "@id": "https://padel-hub.com.ar/#app" },
+        "primaryImageOfPage": "https://padel-hub.com.ar/images/og-cover.png",
+        "inLanguage": "es-AR",
+        "description": "El turnero fácil de tu club de pádel: reservas online, agenda por cancha y panel en tiempo real."
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
   <app-root></app-root>
