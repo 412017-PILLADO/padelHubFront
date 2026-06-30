@@ -1,0 +1,249 @@
+<!-- ===================== NAV ===================== -->
+<header class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="#top" aria-label="Padel-HUB — inicio">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="-6 -3 44 46" fill="none">
+          <path transform="rotate(-28 16 20.3)" fill="currentColor" fill-rule="evenodd" d="M16 2.5C22.9 2.5 28 7.4 28 14C28 19.9 24.2 23.3 19.6 24.3C18.9 24.5 18.5 25.1 18.5 25.9L19 34.3C19.1 36.6 17.7 38.2 16 38.2C14.3 38.2 12.9 36.6 13 34.3L13.5 25.9C13.5 25.1 13.1 24.5 12.4 24.3C7.8 23.3 4 19.9 4 14C4 7.4 9.1 2.5 16 2.5ZM10.9 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM10.9 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM10.9 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0Z"/>
+        </svg>
+      </span>
+      <span class="brand-type">Padel-<span class="brand-hub">HUB</span></span>
+    </a>
+
+    <nav class="nav-links" aria-label="Principal">
+      @for (link of navLinks; track link.href) {
+        <a [href]="link.href">{{ link.label }}</a>
+      }
+    </nav>
+
+    <div class="nav-cta">
+      <a class="btn btn-ghost btn-sm" href="#ingresar">Ingresar</a>
+      <a class="btn btn-solid btn-sm" href="#contacto">Quiero la mía</a>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<main id="top">
+  <section class="hero" (pointermove)="onHeroMove($event)" (pointerleave)="onHeroLeave()">
+    <div class="container hero-inner">
+      <!-- Paleta protagonista: recorte en diagonal, sangra por la izquierda -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="hero-paleta-float">
+          <img
+            class="hero-paleta"
+            src="/images/paleta-padelhub.png"
+            alt=""
+            width="1024" height="1536"
+            [style.transform]="paletaTransform()" />
+        </div>
+      </div>
+
+      <div class="hero-copy">
+        <p class="eyebrow hero-kicker">
+          <span class="pulse" aria-hidden="true"></span>
+          Gestor de turnos · Pádel
+        </p>
+
+        <h1 class="display hero-brand">
+          <span class="word">Padel-</span><br /><span class="word hub">Hub</span>
+          <span class="sr-only">: software de gestión de turnos para tu club de pádel</span>
+        </h1>
+
+        <p class="hero-tag">El turnero fácil de tu club de pádel.</p>
+
+        <p class="hero-sub">
+          Tan simple que se gestiona casi solo: tus jugadores reservan online y
+          vos apenas mirás.
+        </p>
+
+        <div class="hero-actions">
+          <a class="btn btn-solid" href="#contacto">Quiero la mía</a>
+          <a class="btn btn-ghost" href="#ingresar">
+            Panel
+            <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+
+        <ul class="hero-feats">
+          @for (f of heroFeatures; track f) {
+            <li>{{ f }}</li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <!-- Indicador de scroll: pelota de tenis que pica -->
+    <a class="hero-scroll" href="#producto" aria-label="Ver Producto">
+      <svg class="scroll-ball" viewBox="0 0 40 40" aria-hidden="true">
+        <defs>
+          <radialGradient id="tball" cx="34%" cy="28%" r="78%">
+            <stop offset="0%" stop-color="#eaff7a" />
+            <stop offset="48%" stop-color="#c2e22a" />
+            <stop offset="100%" stop-color="#8fb814" />
+          </radialGradient>
+        </defs>
+        <circle cx="20" cy="20" r="18" fill="url(#tball)" />
+        <!-- costura: dos curvas blancas que bordean los laterales -->
+        <path d="M4 12 C13 16 13 24 4 28" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" />
+        <path d="M36 12 C27 16 27 24 36 28" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round" />
+      </svg>
+      <span class="scroll-shadow" aria-hidden="true"></span>
+    </a>
+  </section>
+
+  <!-- ===================== PRODUCTO ===================== -->
+  <section id="producto" class="section producto">
+    <div class="container">
+      <header class="sec-head">
+        <p class="eyebrow">Producto</p>
+        <h2 class="display sec-title">Todo tu club,<br />ordenado.</h2>
+        <p class="sec-lead">
+          Padel-HUB junta reservas, canchas y horarios en un solo lugar. Tus
+          jugadores reservan solos y vos manejás todo desde un panel claro.
+          Sin curva de aprendizaje: lo configurás una vez y funciona casi solo.
+        </p>
+      </header>
+
+      <div class="prod-showcase">
+        <!-- Mock del panel de agenda -->
+        <div class="agenda-card">
+          <div class="agenda-top">
+            <span class="mono agenda-title">Agenda · Hoy</span>
+            <span class="agenda-live mono"><i class="dot" aria-hidden="true"></i>En vivo</span>
+          </div>
+
+          <div class="agenda-grid">
+            <span class="agenda-corner mono">Cancha</span>
+            @for (h of agendaHours; track h) {
+              <span class="agenda-h mono">{{ h }}</span>
+            }
+            @for (row of agenda; track row.cancha) {
+              <span class="agenda-rowlabel">{{ row.cancha }}</span>
+              @for (cell of row.cells; track $index) {
+                <span class="agenda-cell" [class.busy]="cell"
+                  [attr.aria-label]="row.cancha + ' ' + agendaHours[$index] + (cell ? ' ocupado' : ' libre')">
+                </span>
+              }
+            }
+          </div>
+
+          <div class="agenda-legend mono">
+            <span><i class="sw busy" aria-hidden="true"></i>Ocupado</span>
+            <span><i class="sw" aria-hidden="true"></i>Libre</span>
+          </div>
+        </div>
+
+        <!-- Copy del showcase -->
+        <div class="prod-copy">
+          <h3 class="prod-copy-title">El panel que ves vos</h3>
+          <p>
+            Una grilla con todas tus canchas y franjas. Confirmás, movés o
+            liberás un turno en un toque, sin planillas ni cadenas de WhatsApp.
+          </p>
+          <ul class="prod-checks">
+            <li>Todas tus canchas en una sola pantalla.</li>
+            <li>Se actualiza en tiempo real, sin recargar nada.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Grilla de features -->
+      <ul class="feat-grid">
+        @for (f of features; track f.title) {
+          <li class="feat-card">
+            <span class="feat-ic" aria-hidden="true">
+              @switch (f.icon) {
+                @case ('globe') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>
+                }
+                @case ('grid') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+                }
+                @case ('bell') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+                }
+                @case ('chart') {
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><rect x="5" y="11" width="3.4" height="7" rx="1"/><rect x="10.3" y="6" width="3.4" height="12" rx="1"/><rect x="15.6" y="13" width="3.4" height="5" rx="1"/></svg>
+                }
+              }
+            </span>
+            <h3 class="feat-title">{{ f.title }}</h3>
+            <p class="feat-desc">{{ f.desc }}</p>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ===================== CÓMO FUNCIONA ===================== -->
+  <section id="como-funciona" class="section como">
+    <div class="container">
+      <header class="sec-head">
+        <p class="eyebrow">Cómo funciona</p>
+        <h2 class="display sec-title">En tres pasos<br />y estás andando.</h2>
+        <p class="sec-lead">
+          Tan fácil que lo dejás funcionando en una tarde, sin saber nada de
+          tecnología y sin instalar nada.
+        </p>
+      </header>
+
+      <ol class="steps">
+        @for (s of steps; track s.n) {
+          <li class="step">
+            <span class="step-n display">{{ s.n }}</span>
+            <h3 class="step-title">{{ s.title }}</h3>
+            <p class="step-desc">{{ s.desc }}</p>
+          </li>
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===================== CONTACTO ===================== -->
+  <section id="contacto" class="section contacto">
+    <div class="container contacto-inner">
+      <p class="eyebrow on-dark">Contacto</p>
+      <h2 class="display contacto-title">Quiero la mía.</h2>
+      <p class="contacto-lead">
+        Escribinos por WhatsApp y te mostramos Padel-HUB funcionando con las
+        canchas de tu club. Sin compromiso, respondemos rápido.
+      </p>
+
+      <a class="btn-wpp" [href]="whatsappUrl" target="_blank" rel="noopener">
+        <span class="wpp-ic" aria-hidden="true">
+          <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 .5C7.4.5.5 7.4.5 16c0 2.8.7 5.4 2 7.8L.5 31.5l7.9-2c2.3 1.2 4.9 1.9 7.6 1.9 8.6 0 15.5-6.9 15.5-15.5S24.6.5 16 .5zm0 28c-2.4 0-4.7-.6-6.7-1.8l-.5-.3-4.7 1.2 1.3-4.6-.3-.5C3.9 20.5 3.2 18.3 3.2 16 3.2 8.9 8.9 3.2 16 3.2S28.8 8.9 28.8 16 23.1 28.5 16 28.5zm7.2-9.6c-.4-.2-2.3-1.1-2.7-1.3-.4-.1-.6-.2-.9.2-.3.4-1 1.3-1.2 1.5-.2.2-.4.3-.8.1-.4-.2-1.6-.6-3.1-1.9-1.1-1-1.9-2.3-2.1-2.7-.2-.4 0-.6.2-.8.2-.2.4-.4.6-.6.2-.2.2-.4.4-.7.1-.2 0-.5 0-.7-.1-.2-.9-2.1-1.2-2.9-.3-.7-.6-.6-.9-.6h-.7c-.2 0-.6.1-1 .5-.3.4-1.3 1.3-1.3 3.1s1.3 3.6 1.5 3.9c.2.3 2.6 4 6.3 5.6.9.4 1.6.6 2.1.8.9.3 1.7.2 2.3.1.7-.1 2.3-.9 2.6-1.8.3-.9.3-1.7.2-1.8-.1-.2-.3-.3-.7-.4z"/></svg>
+        </span>
+        Escribinos por WhatsApp
+      </a>
+
+      <p class="contacto-meta mono">Córdoba, Argentina · 351 750 5281</p>
+    </div>
+  </section>
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <a class="brand" href="#top" aria-label="Padel-HUB — inicio">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="-6 -3 44 46" fill="none">
+          <path transform="rotate(-28 16 20.3)" fill="currentColor" fill-rule="evenodd" d="M16 2.5C22.9 2.5 28 7.4 28 14C28 19.9 24.2 23.3 19.6 24.3C18.9 24.5 18.5 25.1 18.5 25.9L19 34.3C19.1 36.6 17.7 38.2 16 38.2C14.3 38.2 12.9 36.6 13 34.3L13.5 25.9C13.5 25.1 13.1 24.5 12.4 24.3C7.8 23.3 4 19.9 4 14C4 7.4 9.1 2.5 16 2.5ZM10.9 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM10.9 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM10.9 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0Z"/>
+        </svg>
+      </span>
+      <span class="brand-type">Padel-<span class="brand-hub">HUB</span></span>
+    </a>
+
+    <nav class="footer-links" aria-label="Pie">
+      <a href="#producto">Producto</a>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#contacto">Contacto</a>
+      <a href="#ingresar">Ingresar</a>
+    </nav>
+  </div>
+
+  <div class="container footer-bottom">
+    <span>© {{ anio }} Padel-HUB · Córdoba, Argentina</span>
+    <span class="mono">El turnero de tu club de pádel</span>
+  </div>
+</footer>

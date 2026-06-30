@@ -1,0 +1,258 @@
+<p-toast position="top-center"></p-toast>
+<p-confirmdialog></p-confirmdialog>
+
+<app-admin-nav></app-admin-nav>
+<header class="pagehead">
+  <div class="greet">
+    <strong class="display">Tu agenda.</strong>
+    <span class="hdash"></span>
+    <span class="mono">Horarios, duraciones, contacto y bloqueos</span>
+  </div>
+</header>
+
+<main>
+  <!-- ===== HORARIO SEMANAL ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Horario semanal</span><span class="ln"></span></div>
+    <p class="block-sub">Activá los días que abrís y ajustá desde / hasta. Los días apagados no muestran turnos.</p>
+    <div class="week">
+      @for (d of week(); track d.diaSemana) {
+        <div class="day-row" [class.off]="!d.open">
+          <span class="dname">{{ dowLabels[d.diaSemana] }}</span>
+          <button type="button" class="switch" role="switch" [attr.aria-checked]="d.open"
+            [attr.aria-label]="dowFull[d.diaSemana] + (d.open ? ' abierto' : ' cerrado')"
+            (click)="toggleDay(d.diaSemana)"></button>
+          @if (d.open) {
+            <div class="day-edit">
+              <select class="tsel" [ngModel]="d.from" (ngModelChange)="setFrom(d.diaSemana, $event)">
+                @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+              </select>
+              <span class="sep">—</span>
+              <select class="tsel" [ngModel]="d.to" (ngModelChange)="setTo(d.diaSemana, $event)">
+                @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+              </select>
+            </div>
+          } @else {
+            <span class="closed-badge">Cerrado</span>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ===== DESCANSO ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Descanso</span><span class="ln"></span></div>
+    <p class="block-sub">Cortá la agenda en una franja. Se aplica a todos los días abiertos.</p>
+    <div class="break-row">
+      <div class="bl">
+        <span class="bt">Pausa</span>
+        <span class="bs mono">{{ breakStateLabel() }}</span>
+      </div>
+      <button type="button" class="switch" role="switch" [attr.aria-checked]="breakOn()"
+        aria-label="Activar descanso" (click)="toggleBreak()"></button>
+    </div>
+    <div class="break-times" [class.dim]="!breakOn()">
+      <select class="tsel" [ngModel]="breakFrom()" (ngModelChange)="setBreakFrom($event)">
+        @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+      </select>
+      <span class="sep">—</span>
+      <select class="tsel" [ngModel]="breakTo()" (ngModelChange)="setBreakTo($event)">
+        @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+      </select>
+    </div>
+  </section>
+
+  <!-- ===== DURACIONES ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Duraciones</span><span class="ln"></span></div>
+    <p class="block-sub">Qué duraciones puede elegir el jugador, y cada cuántos minutos arranca un turno (paso).</p>
+
+    <div class="dur-chips">
+      @for (d of durOpciones; track d) {
+        <button type="button" class="dchip" [attr.aria-pressed]="isDurActive(d)" (click)="toggleDur(d)">
+          {{ d }}'
+        </button>
+      }
+    </div>
+
+    @if (duraciones().length) {
+      <div class="default-row">
+        <span class="dr-label">Por defecto</span>
+        <div class="def-chips">
+          @for (d of duraciones(); track d) {
+            <button type="button" class="dchip sm" [attr.aria-pressed]="duracionDefault() === d" (click)="setDefault(d)">
+              {{ d }}'
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="paso-row">
+      <label class="paso-label" for="paso">Paso (min)</label>
+      <input id="paso" class="paso-input" [class.invalid]="invalidPaso()" type="number"
+        inputmode="numeric" min="5" max="180" step="5" placeholder="30"
+        [ngModel]="pasoMinutos()" (ngModelChange)="onPasoInput($event)" />
+      @if (invalidPaso()) { <span class="paso-msg err">Entre 5 y 180</span> }
+    </div>
+  </section>
+
+  <!-- ===== CONTACTO ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Contacto y ubicación</span><span class="ln"></span></div>
+    <p class="block-sub">Lo que ve el jugador en la página de reserva. Dejá vacío lo que no quieras mostrar.</p>
+    <div class="contact-form">
+      <label class="cf">
+        <span class="cf-label">Dirección</span>
+        <input class="cf-input" type="text" maxlength="255" placeholder="Av. Colón 1234, Córdoba"
+          [ngModel]="direccion()" (ngModelChange)="setDireccion($event)" />
+      </label>
+      <label class="cf">
+        <span class="cf-label">WhatsApp</span>
+        <input class="cf-input" type="tel" maxlength="40" inputmode="tel" placeholder="5493510000000"
+          [ngModel]="whatsapp()" (ngModelChange)="setWhatsapp($event)" />
+        <span class="cf-hint">Con código de país, solo números. Ej: 5493510000000</span>
+      </label>
+      <label class="cf">
+        <span class="cf-label">Instagram</span>
+        <input class="cf-input" type="text" maxlength="100" placeholder="tuclub"
+          [ngModel]="instagram()" (ngModelChange)="setInstagram($event)" />
+        <span class="cf-hint">Solo el usuario, sin la @.</span>
+      </label>
+      <label class="cf">
+        <span class="cf-label">Link de Google Maps</span>
+        <input class="cf-input" type="url" maxlength="500" inputmode="url" placeholder="https://maps.app.goo.gl/…"
+          [ngModel]="mapaUrl()" (ngModelChange)="setMapaUrl($event)" />
+      </label>
+    </div>
+  </section>
+
+  <!-- ===== CANCHAS ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Canchas</span><span class="ln"></span></div>
+    <p class="block-sub">Las canchas que el jugador puede reservar. Eliminar una no borra las reservas ya hechas.</p>
+
+    @if (canchasOrdenadas().length > 0) {
+      <div class="cancha-list">
+        @for (c of canchasOrdenadas(); track c.id) {
+          <div class="cancha-item">
+            <span class="cancha-dot" [style.background]="c.color || '#2747ff'"></span>
+            <div class="cancha-info">
+              <span class="cancha-name">{{ c.nombre }}</span>
+              <span class="cancha-meta mono">
+                {{ c.techada ? 'Techada' : 'Descubierta' }} · {{ tipoParedLabel(c.tipoPared) }}
+                @if (c.precioHora != null) { · ${{ c.precioHora }}/h }
+              </span>
+            </div>
+            <button type="button" class="cancha-edit" aria-label="Editar cancha" (click)="editCancha(c)">Editar</button>
+            <button type="button" class="cancha-del" aria-label="Eliminar cancha" (click)="askDeleteCancha(c)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="blk-empty">No hay canchas cargadas todavía.</div>
+    }
+
+    @if (canchaFormOpen()) {
+      <div class="cancha-form">
+        <label class="cf">
+          <span class="cf-label">Nombre</span>
+          <input id="cName" class="cf-input" type="text" maxlength="150" placeholder="Cancha 1"
+            [ngModel]="cNombre()" (ngModelChange)="cNombre.set($event)" />
+        </label>
+        <label class="cf">
+          <span class="cf-label">Orden</span>
+          <input id="cOrden" class="cf-input" type="number" inputmode="numeric" min="1" placeholder="auto"
+            [ngModel]="cOrden()" (ngModelChange)="cOrden.set($event)" />
+        </label>
+        <label class="cf">
+          <span class="cf-label">Tipo de pared</span>
+          <p-select [options]="tipoParedOpciones" [ngModel]="cTipoPared()"
+            (ngModelChange)="cTipoPared.set($event)" optionLabel="label" optionValue="value"
+            appendTo="body"></p-select>
+        </label>
+        <label class="cf">
+          <span class="cf-label">Precio / hora</span>
+          <input class="cf-input" type="number" inputmode="numeric" min="0" step="100" placeholder="8000"
+            [ngModel]="cPrecio()" (ngModelChange)="cPrecio.set($event)" />
+        </label>
+        <label class="cf cf-inline">
+          <span class="cf-label">Techada</span>
+          <button type="button" class="switch" role="switch" [attr.aria-checked]="cTechada()"
+            aria-label="Cancha techada" (click)="cTechada.set(!cTechada())"></button>
+        </label>
+        <label class="cf cf-inline">
+          <span class="cf-label">Color</span>
+          <input class="cancha-color" type="color" [ngModel]="cColor()" (ngModelChange)="cColor.set($event)" />
+        </label>
+        <div class="cancha-actions">
+          <button type="button" class="cancha-cancel" (click)="cancelCanchaEdit()">Cancelar</button>
+          <button type="button" class="cancha-save" [disabled]="!canCanchaSave()" (click)="saveCancha()">
+            {{ editingCanchaId() == null ? 'Crear cancha' : 'Guardar cancha' }}
+          </button>
+        </div>
+      </div>
+    } @else {
+      <button type="button" class="cancha-add" (click)="startNewCancha()">+ Agregar cancha</button>
+    }
+  </section>
+
+  <!-- ===== BLOQUEAR DÍAS ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Bloquear días</span><span class="ln"></span></div>
+    <p class="block-sub">Elegí una cancha (o todo el complejo), un motivo opcional, y tocá la fecha en el calendario.</p>
+
+    <div class="blk-form">
+      <label class="blk-field">
+        <span class="cf-label">Cancha</span>
+        <p-select [options]="canchaOpciones()" [ngModel]="bloqueoCanchaId()"
+          (ngModelChange)="setBloqueoCancha($event)" optionLabel="label" optionValue="value"
+          placeholder="Todo el complejo" appendTo="body"></p-select>
+      </label>
+      <label class="blk-field">
+        <span class="cf-label">Motivo (opcional)</span>
+        <input class="cf-input" type="text" maxlength="120" placeholder="Mantenimiento, torneo…"
+          [ngModel]="bloqueoMotivo()" (ngModelChange)="setBloqueoMotivo($event)" />
+      </label>
+    </div>
+
+    <div class="cal">
+      <p-datepicker [inline]="true" [ngModel]="calValue()" (onSelect)="onPickerSelect($event)"
+        [minDate]="today" [disabledDays]="disabledDays()" dateFormat="dd/mm/yy"></p-datepicker>
+    </div>
+
+    @if (bloqueosOrdenados().length > 0) {
+      <div class="blk-list">
+        @for (b of bloqueosOrdenados(); track b.id) {
+          <div class="blk-item">
+            <div class="when">
+              <span class="dnum mono">{{ bloqDayNum(b) }}</span>
+              <span class="dmo">{{ bloqDow(b) }}</span>
+            </div>
+            <div class="reason">
+              {{ b.canchaNombre || 'Todo el complejo' }}
+              @if (b.motivo) { <span class="rmotivo">· {{ b.motivo }}</span> }
+            </div>
+            <button type="button" class="rm" aria-label="Quitar bloqueo" (click)="removeBloqueo(b)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="blk-empty">No hay días bloqueados próximos.</div>
+    }
+  </section>
+</main>
+
+<!-- ===== BARRA GUARDAR ===== -->
+<div class="savebar">
+  <div class="save-meta">
+    <div class="st eyebrow">Estado</div>
+    <div class="sv" [class.dirty]="dirty() || invalidPaso() || invalidDuraciones()">{{ saveState() }}</div>
+  </div>
+  <button class="save-btn" [disabled]="!canSave()" (click)="save()">Guardar</button>
+</div>
