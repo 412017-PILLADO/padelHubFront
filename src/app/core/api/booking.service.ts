@@ -66,6 +66,7 @@ export interface PublicConfig {
   pasoMinutos: number;
   duracionesPermitidas: number[];
   duracionDefault: number;
+  permitirOtrasDuraciones: boolean;
   canchas: CanchaConfig[];
   horarios: { diaSemana: number; horaInicio: string; horaFin: string }[];
 }

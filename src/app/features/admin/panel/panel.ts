@@ -96,6 +96,47 @@ export class PanelComponent {
     return `${DOWS[d.getDay()]} ${d.getDate()} ${MES_ABBR[d.getMonth()]}`;
   });
 
+  // Partes de la fecha para la tarjeta fija del sidebar.
+  readonly diaNum = computed(() => this.selectedDay().getDate());
+  readonly mesLabel = computed(() => MES_ABBR[this.selectedDay().getMonth()]);
+  readonly dowLabel = computed(() => DOWS[this.selectedDay().getDay()]);
+
+  /** Filtro por cancha (null = todas). */
+  readonly canchaFilter = signal<string | null>(null);
+
+  /** Canchas presentes en los turnos del día (para armar el filtro), ordenadas naturalmente. */
+  readonly canchas = computed(() => {
+    const set = new Set<string>();
+    for (const t of this.list()) {
+      if (t.canchaNombre) set.add(t.canchaNombre);
+    }
+    return [...set].sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+  });
+
+  /** Turnos visibles: filtrados por cancha y ordenados por hora, luego cancha (columna pareja). */
+  readonly ordered = computed(() => {
+    const f = this.canchaFilter();
+    return this.list()
+      .filter((t) => !f || t.canchaNombre === f)
+      .sort(
+        (a, b) =>
+          a.hora.localeCompare(b.hora) ||
+          (a.canchaNombre ?? '').localeCompare(b.canchaNombre ?? '')
+      );
+  });
+
+  /** Cantidad de turnos visibles (para el resumen del sidebar). */
+  readonly count = computed(() => this.ordered().length);
+
+  /** Hay turnos en el día pero el filtro de cancha no deja ninguno a la vista. */
+  readonly noMatch = computed(
+    () => this.loaded() && !this.loading() && this.list().length > 0 && this.ordered().length === 0
+  );
+
+  setCanchaFilter(c: string | null): void {
+    this.canchaFilter.set(c);
+  }
+
   /** Mostramos siempre la cancha del turno. */
   readonly showCancha = computed(() => true);
 
@@ -146,6 +187,7 @@ export class PanelComponent {
     this.loading.set(true);
     this.loaded.set(false);
     this.list.set([]);
+    this.canchaFilter.set(null); // el filtro por cancha se resetea al cambiar de día
     this.turnos.turnosDelDia(this.apiFecha(day)).subscribe({
       next: (turnos) => {
         this.list.set(turnos);

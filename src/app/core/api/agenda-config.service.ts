@@ -36,6 +36,9 @@ export interface AgendaConfig {
   pasoMinutos: number;
   duraciones: number[];
   duracionDefault: number;
+  permitirOtrasDuraciones: boolean;
+  precioModo: 'GENERAL' | 'POR_CANCHA';
+  precioHoraGeneral: number | null;
   breakOn: boolean;
   breakFrom: string;
   breakTo: string;
@@ -57,6 +60,13 @@ export interface GuardarDuracionesRequest {
   pasoMinutos: number;
   duraciones: number[];
   duracionDefault: number;
+  permitirOtrasDuraciones: boolean;
+}
+
+/** Body de `PUT /api/v1/agenda/precios`. `precioHoraGeneral` requerido si modo GENERAL. */
+export interface GuardarPreciosRequest {
+  precioModo: 'GENERAL' | 'POR_CANCHA';
+  precioHoraGeneral: number | null;
 }
 
 /** Body de `POST /api/v1/agenda/bloqueos`. */
@@ -102,9 +112,14 @@ export class AgendaConfigService {
     return this.http.put<AgendaConfig>('/api/v1/agenda/horarios', body);
   }
 
-  /** Actualiza paso + duraciones permitidas + duración por defecto. */
+  /** Actualiza paso + duraciones permitidas + turno principal + si permite otras duraciones. */
   putDuraciones(body: GuardarDuracionesRequest): Observable<AgendaConfig> {
     return this.http.put<AgendaConfig>('/api/v1/agenda/duraciones', body);
+  }
+
+  /** Actualiza el modo de precio (general/por cancha) + el precio general. */
+  putPrecios(body: GuardarPreciosRequest): Observable<AgendaConfig> {
+    return this.http.put<AgendaConfig>('/api/v1/agenda/precios', body);
   }
 
   /** Actualiza contacto/ubicación del complejo. Devuelve la config actualizada. */

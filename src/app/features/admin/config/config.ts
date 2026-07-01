@@ -119,7 +119,13 @@ export class ConfigComponent {
   // ── Duraciones ──
   readonly pasoMinutos = signal(30);
   readonly duraciones = signal<number[]>([60, 90, 120]);
+  /** Turno principal: ancla la grilla de horarios y es el único turno si no se permiten otros. */
   readonly duracionDefault = signal(90);
+  readonly permitirOtras = signal(true);
+
+  // ── Precios ──
+  readonly precioModo = signal<'GENERAL' | 'POR_CANCHA'>('POR_CANCHA');
+  readonly precioHoraGeneral = signal<number | null>(null);
 
   // ── Canchas ──
   readonly canchas = signal<CanchaConfig[]>([]);
@@ -172,12 +178,19 @@ export class ConfigComponent {
   readonly invalidDuraciones = computed(
     () => this.duraciones().length === 0 || !this.duraciones().includes(this.duracionDefault())
   );
+  readonly invalidPrecio = computed(() => {
+    if (this.precioModo() !== 'GENERAL') return false;
+    const p = this.precioHoraGeneral();
+    return p == null || !(p > 0);
+  });
   readonly canSave = computed(
-    () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones() && !this.saving()
+    () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones()
+      && !this.invalidPrecio() && !this.saving()
   );
   readonly saveState = computed(() => {
     if (this.invalidPaso()) return 'Revisá el paso (5–180 min)';
-    if (this.invalidDuraciones()) return 'Elegí al menos una duración y un default';
+    if (this.invalidDuraciones()) return 'Elegí el turno principal';
+    if (this.invalidPrecio()) return 'Cargá el precio general por hora';
     return this.dirty() ? 'Cambios sin guardar' : 'Todo guardado';
   });
   readonly breakStateLabel = computed(() =>
@@ -227,6 +240,9 @@ export class ConfigComponent {
     this.pasoMinutos.set(cfg.pasoMinutos);
     this.duraciones.set([...cfg.duraciones].sort((a, b) => a - b));
     this.duracionDefault.set(cfg.duracionDefault);
+    this.permitirOtras.set(cfg.permitirOtrasDuraciones ?? true);
+    this.precioModo.set(cfg.precioModo ?? 'POR_CANCHA');
+    this.precioHoraGeneral.set(cfg.precioHoraGeneral ?? null);
     this.bloqueos.set(cfg.bloqueos ?? []);
     this.canchas.set(cfg.canchas ?? []);
     const c = cfg.contacto ?? {
@@ -282,19 +298,33 @@ export class ConfigComponent {
   // ── Duraciones ──
   isDurActive(d: number): boolean { return this.duraciones().includes(d); }
   toggleDur(d: number): void {
+    // El turno principal no se puede desactivar (siempre tiene que ser reservable).
+    if (d === this.duracionDefault()) return;
     this.duraciones.update((list) =>
       list.includes(d) ? list.filter((x) => x !== d) : [...list, d].sort((a, b) => a - b)
     );
-    // Si el default quedó fuera, reasignar al primero disponible.
-    if (!this.duraciones().includes(this.duracionDefault())) {
-      this.duracionDefault.set(this.duraciones()[0] ?? 0);
+    this.markDirty();
+  }
+  setDefault(d: number): void {
+    this.duracionDefault.set(d);
+    // El turno principal siempre tiene que estar entre las duraciones permitidas.
+    if (!this.duraciones().includes(d)) {
+      this.duraciones.update((list) => [...list, d].sort((a, b) => a - b));
     }
     this.markDirty();
   }
-  setDefault(d: number): void { this.duracionDefault.set(d); this.markDirty(); }
+  togglePermitirOtras(): void { this.permitirOtras.update((v) => !v); this.markDirty(); }
   onPasoInput(value: string): void {
     const n = Number(value);
     this.pasoMinutos.set(Number.isFinite(n) ? Math.round(n) : 0);
+    this.markDirty();
+  }
+
+  // ── Precios ──
+  setPrecioModo(modo: 'GENERAL' | 'POR_CANCHA'): void { this.precioModo.set(modo); this.markDirty(); }
+  onPrecioGeneralInput(value: string): void {
+    const n = Number(value);
+    this.precioHoraGeneral.set(value.trim() === '' || !Number.isFinite(n) ? null : Math.round(n));
     this.markDirty();
   }
 
@@ -490,6 +520,13 @@ export class ConfigComponent {
             pasoMinutos: this.pasoMinutos(),
             duraciones: this.duraciones(),
             duracionDefault: this.duracionDefault(),
+            permitirOtrasDuraciones: this.permitirOtras(),
+          })
+        ),
+        concatMap(() =>
+          this.api.putPrecios({
+            precioModo: this.precioModo(),
+            precioHoraGeneral: this.precioModo() === 'GENERAL' ? this.precioHoraGeneral() : null,
           })
         ),
         concatMap(() => this.api.putContacto(contacto))

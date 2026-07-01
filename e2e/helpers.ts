@@ -1,6 +1,6 @@
 import { Page, APIRequestContext, expect } from '@playwright/test';
 
-export const API = 'http://localhost:8090';
+export const API = 'http://localhost:8095';
 export const RESERVA_URL = 'http://demo.localhost:4400/';
 export const OWNER = { email: 'owner@padelhub.com', password: 'padel123' };
 

@@ -1,24 +1,45 @@
 :host {
   display: block;
-  min-height: 100svh;
   background: var(--paper);
   color: var(--ink);
 }
 
-/* ===================== LAYOUT ===================== */
+/* ===================== LAYOUT =====================
+   En desktop (≥900px) la página se fija al viewport (100svh, sin scroll de documento): el
+   afiche izquierdo queda CLAVADO y solo scrollea internamente la columna derecha (los pasos).
+   La info del afiche se muestra completa (altura natural, footer al fondo con margin-top:auto)
+   gracias a la compactación por altura de más abajo. En mobile el flujo se apila natural. */
 .poster {
   display: grid;
   grid-template-columns: 1fr;
-  max-width: var(--container);
-  margin-inline: auto;
-  padding: clamp(20px, 5vw, 48px);
-  gap: clamp(24px, 4vw, 48px);
+  min-height: 100svh;
 }
 @media (min-width: 900px) {
+  :host { height: 100svh; overflow: hidden; }
   .poster {
-    grid-template-columns: 0.85fr 1.15fr;
-    align-items: start;
+    height: 100svh;
+    min-height: 0;
+    grid-template-columns: minmax(300px, 34%) 1fr;
   }
+}
+/* Desktop de poca altura (notebooks 768/720): el héroe decorativo aprieta la info y la mandaba a
+   scroll. El título ya está grande en la columna derecha, así que acá lo ocultamos y compactamos
+   para que horarios + contacto entren completos sin scroll interno. */
+@media (min-width: 900px) and (max-height: 880px) {
+  .poster-brand { padding-top: 28px; padding-bottom: 26px; }
+  .poster-hero { display: none; }
+  .info { margin-top: 20px; gap: 16px; }
+}
+@media (min-width: 900px) and (max-height: 760px) {
+  .poster-brand { padding-top: 22px; padding-bottom: 18px; }
+  .info { margin-top: 14px; gap: 12px; }
+  .link-row, .map-stub { padding-top: 9px; padding-bottom: 9px; }
+  .pb-foot { margin-top: 12px; padding-top: 10px; }
+  .brand-mark { width: 30px; height: 30px; }
+  .logo-type .name { font-size: 1.45rem; }
+  .logo-type .rule { margin: 6px 0 4px; }
+  .info-h { margin-bottom: 6px; }
+  .addr { margin-bottom: 8px; }
 }
 
 /* ===================== AFICHE (marca) ===================== */
@@ -27,9 +48,11 @@
   overflow: hidden;
   background: linear-gradient(150deg, var(--court), var(--court-deep));
   color: #fff;
-  border-radius: var(--r-lg);
-  padding: clamp(24px, 4vw, 36px);
+  padding: clamp(24px, 3vw, 40px);
   isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 .watermark {
   position: absolute;
@@ -44,11 +67,12 @@
 }
 .poster-brand > * { position: relative; z-index: 1; }
 
+.pb-head { flex: none; }
 .brand { display: flex; align-items: center; gap: 12px; }
 .brand-mark { width: 34px; height: 34px; color: #fff; }
 .brand-mark svg { width: 100%; height: 100%; }
 .logo-type .name {
-  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
   line-height: 0.92;
   color: #fff;
 }
@@ -56,15 +80,22 @@
 .logo-type .sub { color: rgba(255, 255, 255, 0.85); }
 
 .poster-hero {
-  font-size: clamp(2.6rem, 6vw, 4rem);
-  line-height: 0.9;
-  margin: clamp(28px, 5vw, 48px) 0;
+  flex: none;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 0.92;
+  margin: clamp(12px, 2vh, 22px) 0;
   color: #fff;
 }
 .poster-hero span { color: rgba(255, 255, 255, 0.55); }
 
-/* — Info — */
-.info { display: flex; flex-direction: column; gap: 22px; }
+/* — Info (altura natural, SIN scroll: el afiche izquierdo queda fijo y se ve completo) — */
+.info {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
 .info-h { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
 .info-h .t { color: rgba(255, 255, 255, 0.85); }
 .info-h .ln { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.22); }
@@ -99,35 +130,75 @@
 .lr-s { display: block; font-size: 0.78rem; color: rgba(255, 255, 255, 0.7); }
 .arr { width: 18px; height: 18px; opacity: 0.7; }
 
-/* ===================== FLUJO ===================== */
-.hero-line {
-  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-  margin-bottom: clamp(20px, 3vw, 32px);
+.pb-foot {
+  flex: none;
+  margin-top: auto; /* empuja el footer al fondo del afiche cuando sobra alto */
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  font-size: 0.78rem;
 }
-.hero-line strong {
-  font-size: clamp(1.6rem, 3.2vw, 2.4rem);
+.pb-foot .cr { color: rgba(255, 255, 255, 0.7); }
+.pb-foot .panel-link { color: rgba(255, 255, 255, 0.9); font-weight: 600; }
+.pb-foot .panel-link:hover { color: #fff; text-decoration: underline; }
+
+/* ===================== FLUJO ===================== */
+.booking-flow {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: clamp(20px, 3vw, 40px);
+  /* la columna derecha ENTERA scrollea (título + selectores + horario + cancha + datos);
+     el afiche izquierdo queda fijo. */
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.booking-flow::-webkit-scrollbar { width: 8px; }
+.booking-flow::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+
+.flow-head {
+  flex: none;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-bottom: clamp(12px, 2vh, 22px);
+}
+.flow-head strong {
+  font-size: clamp(1.4rem, 2.6vw, 2.1rem);
   text-transform: uppercase;
 }
 .hdash { flex: 1; min-width: 24px; height: 2px; background: var(--line-strong); }
-.hero-line .mono { color: var(--ink-dim); font-size: 0.85rem; }
+.flow-head .mono { color: var(--ink-dim); font-size: 0.85rem; }
+
+/* selectores compactos (duración + día) fijos arriba */
+.flow-top { flex: none; }
+
+/* horario + cancha + datos: altura natural; el scroll lo maneja el contenedor .booking-flow
+   (la columna derecha entera), no esta región. */
+.flow-body {
+  flex: 0 0 auto;
+  min-height: 0;
+}
 
 .step {
   border-top: 2px solid var(--line);
-  padding: 22px 0;
+  padding: clamp(12px, 1.8vh, 18px) 0;
   transition: border-color 0.2s ease;
 }
 .step.done { border-top-color: var(--court); }
-.step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 16px; }
+.step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .step-num { color: var(--court); font-size: 0.95rem; font-weight: 700; }
-.step-title { font-size: 1.15rem; font-weight: 700; letter-spacing: -0.01em; }
+.step-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
 .step-hint { color: var(--ink-faint); font-size: 0.95rem; }
+
+/* la grilla de horarios es el bloque más alto; vive dentro del scroll de .flow-body */
+.step-times { min-height: 0; }
 
 /* — Chips (duración / día) — */
 .chips { display: flex; flex-wrap: wrap; gap: 10px; }
 .chip {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  min-width: 78px; gap: 2px;
-  padding: 12px 16px;
+  min-width: 76px; gap: 2px;
+  padding: 10px 16px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--r);
@@ -145,16 +216,36 @@
 .chip[aria-pressed='true'] .c-date { color: rgba(255, 255, 255, 0.8); }
 
 /* — Calendario — */
-.cal { margin-top: 16px; }
+/* El día es el contexto de posicionamiento del calendario (popover flotante). */
+.step-day { position: relative; }
+
+/* Calendario: popover flotante por ENCIMA del contenido (no inline → no agrega scroll ni empuja
+   los pasos de abajo). Aparece justo debajo de los chips de día. */
+.cal.open {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 60px -18px rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+.cal.open ::ng-deep .p-datepicker {
+  border: none;
+  box-shadow: none;
+}
 
 /* — Grilla de horarios — */
 .times {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
   gap: 8px;
+  align-content: start;
 }
 .slot {
-  padding: 11px 8px;
+  padding: 10px 8px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--r);
@@ -178,7 +269,7 @@
 .court {
   display: flex; align-items: center; gap: 12px;
   text-align: left;
-  padding: 14px 16px;
+  padding: 12px 16px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--r);
@@ -195,13 +286,13 @@
 .court-price { margin-left: auto; font-weight: 700; color: var(--court-deep); }
 
 /* — Formulario — */
-.form { display: flex; flex-direction: column; gap: 16px; max-width: 420px; }
+.form { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); }
 .field input { width: 100%; }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
 .confirm {
-  height: 52px;
+  height: 50px;
   border: none;
   border-radius: var(--r);
   background: var(--court);
@@ -213,19 +304,6 @@
 }
 .confirm:hover:not(:disabled) { background: var(--court-deep); transform: translateY(-1px); }
 .confirm:disabled { background: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
-
-/* ===================== FOOTER ===================== */
-.reserva-foot {
-  max-width: var(--container);
-  margin-inline: auto;
-  padding: 24px clamp(20px, 5vw, 48px) 40px;
-  border-top: 1px solid var(--line);
-  margin-top: 20px;
-}
-.cr { font-size: 0.8rem; color: var(--ink-faint); }
-.cr-sep { margin: 0 8px; }
-.panel-link { color: var(--court-deep); font-weight: 600; }
-.panel-link:hover { text-decoration: underline; }
 
 /* ===================== ÉXITO ===================== */
 .success {
@@ -272,3 +350,58 @@
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .ghost-btn:hover { border-color: var(--court); color: var(--court-deep); }
+
+/* ===================== MOBILE (<900px) =====================
+   Orden pedido: (1) banda azul con "PADEL HUB DEMO" grande, (2) el formulario completo,
+   (3) banda azul con horarios/contacto abajo. Para poder intercalar el form ENTRE las dos
+   partes del afiche, disolvemos el <aside> con display:contents y ordenamos sus hijos junto
+   al form; cada banda azul recupera su fondo/padding (ya no lo aporta el aside). */
+@media (max-width: 899px) {
+  .poster { display: flex; flex-direction: column; }
+  .poster-brand { display: contents; }
+  .poster-hero,
+  .watermark { display: none; }
+
+  /* (1) banda azul superior: el nombre del club, grande */
+  .pb-head {
+    order: 1;
+    background: linear-gradient(150deg, var(--court), var(--court-deep));
+    color: #fff;
+    padding: 30px clamp(18px, 6vw, 26px) 26px;
+  }
+  .logo-type .name { font-size: clamp(2rem, 8.5vw, 2.8rem); }
+
+  /* (2) formulario completo */
+  .booking-flow {
+    order: 2;
+    overflow: visible;
+    padding: clamp(20px, 5vw, 26px) clamp(16px, 5vw, 24px) 26px;
+  }
+  .flow-body { overflow: visible; }
+
+  /* (3) banda azul inferior: horarios + dónde estamos + contacto + footer */
+  .info {
+    order: 3;
+    overflow: visible;
+    flex: 0 0 auto;
+    margin-top: 0;
+    background: linear-gradient(150deg, var(--court-deep), var(--court));
+    color: #fff;
+    padding: 28px clamp(18px, 6vw, 26px) 18px;
+  }
+  .pb-foot {
+    order: 4;
+    margin-top: 0;
+    background: var(--court-deep);
+    color: #fff;
+    padding: 14px clamp(18px, 6vw, 26px) 26px;
+  }
+
+  /* chips y slots un toque más aireados al tacto */
+  .chip { min-width: 0; flex: 1 1 auto; }
+  .dur-chips .chip { flex: 1 1 28%; }
+  .days .chip { flex: 1 1 40%; }
+  .times { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+  .slot { padding: 12px 8px; }
+  .form { max-width: none; }
+}

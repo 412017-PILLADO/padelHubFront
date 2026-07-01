@@ -7,7 +7,7 @@
     <aside class="poster-brand">
       <div class="watermark display" aria-hidden="true">{{ tenantPrimerNombre() }}</div>
 
-      <header>
+      <header class="pb-head">
         <div class="brand">
           <span class="brand-mark" aria-hidden="true">
             <svg viewBox="-6 -3 44 46" fill="none">
@@ -82,164 +82,169 @@
           </div>
         }
       </div>
+
+      <footer class="pb-foot">
+        <span class="cr mono">© 2026 {{ tenantNombre() }}</span>
+        <a class="panel-link mono" routerLink="/admin">Panel del club</a>
+      </footer>
     </aside>
 
     <!-- columna reserva: los pasos -->
     <main class="booking-flow">
-      <div class="hero-line">
+      <div class="flow-head">
         <strong class="display">Reservá tu cancha.</strong>
         <span class="hdash"></span>
         <span class="mono">{{ tenantNombre() }}</span>
       </div>
 
-      <!-- 01 · DURACIÓN -->
-      <section class="step" [class.done]="true">
-        <div class="step-head">
-          <span class="step-num mono">01</span>
-          <span class="step-title">¿Cuánto vas a jugar?</span>
-        </div>
-        <div class="chips dur-chips">
-          @for (d of duraciones(); track d) {
-            <button type="button" class="chip"
-              [attr.aria-pressed]="duracion() === d" (click)="pickDuracion(d)">
-              <span class="c-label mono">{{ d }}'</span>
-              <span class="c-date">min</span>
-            </button>
-          }
-        </div>
-      </section>
-
-      <!-- 02 · DÍA -->
-      <section class="step" [class.done]="dayDone()">
-        <div class="step-head">
-          <span class="step-num mono">02</span>
-          <span class="step-title">¿Para cuándo?</span>
-        </div>
-        <div class="chips days">
-          @for (chip of chips(); track chip.label) {
-            <button type="button" class="chip"
-              [attr.aria-pressed]="isChipSelected(chip.date)" (click)="selectDay(chip.date)">
-              <span class="c-label">{{ chip.label }}</span>
-              <span class="c-date mono">{{ chipDate(chip.date) }}</span>
-            </button>
-          }
-          <button type="button" class="chip"
-            [attr.aria-pressed]="calOpen()" (click)="toggleCalendar()">
-            <span class="c-label">Otra</span>
-            <span class="c-date mono">Fecha</span>
-          </button>
-        </div>
-
-        @if (calOpen()) {
-          <div class="cal open">
-            <p-datepicker [inline]="true" [ngModel]="pickerValue()" [minDate]="minDate"
-              [firstDayOfWeek]="1" (onSelect)="onPickerSelect($event)"></p-datepicker>
-          </div>
-        }
-      </section>
-
-      <!-- 03 · HORARIO -->
-      <section class="step" [class.done]="timeDone()">
-        <div class="step-head">
-          <span class="step-num mono">03</span>
-          <span class="step-title">¿A qué hora?</span>
-        </div>
-
-        @if (loadingSlots()) {
-          <p class="step-hint">Buscando turnos…</p>
-        } @else if (showTimes()) {
-          <div class="times">
-            @for (slot of slots(); track slot.hora) {
-              <button type="button" class="slot mono"
-                [disabled]="!slot.disponible"
-                [attr.aria-pressed]="selectedTime() === slot.hora"
-                [attr.aria-label]="slot.disponible ? slot.hora : slot.hora + ' ocupado'"
-                (click)="selectTime(slot)">
-                {{ slot.hora }}
-              </button>
-            }
-          </div>
-        } @else {
-          <p class="step-hint">{{ timeHint() }}</p>
-        }
-      </section>
-
-      <!-- 04 · CANCHA -->
-      <section class="step" [class.done]="canchaDone()">
-        <div class="step-head">
-          <span class="step-num mono">04</span>
-          <span class="step-title">Elegí cancha</span>
-        </div>
-        @if (timeDone()) {
-          <div class="courts">
-            <button type="button" class="court any"
-              [attr.aria-pressed]="isCanchaSelected(ANY)" (click)="selectCancha(ANY)">
-              <span class="court-name">Cualquiera disponible</span>
-              <span class="court-meta">Te asignamos una cancha libre</span>
-            </button>
-            @for (c of canchasDelSlot(); track c.id) {
-              <button type="button" class="court"
-                [attr.aria-pressed]="isCanchaSelected(c.id)" (click)="selectCancha(c.id)">
-                <span class="court-dot" [style.background]="c.color || 'var(--court)'" aria-hidden="true"></span>
-                <span class="court-body">
-                  <span class="court-name">{{ c.nombre }}</span>
-                  <span class="court-meta">{{ canchaTipo(c) }}</span>
-                </span>
-                @if (mostrarPrecios() && c.precioHora != null) {
-                  <span class="court-price mono">${{ c.precioHora }}/h</span>
-                }
-              </button>
-            }
-          </div>
-        } @else {
-          <p class="step-hint">Elegí el horario para ver las canchas.</p>
-        }
-      </section>
-
-      <!-- 05 · DATOS -->
-      <section class="step" [class.done]="formValid()">
-        <div class="step-head">
-          <span class="step-num mono">05</span>
-          <span class="step-title">¿Quién reserva?</span>
-        </div>
-        @if (formOpen()) {
-          <div class="form open">
-            <div class="field">
-              <label for="fName">Nombre</label>
-              <input id="fName" type="text" pInputText autocomplete="name"
-                placeholder="Tu nombre" inputmode="text"
-                [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" />
+      <!-- selectores compactos: duración + día -->
+      <div class="flow-top" [class.no-dur]="!showDuracion()">
+        <!-- 01 · DURACIÓN (solo si el club permite elegir) -->
+        @if (showDuracion()) {
+          <section class="step" [class.done]="true">
+            <div class="step-head">
+              <span class="step-num mono">{{ stepNums().dur }}</span>
+              <span class="step-title">¿Cuánto vas a jugar?</span>
             </div>
-            @if (requiereTelefono()) {
-              <div class="field">
-                <label for="fPhone">WhatsApp</label>
-                <input id="fPhone" type="tel" pInputText autocomplete="tel"
-                  placeholder="351 555 5555" inputmode="tel"
-                  [ngModel]="whatsapp()" (ngModelChange)="whatsapp.set($event)" />
-              </div>
+            <div class="chips dur-chips">
+              @for (d of duraciones(); track d) {
+                <button type="button" class="chip"
+                  [attr.aria-pressed]="duracion() === d" (click)="pickDuracion(d)">
+                  <span class="c-label mono">{{ d }}'</span>
+                  <span class="c-date">min</span>
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        <!-- DÍA -->
+        <section class="step step-day" [class.done]="dayDone()">
+          <div class="step-head">
+            <span class="step-num mono">{{ stepNums().dia }}</span>
+            <span class="step-title">¿Para cuándo?</span>
+          </div>
+          <div class="chips days">
+            @for (chip of chips(); track chip.label) {
+              <button type="button" class="chip"
+                [attr.aria-pressed]="isChipSelected(chip.date)" (click)="selectDay(chip.date)">
+                <span class="c-label">{{ chip.label }}</span>
+                <span class="c-date mono">{{ chipDate(chip.date) }}</span>
+              </button>
             }
-            <!-- honeypot anti-bots -->
-            <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
-              aria-hidden="true" [ngModel]="empresa()" (ngModelChange)="empresa.set($event)" />
-            <button type="button" class="confirm"
-              [disabled]="!canConfirm() || enviando()" (click)="confirm()">
-              {{ enviando() ? 'Confirmando…' : 'Confirmar turno' }}
+            <button type="button" class="chip"
+              [attr.aria-pressed]="calOpen() || customDay() !== null" (click)="toggleCalendar()">
+              <span class="c-label">Otra</span>
+              <span class="c-date mono">{{ customDay() !== null ? chipDate(customDay()!) : 'Fecha' }}</span>
             </button>
           </div>
-        } @else {
-          <p class="step-hint">Elegí la cancha para dejar tus datos.</p>
-        }
-      </section>
+
+          @if (calOpen()) {
+            <div class="cal open">
+              <p-datepicker [inline]="true" [ngModel]="pickerValue()" [minDate]="minDate"
+                [firstDayOfWeek]="1" (onSelect)="onPickerSelect($event)"></p-datepicker>
+            </div>
+          }
+        </section>
+      </div>
+
+      <!-- región flexible: horario + cancha + datos -->
+      <div class="flow-body">
+        <!-- 03 · HORARIO -->
+        <section class="step step-times" [class.done]="timeDone()">
+          <div class="step-head">
+            <span class="step-num mono">{{ stepNums().hora }}</span>
+            <span class="step-title">¿A qué hora?</span>
+          </div>
+
+          @if (loadingSlots()) {
+            <p class="step-hint">Buscando turnos…</p>
+          } @else if (showTimes()) {
+            <div class="times">
+              @for (slot of slots(); track slot.hora) {
+                <button type="button" class="slot mono"
+                  [disabled]="!slot.disponible"
+                  [attr.aria-pressed]="selectedTime() === slot.hora"
+                  [attr.aria-label]="slot.disponible ? slot.hora : slot.hora + ' ocupado'"
+                  (click)="selectTime(slot)">
+                  {{ slot.hora }}
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="step-hint">{{ timeHint() }}</p>
+          }
+        </section>
+
+        <!-- 04 · CANCHA -->
+        <section class="step" [class.done]="canchaDone()">
+          <div class="step-head">
+            <span class="step-num mono">{{ stepNums().cancha }}</span>
+            <span class="step-title">Elegí cancha</span>
+          </div>
+          @if (timeDone()) {
+            <div class="courts">
+              <button type="button" class="court any"
+                [attr.aria-pressed]="isCanchaSelected(ANY)" (click)="selectCancha(ANY)">
+                <span class="court-name">Cualquiera disponible</span>
+                <span class="court-meta">Te asignamos una cancha libre</span>
+              </button>
+              @for (c of canchasDelSlot(); track c.id) {
+                <button type="button" class="court"
+                  [attr.aria-pressed]="isCanchaSelected(c.id)" (click)="selectCancha(c.id)">
+                  <span class="court-dot" [style.background]="c.color || 'var(--court)'" aria-hidden="true"></span>
+                  <span class="court-body">
+                    <span class="court-name">{{ c.nombre }}</span>
+                    <span class="court-meta">{{ canchaTipo(c) }}</span>
+                  </span>
+                  @if (mostrarPrecios() && precioTurno(c); as precio) {
+                    <span class="court-price mono">${{ precio }}</span>
+                  }
+                </button>
+              }
+            </div>
+          } @else {
+            <p class="step-hint">Elegí el horario para ver las canchas.</p>
+          }
+        </section>
+
+        <!-- 05 · DATOS -->
+        <section class="step" [class.done]="formValid()">
+          <div class="step-head">
+            <span class="step-num mono">{{ stepNums().datos }}</span>
+            <span class="step-title">¿Quién reserva?</span>
+          </div>
+          @if (formOpen()) {
+            <div class="form open">
+              <div class="field">
+                <label for="fName">Nombre</label>
+                <input id="fName" type="text" pInputText autocomplete="name"
+                  placeholder="Tu nombre" inputmode="text"
+                  [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" />
+              </div>
+              @if (requiereTelefono()) {
+                <div class="field">
+                  <label for="fPhone">WhatsApp</label>
+                  <input id="fPhone" type="tel" pInputText autocomplete="tel"
+                    placeholder="351 555 5555" inputmode="tel"
+                    [ngModel]="whatsapp()" (ngModelChange)="whatsapp.set($event)" />
+                </div>
+              }
+              <!-- honeypot anti-bots -->
+              <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
+                aria-hidden="true" [ngModel]="empresa()" (ngModelChange)="empresa.set($event)" />
+              <button type="button" class="confirm"
+                [disabled]="!canConfirm() || enviando()" (click)="confirm()">
+                {{ enviando() ? 'Confirmando…' : 'Confirmar turno' }}
+              </button>
+            </div>
+          } @else {
+            <p class="step-hint">Elegí la cancha para dejar tus datos.</p>
+          }
+        </section>
+      </div>
     </main>
   </div>
-
-  <footer class="reserva-foot">
-    <div class="cr mono">
-      © 2026 {{ tenantNombre() }}
-      <span class="cr-sep" aria-hidden="true">·</span>
-      <a class="panel-link" routerLink="/admin">Panel del club</a>
-    </div>
-  </footer>
 }
 
 <!-- ===== ÉXITO ===== -->

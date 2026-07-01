@@ -128,6 +128,20 @@ export class Landing {
   readonly duraciones = computed(() => this.config()?.duracionesPermitidas ?? [60, 90, 120]);
   readonly duracion = signal<number>(90);
 
+  /**
+   * Mostramos el paso de duración solo si el club permite otras duraciones y hay más de una. Si no,
+   * todos juegan el turno principal y nos salteamos el paso → reserva más rápida.
+   */
+  readonly showDuracion = computed(
+    () => this.config()?.permitirOtrasDuraciones !== false && this.duraciones().length > 1
+  );
+  /** Numeración de los pasos visibles (corre 1 hacia arriba cuando se oculta la duración). */
+  readonly stepNums = computed(() =>
+    this.showDuracion()
+      ? { dur: '01', dia: '02', hora: '03', cancha: '04', datos: '05' }
+      : { dur: '', dia: '01', hora: '02', cancha: '03', datos: '04' }
+  );
+
   // ── Paso 2 · Día ──────────────────────────────────────────────────
   readonly selectedDay = signal<Date | null>(null);
   readonly calOpen = signal(false);
@@ -165,6 +179,13 @@ export class Landing {
     { label: 'Mañana', date: addDays(this.today, 1) },
     { label: 'Pasado', date: addDays(this.today, 2) },
   ]);
+
+  /** Día elegido con el calendario, fuera de los chips Hoy/Mañana/Pasado. */
+  readonly customDay = computed(() => {
+    const day = this.selectedDay();
+    if (!day || this.chips().some((c) => sameDay(day, c.date))) return null;
+    return day;
+  });
 
   // ── Estado derivado ───────────────────────────────────────────────
   readonly dayDone = computed(() => this.selectedDay() !== null);
@@ -277,12 +298,9 @@ export class Landing {
 
   onPickerSelect(value: Date): void {
     if (!value) return;
-    const day = startOfDay(value);
-    this.pickerValue.set(day);
-    this.selectedDay.set(day);
-    this.selectedTime.set(null);
-    this.selectedCancha.set(null);
-    this.loadAvailability(day);
+    this.pickerValue.set(startOfDay(value));
+    // selectDay cierra el calendario (que tapa los horarios) y recarga disponibilidad.
+    this.selectDay(value);
   }
 
   // ── Disponibilidad ────────────────────────────────────────────────
@@ -332,6 +350,13 @@ export class Landing {
   canchaTipo(c: CanchaLibre): string {
     const techo = c.techada ? 'Techada' : 'Descubierta';
     return c.tipoPared ? `${techo} · ${c.tipoPared}` : techo;
+  }
+
+  /** Precio total del turno (precio/hora × duración elegida), formateado con separador de miles. */
+  precioTurno(c: CanchaLibre): string | null {
+    if (c.precioHora == null) return null;
+    const total = Math.round((c.precioHora * this.duracion()) / 60);
+    return total.toLocaleString('es-AR');
   }
 
   // ── Confirmar ─────────────────────────────────────────────────────

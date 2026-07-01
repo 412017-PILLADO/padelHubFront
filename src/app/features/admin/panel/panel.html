@@ -11,33 +11,67 @@
   </div>
 </header>
 
-<main>
-  <!-- ===== SELECTOR DE FECHA ===== -->
-  <section class="block date-block">
-    <div class="block-h"><span class="t eyebrow">Día</span><span class="ln"></span></div>
-    <div class="days">
-      <button type="button" class="chip" [attr.aria-pressed]="isToday()" (click)="selectToday()">Hoy</button>
-      <button type="button" class="chip" [attr.aria-pressed]="isTomorrow()" (click)="selectTomorrow()">Mañana</button>
-      <button type="button" class="chip" [attr.aria-pressed]="calOpen()" (click)="toggleCalendar()">Otra</button>
-    </div>
-    @if (calOpen()) {
-      <div class="cal">
-        <p-datepicker [inline]="true" [ngModel]="calValue()" (onSelect)="onPickerSelect($event)" dateFormat="dd/mm/yy"></p-datepicker>
+<main class="layout">
+  <!-- ===== FILTROS FIJOS (fecha + día) ===== -->
+  <aside class="sidebar">
+    <section class="block filters">
+      <div class="block-h"><span class="t eyebrow">Día</span><span class="ln"></span></div>
+
+      <!-- fecha fija del día seleccionado -->
+      <div class="date-card">
+        <span class="dc-day mono">{{ diaNum() }}</span>
+        <span class="dc-rest">
+          <span class="dc-mo eyebrow">{{ mesLabel() }}</span>
+          <span class="dc-dow">{{ dowLabel() }}</span>
+        </span>
       </div>
-    }
-  </section>
+
+      <!-- chips rápidos (el calendario abre como popover flotante, no empuja el layout) -->
+      <div class="days">
+        <button type="button" class="chip" [attr.aria-pressed]="isToday()" (click)="selectToday()">Hoy</button>
+        <button type="button" class="chip" [attr.aria-pressed]="isTomorrow()" (click)="selectTomorrow()">Mañana</button>
+        <button type="button" class="chip" [attr.aria-pressed]="calOpen()" (click)="toggleCalendar()">Otra</button>
+        @if (calOpen()) {
+          <div class="cal">
+            <p-datepicker [inline]="true" [ngModel]="calValue()" (onSelect)="onPickerSelect($event)" dateFormat="dd/mm/yy"></p-datepicker>
+          </div>
+        }
+      </div>
+
+      <!-- filtro por cancha (solo si hay más de una con turnos ese día) -->
+      @if (canchas().length > 1) {
+        <div class="cancha-filter">
+          <span class="cf-label eyebrow">Cancha</span>
+          <div class="days cf-chips">
+            <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === null"
+              (click)="setCanchaFilter(null)">Todas</button>
+            @for (c of canchas(); track c) {
+              <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === c"
+                (click)="setCanchaFilter(c)">{{ c }}</button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (loaded() && !loading()) {
+        <div class="count mono">{{ count() }} {{ count() === 1 ? 'turno' : 'turnos' }}</div>
+      }
+    </section>
+  </aside>
 
   <!-- ===== LISTA DE TURNOS ===== -->
-  <section class="block">
+  <section class="block content">
     <div class="block-h"><span class="t eyebrow">Agenda</span><span class="ln"></span></div>
 
     @if (loading()) {
       <p class="state-msg">Cargando turnos…</p>
     } @else if (empty()) {
       <p class="state-msg empty">No hay turnos para este día.</p>
+    } @else if (noMatch()) {
+      <p class="state-msg empty">No hay turnos en {{ canchaFilter() }}.</p>
     } @else {
       <div class="turnos">
-        @for (t of list(); track t.id) {
+        @for (t of ordered(); track t.id) {
           <div class="turno-row">
             <div class="t-hora mono">{{ t.hora }}<span class="t-dur">{{ t.duracionMinutos }}'</span></div>
             <div class="t-info">

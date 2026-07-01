@@ -63,39 +63,70 @@
     </div>
   </section>
 
-  <!-- ===== DURACIONES ===== -->
+  <!-- ===== TURNO Y DURACIONES ===== -->
   <section class="block">
-    <div class="block-h"><span class="t eyebrow">Duraciones</span><span class="ln"></span></div>
-    <p class="block-sub">Qué duraciones puede elegir el jugador, y cada cuántos minutos arranca un turno (paso).</p>
+    <div class="block-h"><span class="t eyebrow">Turno y duraciones</span><span class="ln"></span></div>
+    <p class="block-sub">El turno principal define la grilla de horarios (la mayoría juega 90'). Si permitís otras
+      duraciones, arrancan en los mismos horarios del turno principal.</p>
 
-    <div class="dur-chips">
-      @for (d of durOpciones; track d) {
-        <button type="button" class="dchip" [attr.aria-pressed]="isDurActive(d)" (click)="toggleDur(d)">
-          {{ d }}'
-        </button>
-      }
+    <div class="default-row">
+      <span class="dr-label">Turno principal</span>
+      <div class="def-chips">
+        @for (d of durOpciones; track d) {
+          <button type="button" class="dchip sm" [attr.aria-pressed]="duracionDefault() === d" (click)="setDefault(d)">
+            {{ d }}'
+          </button>
+        }
+      </div>
     </div>
 
-    @if (duraciones().length) {
+    <div class="break-row">
+      <div class="bl">
+        <span class="bt">Permitir otras duraciones</span>
+        <span class="bs mono">{{ permitirOtras() ? 'El jugador elige duración' : 'Solo turno principal' }}</span>
+      </div>
+      <button type="button" class="switch" role="switch" [attr.aria-checked]="permitirOtras()"
+        aria-label="Permitir otras duraciones" (click)="togglePermitirOtras()"></button>
+    </div>
+
+    @if (permitirOtras()) {
       <div class="default-row">
-        <span class="dr-label">Por defecto</span>
-        <div class="def-chips">
-          @for (d of duraciones(); track d) {
-            <button type="button" class="dchip sm" [attr.aria-pressed]="duracionDefault() === d" (click)="setDefault(d)">
+        <span class="dr-label">Duraciones</span>
+        <div class="dur-chips">
+          @for (d of durOpciones; track d) {
+            <button type="button" class="dchip" [attr.aria-pressed]="isDurActive(d)" (click)="toggleDur(d)">
               {{ d }}'
             </button>
           }
         </div>
       </div>
     }
+  </section>
 
-    <div class="paso-row">
-      <label class="paso-label" for="paso">Paso (min)</label>
-      <input id="paso" class="paso-input" [class.invalid]="invalidPaso()" type="number"
-        inputmode="numeric" min="5" max="180" step="5" placeholder="30"
-        [ngModel]="pasoMinutos()" (ngModelChange)="onPasoInput($event)" />
-      @if (invalidPaso()) { <span class="paso-msg err">Entre 5 y 180</span> }
+  <!-- ===== PRECIOS ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Precios</span><span class="ln"></span></div>
+    <p class="block-sub">Un precio general por hora para todo el complejo, o un precio por cancha (para
+      diferenciar con luz / sin luz, cemento / cristal, techada / descubierta).</p>
+
+    <div class="dur-chips seg">
+      <button type="button" class="dchip" [attr.aria-pressed]="precioModo() === 'GENERAL'"
+        (click)="setPrecioModo('GENERAL')">Precio general</button>
+      <button type="button" class="dchip" [attr.aria-pressed]="precioModo() === 'POR_CANCHA'"
+        (click)="setPrecioModo('POR_CANCHA')">Por cancha</button>
     </div>
+
+    @if (precioModo() === 'GENERAL') {
+      <div class="paso-row">
+        <label class="paso-label" for="precioGen">Precio / hora</label>
+        <input id="precioGen" class="paso-input" [class.invalid]="invalidPrecio()" type="number"
+          inputmode="numeric" min="0" step="100"
+          [ngModel]="precioHoraGeneral()" (ngModelChange)="onPrecioGeneralInput($event)" />
+        @if (invalidPrecio()) { <span class="paso-msg err">Cargá un precio</span> }
+      </div>
+    } @else {
+      <p class="block-sub mt">Cada cancha define su precio abajo, en la sección Canchas.</p>
+    }
   </section>
 
   <!-- ===== CONTACTO ===== -->
@@ -142,7 +173,7 @@
               <span class="cancha-name">{{ c.nombre }}</span>
               <span class="cancha-meta mono">
                 {{ c.techada ? 'Techada' : 'Descubierta' }} · {{ tipoParedLabel(c.tipoPared) }}
-                @if (c.precioHora != null) { · ${{ c.precioHora }}/h }
+                @if (precioModo() === 'POR_CANCHA' && c.precioHora != null) { · ${{ c.precioHora }}/h }
               </span>
             </div>
             <button type="button" class="cancha-edit" aria-label="Editar cancha" (click)="editCancha(c)">Editar</button>
@@ -174,11 +205,13 @@
             (ngModelChange)="cTipoPared.set($event)" optionLabel="label" optionValue="value"
             appendTo="body"></p-select>
         </label>
-        <label class="cf">
-          <span class="cf-label">Precio / hora</span>
-          <input class="cf-input" type="number" inputmode="numeric" min="0" step="100" placeholder="8000"
-            [ngModel]="cPrecio()" (ngModelChange)="cPrecio.set($event)" />
-        </label>
+        @if (precioModo() === 'POR_CANCHA') {
+          <label class="cf">
+            <span class="cf-label">Precio / hora</span>
+            <input class="cf-input" type="number" inputmode="numeric" min="0" step="100" placeholder="Ej: 8000"
+              [ngModel]="cPrecio()" (ngModelChange)="cPrecio.set($event)" />
+          </label>
+        }
         <label class="cf cf-inline">
           <span class="cf-label">Techada</span>
           <button type="button" class="switch" role="switch" [attr.aria-checked]="cTechada()"
@@ -252,7 +285,7 @@
 <div class="savebar">
   <div class="save-meta">
     <div class="st eyebrow">Estado</div>
-    <div class="sv" [class.dirty]="dirty() || invalidPaso() || invalidDuraciones()">{{ saveState() }}</div>
+    <div class="sv" [class.dirty]="dirty() || invalidPaso() || invalidDuraciones() || invalidPrecio()">{{ saveState() }}</div>
   </div>
   <button class="save-btn" [disabled]="!canSave()" (click)="save()">Guardar</button>
 </div>
