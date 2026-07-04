@@ -264,26 +264,98 @@
   cursor: not-allowed;
 }
 
-/* — Canchas — */
-.courts { display: flex; flex-direction: column; gap: 10px; }
-.court {
-  display: flex; align-items: center; gap: 12px;
-  text-align: left;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--r);
-  color: var(--ink);
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+/* — Canchas (cards = la cancha vista desde arriba, con la ficha adentro) — */
+.courts {
+  display: grid;
+  /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio */
+  grid-template-columns: repeat(auto-fill, minmax(138px, 172px));
+  justify-content: start;
+  gap: 12px;
 }
-.court:hover { border-color: var(--court); transform: translateY(-1px); }
-.court[aria-pressed='true'] { border-color: var(--court); background: var(--court-soft); box-shadow: inset 0 0 0 1px var(--court); }
-.court.any { justify-content: flex-start; flex-direction: column; align-items: flex-start; gap: 2px; }
-.court-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
-.court-body { display: flex; flex-direction: column; gap: 2px; flex: 1; }
-.court-name { font-weight: 700; }
-.court-meta { font-size: 0.82rem; color: var(--ink-dim); }
-.court-price { margin-left: auto; font-weight: 700; color: var(--court-deep); }
+.ccard {
+  /* piso claro + líneas + materiales (la landing es tema claro fijo) */
+  --floor: #e9eef8;
+  --floor-line: #93a4c6;
+  --scrim: 247, 250, 255;
+  --plan-ink: #16233f;
+  --plan-ink-dim: #4c5878;
+  --concrete: #b4bcce;
+  --concrete-edge: #97a0b6;
+  --glass: rgba(150, 185, 235, 0.5);
+
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border: none; padding: 0; margin: 0;
+  border-radius: var(--r);
+  background: var(--floor);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 12px 26px -18px rgba(18, 32, 63, 0.5);
+  transition: transform 0.16s ease;
+}
+.ccard:hover { transform: translateY(-2px); }
+.court-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; color: var(--floor-line); z-index: 0; }
+.ccard .glow, .ccard .sky { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.ccard .glow { background: radial-gradient(52% 22% at 50% 27%, rgba(255, 214, 150, 0.55), transparent 70%), radial-gradient(52% 22% at 50% 73%, rgba(255, 214, 150, 0.48), transparent 70%); }
+.ccard .sky { background: linear-gradient(180deg, rgba(150, 180, 220, 0.2), transparent 28%); }
+
+/* Materiales de pared */
+.ccard.mat-glass { box-shadow: inset 0 0 0 3px var(--glass), 0 10px 22px -12px rgba(70, 115, 195, 0.55); }
+.ccard.mat-glass::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+  padding: 4px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 28%, rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, 0.55));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.ccard.mat-concrete { box-shadow: inset 0 0 0 6px var(--concrete), inset 0 0 0 7px var(--concrete-edge), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+.ccard.mat-mixed { box-shadow: inset 0 6px 0 var(--concrete), inset 0 -6px 0 var(--concrete), inset 4px 0 0 var(--glass), inset -4px 0 0 var(--glass), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+.ccard.mat-mixed::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 13%, rgba(255, 255, 255, 0) 87%, rgba(255, 255, 255, 0.55));
+}
+
+/* Ficha adentro, con velo arriba/abajo para legibilidad */
+.cc-in {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 13px;
+  color: var(--plan-ink);
+  background: linear-gradient(180deg, rgba(var(--scrim), 0.94) 0%, rgba(var(--scrim), 0) 27%, rgba(var(--scrim), 0) 58%, rgba(var(--scrim), 0.96) 100%);
+}
+.cc-top { display: flex; align-items: center; gap: 7px; }
+.cc-dot { width: 10px; height: 10px; border-radius: 3px; background: var(--dot, var(--court)); flex: none; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8); }
+.cc-name { font-weight: 800; letter-spacing: -0.01em; font-size: 1.18rem; line-height: 1.02; }
+.cc-bot { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.cc-chips { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.cc-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(22, 35, 63, 0.14);
+  border-radius: 999px; padding: 4px 9px 4px 7px;
+  font-size: 0.8rem; font-weight: 600; color: var(--plan-ink-dim); white-space: nowrap;
+}
+.cc-chip svg { width: 14px; height: 14px; }
+.cc-chip.lit { color: #9a6412; border-color: rgba(214, 150, 40, 0.42); background: rgba(255, 224, 160, 0.8); }
+.cc-price { align-self: flex-end; flex: none; }
+.cc-price .amount { font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--plan-ink); }
+
+/* Seleccionada */
+.ccard.is-selected { outline: 3px solid var(--court); outline-offset: -2px; }
+.ccard.is-selected::after {
+  content: ""; position: absolute; z-index: 4; top: 9px; right: 9px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--court) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 13px no-repeat;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.28);
+}
+
+/* "Cualquiera disponible" */
+.ccard.any { background: var(--surface); box-shadow: inset 0 0 0 1.6px color-mix(in srgb, var(--court) 45%, transparent), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+.ccard.any .cc-in { background: none; justify-content: center; align-items: center; text-align: center; gap: 9px; color: var(--ink); }
+.any-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--court-soft); color: var(--court); }
+.any-ic svg { width: 22px; height: 22px; }
+.ccard.any .cc-name { font-size: 1.05rem; text-align: center; }
+.any-sub { font-size: 0.82rem; color: var(--ink-dim); }
 
 /* — Formulario — */
 .form { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
@@ -305,12 +377,16 @@
 .confirm:hover:not(:disabled) { background: var(--court-deep); transform: translateY(-1px); }
 .confirm:disabled { background: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
 
-/* ===================== ÉXITO ===================== */
+/* ===================== ÉXITO =====================
+   Vive DENTRO de la columna derecha (.booking-flow): el afiche izquierdo queda fijo y el éxito no
+   toma toda la pantalla. En desktop se centra vertical en la columna; en mobile va en su lugar
+   natural (entre las dos bandas de marca), altura natural. */
+.booking-flow.is-success { justify-content: center; align-items: center; }
 .success {
-  min-height: 100svh;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center;
   text-align: center;
-  padding: clamp(24px, 6vw, 64px);
+  width: 100%; max-width: 400px;
+  padding: clamp(16px, 3vh, 32px) 0;
   gap: 12px;
 }
 .check-ring {
@@ -350,6 +426,50 @@
   transition: border-color 0.15s ease, color 0.15s ease;
 }
 .ghost-btn:hover { border-color: var(--court); color: var(--court-deep); }
+
+/* Aviso de seña pendiente en la pantalla de éxito */
+.sena-box {
+  width: 100%; max-width: 340px;
+  background: var(--court-soft);
+  border: 1px solid var(--court);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+  margin: 0 0 20px;
+  text-align: left;
+}
+.sena-title { font-weight: 700; color: var(--court-deep); margin-bottom: 6px; }
+.sena-text { font-size: 0.92rem; color: var(--ink-dim); line-height: 1.45; margin: 0; }
+.sena-wa {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 14px; width: 100%; height: 46px;
+  background: var(--court); color: #fff;
+  border-radius: var(--r); font-weight: 700; text-decoration: none;
+  transition: filter 0.15s ease;
+}
+.sena-wa:hover { filter: brightness(1.08); }
+
+/* Alias de transferencia + botón copiar (dentro del aviso de seña) */
+.sena-alias-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--court);
+  border-radius: var(--r);
+}
+.sa-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.sa-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); }
+.sa-value { font-weight: 700; font-size: 1rem; color: var(--ink); overflow-wrap: anywhere; }
+.sa-copy {
+  flex: none;
+  height: 38px; padding: 0 16px;
+  background: var(--court); color: #fff;
+  border: none; border-radius: var(--r);
+  font-weight: 700; font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.sa-copy:hover { filter: brightness(1.08); }
 
 /* ===================== MOBILE (<900px) =====================
    Orden pedido: (1) banda azul con "PADEL HUB DEMO" grande, (2) el formulario completo,

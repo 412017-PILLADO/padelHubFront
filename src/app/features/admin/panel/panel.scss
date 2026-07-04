@@ -114,3 +114,51 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .act.wa:hover { border-color: #25d366; transform: translateY(-1px); }
 .act.cancel { color: var(--clay); }
 .act.cancel:hover { border-color: var(--clay); background: color-mix(in srgb, var(--clay) 8%, var(--surface)); transform: translateY(-1px); }
+
+/* ===== Pendientes de seña (banner sobre la agenda) ===== */
+.pending-banner {
+  margin: 0 0 20px;
+  background: var(--court-soft);
+  border: 1px solid var(--court);
+  border-radius: var(--r-lg);
+  padding: 16px 18px;
+}
+.pb-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.pb-title { font-weight: 800; color: var(--court-deep); letter-spacing: 0.01em; }
+.pb-count {
+  min-width: 24px; height: 24px; padding: 0 8px;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--court); color: #fff; border-radius: 999px; font-weight: 700; font-size: 0.85rem;
+}
+.pb-list { display: flex; flex-direction: column; gap: 8px; }
+.pb-row {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 10px 14px;
+}
+.pb-when { display: flex; flex-direction: column; min-width: 150px; }
+.pb-fecha { font-weight: 700; }
+.pb-hora { font-size: 0.85rem; color: var(--ink-dim); }
+.pb-cliente { display: flex; flex-direction: column; flex: 1; min-width: 120px; }
+.pb-nombre { font-weight: 600; }
+.pb-expira { font-size: 0.8rem; color: var(--clay); }
+.pb-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.pb-wa {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: var(--r);
+  border: 1px solid var(--line-strong); color: #25d366; text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.pb-wa:hover { border-color: #25d366; transform: translateY(-1px); }
+.pb-wa svg { width: 18px; height: 18px; }
+.pb-ok, .pb-no {
+  height: 38px; padding: 0 16px; border-radius: var(--r);
+  font-weight: 700; font-size: 0.9rem; cursor: pointer;
+  transition: filter 0.15s ease, border-color 0.15s ease;
+}
+.pb-ok { background: var(--court); border: 1px solid var(--court); color: #fff; }
+.pb-ok:hover { filter: brightness(1.08); }
+.pb-no { background: transparent; border: 1px solid var(--line-strong); color: var(--clay); }
+.pb-no:hover { border-color: var(--clay); }

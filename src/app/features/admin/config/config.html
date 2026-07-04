@@ -129,6 +129,56 @@
     }
   </section>
 
+  <!-- ===== SEÑA ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Seña</span><span class="ln"></span></div>
+    <p class="block-sub">Si pedís seña, la reserva del cliente queda <strong>pendiente</strong> hasta que
+      vos confirmes el pago (transferencia / comprobante por WhatsApp). Tiene 15 minutos para pagar;
+      si no, el turno se libera solo.</p>
+
+    <div class="break-row">
+      <div class="bl">
+        <span class="bt">Pedir seña para reservar</span>
+        <span class="bs mono">{{ requiereSena() ? 'Reservas quedan pendientes de validar' : 'Reservas se confirman al instante' }}</span>
+      </div>
+      <button type="button" class="switch sena-switch" role="switch" [attr.aria-checked]="requiereSena()"
+        aria-label="Pedir seña para reservar" (click)="toggleSena()"></button>
+    </div>
+
+    @if (requiereSena()) {
+      <div class="paso-row">
+        <label class="paso-label" for="senaMonto">Monto de la seña</label>
+        <input id="senaMonto" class="paso-input sena-monto" [class.invalid]="invalidSenaMonto()" type="number"
+          inputmode="numeric" min="0" step="100" placeholder="Ej: 5000"
+          [ngModel]="senaMonto()" (ngModelChange)="onSenaMontoInput($event)" />
+        @if (invalidSenaMonto()) { <span class="paso-msg err">Cargá un monto mayor a 0</span> }
+      </div>
+      <div class="paso-row sena-alias-row">
+        <label class="paso-label" for="senaAlias">Alias / CBU para transferir</label>
+        <input id="senaAlias" class="paso-input sena-alias" [class.invalid]="invalidSenaAlias()" type="text"
+          maxlength="100" placeholder="Ej: padel.hub.mp"
+          [ngModel]="senaAlias()" (ngModelChange)="onSenaAliasInput($event)" />
+        @if (invalidSenaAlias()) { <span class="paso-msg err">Cargá el alias donde recibís la seña</span> }
+      </div>
+      <p class="block-sub sena-alias-hint">Se lo mostramos al cliente en la pantalla de éxito con un botón para copiarlo.</p>
+    }
+  </section>
+
+  <!-- ===== AUTOASIGNACIÓN ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Elección de cancha</span><span class="ln"></span></div>
+    <p class="block-sub">Si tus canchas son equivalentes, activá la autoasignación: el sistema le asigna
+      una cancha libre al cliente y le sacamos el paso de elegir cancha (reserva más corta).</p>
+    <div class="break-row">
+      <div class="bl">
+        <span class="bt">Autoasignar canchas</span>
+        <span class="bs mono">{{ autoasignacion() ? 'El cliente NO elige cancha, la asigna el sistema' : 'El cliente elige la cancha' }}</span>
+      </div>
+      <button type="button" class="switch auto-switch" role="switch" [attr.aria-checked]="autoasignacion()"
+        aria-label="Autoasignar canchas" (click)="toggleAutoasignacion()"></button>
+    </div>
+  </section>
+
   <!-- ===== CONTACTO ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Contacto y ubicación</span><span class="ln"></span></div>
@@ -285,7 +335,7 @@
 <div class="savebar">
   <div class="save-meta">
     <div class="st eyebrow">Estado</div>
-    <div class="sv" [class.dirty]="dirty() || invalidPaso() || invalidDuraciones() || invalidPrecio()">{{ saveState() }}</div>
+    <div class="sv" [class.dirty]="dirty() || invalidPaso() || invalidDuraciones() || invalidPrecio() || invalidSena()">{{ saveState() }}</div>
   </div>
   <button class="save-btn" [disabled]="!canSave()" (click)="save()">Guardar</button>
 </div>

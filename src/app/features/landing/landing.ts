@@ -100,6 +100,17 @@ export class Landing {
   readonly mostrarPrecios = computed(() => this.config()?.tenant.mostrarPrecios ?? false);
   readonly requiereTelefono = computed(() => this.config()?.tenant.requiereTelefono ?? true);
 
+  // ── Seña ──────────────────────────────────────────────────────────
+  readonly requiereSena = computed(() => this.config()?.requiereSena ?? false);
+  readonly senaMonto = computed(() => this.config()?.senaMonto ?? null);
+  readonly senaMontoFmt = computed(() => {
+    const m = this.senaMonto();
+    return m != null ? m.toLocaleString('es-AR') : null;
+  });
+  readonly senaAlias = computed(() => this.config()?.senaAlias?.trim() || null);
+  /** Feedback breve del botón "Copiar" del alias en la pantalla de éxito. */
+  readonly aliasCopiado = signal(false);
+
   // ── Info del complejo ─────────────────────────────────────────────
   readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
   readonly mapaUrl = computed(() => this.config()?.complejo.mapaUrl ?? null);
@@ -135,12 +146,23 @@ export class Landing {
   readonly showDuracion = computed(
     () => this.config()?.permitirOtrasDuraciones !== false && this.duraciones().length > 1
   );
-  /** Numeración de los pasos visibles (corre 1 hacia arriba cuando se oculta la duración). */
-  readonly stepNums = computed(() =>
-    this.showDuracion()
-      ? { dur: '01', dia: '02', hora: '03', cancha: '04', datos: '05' }
-      : { dur: '', dia: '01', hora: '02', cancha: '03', datos: '04' }
-  );
+  /**
+   * Mostramos el paso de elegir cancha salvo que el club use autoasignación: en ese caso el sistema
+   * asigna la menos cargada y le sacamos el paso al cliente (reserva más corta).
+   */
+  readonly showCancha = computed(() => this.config()?.autoasignacion !== true);
+  /** Numeración de los pasos visibles (corre según qué pasos se muestran). */
+  readonly stepNums = computed(() => {
+    let n = 0;
+    const num = () => String(++n).padStart(2, '0');
+    return {
+      dur: this.showDuracion() ? num() : '',
+      dia: num(),
+      hora: num(),
+      cancha: this.showCancha() ? num() : '',
+      datos: num(),
+    };
+  });
 
   // ── Paso 2 · Día ──────────────────────────────────────────────────
   readonly selectedDay = signal<Date | null>(null);
@@ -171,7 +193,21 @@ export class Landing {
     hora: string;
     duracion: number;
     primerNombre: string;
+    pendiente: boolean;
+    senaMonto: string | null;
+    senaAlias: string | null;
   } | null>(null);
+
+  /** Link de WhatsApp para mandar el comprobante de la seña (usa el turno recién reservado). */
+  readonly whatsappSenaUrl = computed(() => {
+    const wa = this.whatsappRaw();
+    const d = this.successData();
+    if (!wa || !d) return null;
+    const msg =
+      `¡Hola! Reservé ${d.cancha} el ${d.dia} a las ${d.hora}. ` +
+      `Te paso el comprobante de la seña.`;
+    return `https://wa.me/${wa.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+  });
 
   // ── Day chips ─────────────────────────────────────────────────────
   readonly chips = computed(() => [
@@ -337,7 +373,8 @@ export class Landing {
   selectTime(slot: Slot): void {
     if (!slot.disponible) return;
     this.selectedTime.set(slot.hora);
-    this.selectedCancha.set(null);
+    // Con autoasignación no hay paso de cancha: dejamos "cualquiera" (ANY) elegido y pasamos a datos.
+    this.selectedCancha.set(this.showCancha() ? null : this.ANY);
   }
 
   // ── Paso 4 · Cancha ───────────────────────────────────────────────
@@ -350,6 +387,16 @@ export class Landing {
   canchaTipo(c: CanchaLibre): string {
     const techo = c.techada ? 'Techada' : 'Descubierta';
     return c.tipoPared ? `${techo} · ${c.tipoPared}` : techo;
+  }
+
+  /** Etiqueta del material de la pared para la card de cancha (espeja tipoPared). */
+  materialLabel(c: CanchaLibre): string {
+    switch (c.tipoPared) {
+      case 'MURO': return 'Hormigón';
+      case 'MIXTA': return 'Mixta';
+      case 'CRISTAL': return 'Vidrio';
+      default: return c.tipoPared ?? 'Cancha';
+    }
   }
 
   /** Precio total del turno (precio/hora × duración elegida), formateado con separador de miles. */
@@ -390,7 +437,11 @@ export class Landing {
             hora: `${hora} hs`,
             duracion: this.duracion(),
             primerNombre: nombre.split(' ')[0],
+            pendiente: res.estado === 'PENDIENTE',
+            senaMonto: this.senaMontoFmt(),
+            senaAlias: this.senaAlias(),
           });
+          this.aliasCopiado.set(false);
           this.success.set(true);
           window.scrollTo(0, 0);
         },
@@ -441,6 +492,28 @@ export class Landing {
   openMaps(): void {
     const url = this.mapaUrl();
     if (url) window.open(url, '_blank');
+  }
+
+  /** Copia el alias de la seña al portapapeles y muestra un feedback breve en el botón. */
+  copyAlias(): void {
+    const alias = this.successData()?.senaAlias;
+    if (!alias) return;
+    const ok = () => {
+      this.aliasCopiado.set(true);
+      this.messages.add({ severity: 'success', summary: 'Alias copiado', detail: alias });
+      setTimeout(() => this.aliasCopiado.set(false), 1800);
+    };
+    const fail = () =>
+      this.messages.add({
+        severity: 'warn',
+        summary: 'No se pudo copiar',
+        detail: 'Copialo manualmente: ' + alias,
+      });
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(alias).then(ok, fail);
+    } else {
+      fail();
+    }
   }
 }
 

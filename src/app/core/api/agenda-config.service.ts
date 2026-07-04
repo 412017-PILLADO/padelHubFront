@@ -39,6 +39,10 @@ export interface AgendaConfig {
   permitirOtrasDuraciones: boolean;
   precioModo: 'GENERAL' | 'POR_CANCHA';
   precioHoraGeneral: number | null;
+  requiereSena: boolean;
+  senaMonto: number | null;
+  senaAlias: string | null;
+  autoasignacion: boolean;
   breakOn: boolean;
   breakFrom: string;
   breakTo: string;
@@ -67,6 +71,18 @@ export interface GuardarDuracionesRequest {
 export interface GuardarPreciosRequest {
   precioModo: 'GENERAL' | 'POR_CANCHA';
   precioHoraGeneral: number | null;
+}
+
+/** Body de `PUT /api/v1/agenda/sena`. `senaMonto` (>0) y `senaAlias` requeridos si `requiereSena`. */
+export interface GuardarSenaRequest {
+  requiereSena: boolean;
+  senaMonto: number | null;
+  senaAlias: string | null;
+}
+
+/** Body de `PUT /api/v1/agenda/autoasignacion`. */
+export interface GuardarAutoasignacionRequest {
+  autoasignacion: boolean;
 }
 
 /** Body de `POST /api/v1/agenda/bloqueos`. */
@@ -120,6 +136,16 @@ export class AgendaConfigService {
   /** Actualiza el modo de precio (general/por cancha) + el precio general. */
   putPrecios(body: GuardarPreciosRequest): Observable<AgendaConfig> {
     return this.http.put<AgendaConfig>('/api/v1/agenda/precios', body);
+  }
+
+  /** Activa/desactiva el módulo de señas + el monto. */
+  putSena(body: GuardarSenaRequest): Observable<AgendaConfig> {
+    return this.http.put<AgendaConfig>('/api/v1/agenda/sena', body);
+  }
+
+  /** Activa/desactiva la autoasignación de canchas (oculta el paso de elegir cancha). */
+  putAutoasignacion(body: GuardarAutoasignacionRequest): Observable<AgendaConfig> {
+    return this.http.put<AgendaConfig>('/api/v1/agenda/autoasignacion', body);
   }
 
   /** Actualiza contacto/ubicación del complejo. Devuelve la config actualizada. */

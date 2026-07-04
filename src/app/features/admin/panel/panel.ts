@@ -12,7 +12,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
-import { Turno, TurnosService } from '../../../core/api/turnos.service';
+import { Pendiente, Turno, TurnosService } from '../../../core/api/turnos.service';
 import { WhatsappArPipe } from '../../../shared/whatsapp-ar.pipe';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
 
@@ -87,6 +87,10 @@ export class PanelComponent {
   readonly loading = signal(false);
   readonly loaded = signal(false);
 
+  // ── Pendientes de seña (todas las fechas; se validan acá) ──
+  readonly pendientes = signal<Pendiente[]>([]);
+  readonly tienePendientes = computed(() => this.pendientes().length > 0);
+
   readonly empty = computed(
     () => this.loaded() && !this.loading() && this.list().length === 0
   );
@@ -143,6 +147,75 @@ export class PanelComponent {
   constructor() {
     this.primeng.setTranslation(ES_TRANSLATION);
     this.load(this.today);
+    this.loadPendientes();
+  }
+
+  // ── Pendientes de seña ──
+  private loadPendientes(): void {
+    this.turnos.pendientes().subscribe({
+      next: (ps) => this.pendientes.set(ps),
+      error: () => this.pendientes.set([]),
+    });
+  }
+
+  /** Fecha "Día N mes" del pendiente (cruza días, por eso no alcanza con la hora). */
+  pendFecha(p: Pendiente): string {
+    const [y, m, d] = p.fecha.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return `${DOWS[dt.getDay()]} ${dt.getDate()} ${MES_ABBR[dt.getMonth()]}`;
+  }
+
+  /** Hora a la que vence la ventana de pago (HH:mm), del ISO local `expiraEn`. */
+  pendExpira(p: Pendiente): string {
+    return p.expiraEn ? p.expiraEn.slice(11, 16) : '—';
+  }
+
+  confirmarSena(p: Pendiente): void {
+    this.turnos.confirmarSena(p.id).subscribe({
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Seña confirmada', detail: p.clienteNombre });
+        this.loadPendientes();
+        this.load(this.selectedDay());
+      },
+      error: (err) => {
+        // 409 = la seña venció mientras tanto; refrescamos para que salga de la lista.
+        this.messages.add({
+          severity: 'warn',
+          summary: 'No se pudo confirmar',
+          detail: err?.error?.error ?? 'La seña ya no es válida. Actualizamos la lista.',
+        });
+        this.loadPendientes();
+      },
+    });
+  }
+
+  askRechazarSena(p: Pendiente): void {
+    this.confirm.confirm({
+      header: 'Rechazar seña',
+      message: `¿Rechazar la reserva de ${p.clienteNombre}? El turno se libera.`,
+      acceptLabel: 'Rechazar',
+      rejectLabel: 'Volver',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.doRechazarSena(p),
+    });
+  }
+
+  private doRechazarSena(p: Pendiente): void {
+    this.turnos.rechazarSena(p.id).subscribe({
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Rechazada', detail: p.clienteNombre });
+        this.loadPendientes();
+        this.load(this.selectedDay());
+      },
+      error: () => {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No pudimos rechazar la reserva. Probá de nuevo.',
+        });
+        this.loadPendientes();
+      },
+    });
   }
 
   isToday(): boolean {
