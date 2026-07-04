@@ -166,6 +166,21 @@
     }
   </section>
 
+  <!-- ===== AUTOASIGNACIÓN ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Elección de cancha</span><span class="ln"></span></div>
+    <p class="block-sub">Si tus canchas son equivalentes, activá la autoasignación: el sistema le asigna
+      una cancha libre al cliente y le sacamos el paso de elegir cancha (reserva más corta).</p>
+    <div class="break-row">
+      <div class="bl">
+        <span class="bt">Autoasignar canchas</span>
+        <span class="bs mono">{{ autoasignacion() ? 'El cliente NO elige cancha, la asigna el sistema' : 'El cliente elige la cancha' }}</span>
+      </div>
+      <button type="button" class="switch auto-switch" role="switch" [attr.aria-checked]="autoasignacion()"
+        aria-label="Autoasignar canchas" (click)="toggleAutoasignacion()"></button>
+    </div>
+  </section>
+
   <!-- ===== CONTACTO ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Contacto y ubicación</span><span class="ln"></span></div>

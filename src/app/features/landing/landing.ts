@@ -146,12 +146,23 @@ export class Landing {
   readonly showDuracion = computed(
     () => this.config()?.permitirOtrasDuraciones !== false && this.duraciones().length > 1
   );
-  /** Numeración de los pasos visibles (corre 1 hacia arriba cuando se oculta la duración). */
-  readonly stepNums = computed(() =>
-    this.showDuracion()
-      ? { dur: '01', dia: '02', hora: '03', cancha: '04', datos: '05' }
-      : { dur: '', dia: '01', hora: '02', cancha: '03', datos: '04' }
-  );
+  /**
+   * Mostramos el paso de elegir cancha salvo que el club use autoasignación: en ese caso el sistema
+   * asigna la menos cargada y le sacamos el paso al cliente (reserva más corta).
+   */
+  readonly showCancha = computed(() => this.config()?.autoasignacion !== true);
+  /** Numeración de los pasos visibles (corre según qué pasos se muestran). */
+  readonly stepNums = computed(() => {
+    let n = 0;
+    const num = () => String(++n).padStart(2, '0');
+    return {
+      dur: this.showDuracion() ? num() : '',
+      dia: num(),
+      hora: num(),
+      cancha: this.showCancha() ? num() : '',
+      datos: num(),
+    };
+  });
 
   // ── Paso 2 · Día ──────────────────────────────────────────────────
   readonly selectedDay = signal<Date | null>(null);
@@ -363,7 +374,8 @@ export class Landing {
   selectTime(slot: Slot): void {
     if (!slot.disponible) return;
     this.selectedTime.set(slot.hora);
-    this.selectedCancha.set(null);
+    // Con autoasignación no hay paso de cancha: dejamos "cualquiera" (ANY) elegido y pasamos a datos.
+    this.selectedCancha.set(this.showCancha() ? null : this.ANY);
   }
 
   // ── Paso 4 · Cancha ───────────────────────────────────────────────

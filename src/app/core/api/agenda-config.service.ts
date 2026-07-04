@@ -42,6 +42,7 @@ export interface AgendaConfig {
   requiereSena: boolean;
   senaMonto: number | null;
   senaAlias: string | null;
+  autoasignacion: boolean;
   breakOn: boolean;
   breakFrom: string;
   breakTo: string;
@@ -77,6 +78,11 @@ export interface GuardarSenaRequest {
   requiereSena: boolean;
   senaMonto: number | null;
   senaAlias: string | null;
+}
+
+/** Body de `PUT /api/v1/agenda/autoasignacion`. */
+export interface GuardarAutoasignacionRequest {
+  autoasignacion: boolean;
 }
 
 /** Body de `POST /api/v1/agenda/bloqueos`. */
@@ -135,6 +141,11 @@ export class AgendaConfigService {
   /** Activa/desactiva el módulo de señas + el monto. */
   putSena(body: GuardarSenaRequest): Observable<AgendaConfig> {
     return this.http.put<AgendaConfig>('/api/v1/agenda/sena', body);
+  }
+
+  /** Activa/desactiva la autoasignación de canchas (oculta el paso de elegir cancha). */
+  putAutoasignacion(body: GuardarAutoasignacionRequest): Observable<AgendaConfig> {
+    return this.http.put<AgendaConfig>('/api/v1/agenda/autoasignacion', body);
   }
 
   /** Actualiza contacto/ubicación del complejo. Devuelve la config actualizada. */

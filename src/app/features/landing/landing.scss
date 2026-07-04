@@ -267,7 +267,9 @@
 /* — Canchas (cards = la cancha vista desde arriba, con la ficha adentro) — */
 .courts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio */
+  grid-template-columns: repeat(auto-fill, minmax(138px, 172px));
+  justify-content: start;
   gap: 12px;
 }
 .ccard {

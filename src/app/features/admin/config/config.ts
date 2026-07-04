@@ -132,6 +132,9 @@ export class ConfigComponent {
   readonly senaMonto = signal<number | null>(null);
   readonly senaAlias = signal<string | null>(null);
 
+  // ── Autoasignación de canchas ──
+  readonly autoasignacion = signal(false);
+
   // ── Canchas ──
   readonly canchas = signal<CanchaConfig[]>([]);
   /** id de la cancha en edición; null = formulario de alta. */
@@ -273,6 +276,7 @@ export class ConfigComponent {
     this.requiereSena.set(cfg.requiereSena ?? false);
     this.senaMonto.set(cfg.senaMonto ?? null);
     this.senaAlias.set(cfg.senaAlias ?? null);
+    this.autoasignacion.set(cfg.autoasignacion ?? false);
     this.bloqueos.set(cfg.bloqueos ?? []);
     this.canchas.set(cfg.canchas ?? []);
     const c = cfg.contacto ?? {
@@ -368,6 +372,9 @@ export class ConfigComponent {
     this.senaAlias.set(value.trim() === '' ? null : value);
     this.markDirty();
   }
+
+  // ── Autoasignación ──
+  toggleAutoasignacion(): void { this.autoasignacion.update((v) => !v); this.markDirty(); }
 
   // ── Canchas ──
   startNewCancha(): void {
@@ -577,6 +584,7 @@ export class ConfigComponent {
             senaAlias: this.requiereSena() ? this.senaAlias() : null,
           })
         ),
+        concatMap(() => this.api.putAutoasignacion({ autoasignacion: this.autoasignacion() })),
         concatMap(() => this.api.putContacto(contacto))
       )
       .subscribe({
@@ -587,7 +595,7 @@ export class ConfigComponent {
         },
         error: () => {
           this.saving.set(false);
-          // Son 5 PUT encadenados y NO son atómicos: si falla uno del medio, los anteriores
+          // Son varios PUT encadenados y NO son atómicos: si falla uno del medio, los anteriores
           // ya se persistieron. Recargamos del server para que la UI muestre el estado real
           // (y no quede el front creyendo que no se guardó nada mientras parte ya está en vivo).
           this.messages.add({

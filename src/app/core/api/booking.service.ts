@@ -73,6 +73,8 @@ export interface PublicConfig {
   senaMonto: number | null;
   /** Alias/CBU al que el cliente transfiere la seña (null si no se pide seña). */
   senaAlias: string | null;
+  /** Si es true, el sistema asigna la cancha automáticamente y la landing oculta el paso de elegir. */
+  autoasignacion: boolean;
   canchas: CanchaConfig[];
   horarios: { diaSemana: number; horaInicio: string; horaFin: string }[];
 }

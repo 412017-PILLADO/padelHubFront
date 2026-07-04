@@ -190,7 +190,8 @@
           }
         </section>
 
-        <!-- 04 · CANCHA -->
+        <!-- 04 · CANCHA (se oculta si el club usa autoasignación) -->
+        @if (showCancha()) {
         <section class="step" [class.done]="canchaDone()">
           <div class="step-head">
             <span class="step-num mono">{{ stepNums().cancha }}</span>
@@ -258,6 +259,7 @@
             <p class="step-hint">Elegí el horario para ver las canchas.</p>
           }
         </section>
+        }
 
         <!-- 05 · DATOS -->
         <section class="step" [class.done]="formValid()">
