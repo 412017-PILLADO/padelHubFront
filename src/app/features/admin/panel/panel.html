@@ -11,33 +11,147 @@
   </div>
 </header>
 
-<main>
-  <!-- ===== SELECTOR DE FECHA ===== -->
-  <section class="block date-block">
-    <div class="block-h"><span class="t eyebrow">Día</span><span class="ln"></span></div>
-    <div class="days">
-      <button type="button" class="chip" [attr.aria-pressed]="isToday()" (click)="selectToday()">Hoy</button>
-      <button type="button" class="chip" [attr.aria-pressed]="isTomorrow()" (click)="selectTomorrow()">Mañana</button>
-      <button type="button" class="chip" [attr.aria-pressed]="calOpen()" (click)="toggleCalendar()">Otra</button>
+@if (tienePendientes()) {
+  <section class="pending-banner">
+    <div class="pb-head">
+      <span class="pb-title">Pendientes de seña</span>
+      <span class="pb-count mono">{{ pendientesFiltrados().length }}</span>
     </div>
-    @if (calOpen()) {
-      <div class="cal">
-        <p-datepicker [inline]="true" [ngModel]="calValue()" (onSelect)="onPickerSelect($event)" dateFormat="dd/mm/yy"></p-datepicker>
-      </div>
-    }
+    <div class="pb-list">
+      @for (p of pendientesFiltrados(); track p.id) {
+        <div class="pb-row">
+          <div class="pb-when">
+            <span class="pb-fecha">{{ pendFecha(p) }}</span>
+            <span class="pb-hora mono">{{ p.hora }}–{{ p.fin }} · {{ p.canchaNombre }}</span>
+          </div>
+          <div class="pb-cliente">
+            <span class="pb-nombre">{{ p.clienteNombre }}</span>
+            <span class="pb-expira mono">vence {{ pendExpira(p) }}</span>
+          </div>
+          <div class="pb-actions">
+            <a class="pb-wa" [href]="'https://wa.me/' + (p.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M.057 24l1.687-6.163a11.867 11.867 0 0 1-1.587-5.946C.16 5.335 5.495 0 12.05 0a11.817 11.817 0 0 1 8.413 3.488 11.824 11.824 0 0 1 3.48 8.414c-.003 6.557-5.338 11.892-11.893 11.892a11.9 11.9 0 0 1-5.688-1.448L.057 24zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884a9.86 9.86 0 0 0 1.51 5.26l-.999 3.648 3.768-.967zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+            </a>
+            <button type="button" class="pb-ok" (click)="confirmarSena(p)">Confirmar</button>
+            <button type="button" class="pb-no" (click)="askRechazarSena(p)">Rechazar</button>
+          </div>
+        </div>
+      }
+      @if (pendientesFiltrados().length === 0) {
+        <p class="pb-nomatch">Ninguno coincide con «{{ query() }}».</p>
+      }
+    </div>
   </section>
+}
 
-  <!-- ===== LISTA DE TURNOS ===== -->
-  <section class="block">
-    <div class="block-h"><span class="t eyebrow">Agenda</span><span class="ln"></span></div>
+<main class="layout">
+  <!-- ===== FILTROS FIJOS (fecha + día) ===== -->
+  <aside class="sidebar">
+    <section class="block filters">
+      <div class="block-h"><span class="t eyebrow">Día</span><span class="ln"></span></div>
+
+      <!-- fecha fija del día seleccionado -->
+      <div class="date-card">
+        <span class="dc-day mono">{{ diaNum() }}</span>
+        <span class="dc-rest">
+          <span class="dc-mo eyebrow">{{ mesLabel() }}</span>
+          <span class="dc-dow">{{ dowLabel() }}</span>
+        </span>
+      </div>
+
+      <!-- chips rápidos (el calendario abre como popover flotante, no empuja el layout) -->
+      <div class="days">
+        <button type="button" class="chip" [attr.aria-pressed]="isToday()" (click)="selectToday()">Hoy</button>
+        <button type="button" class="chip" [attr.aria-pressed]="isTomorrow()" (click)="selectTomorrow()">Mañana</button>
+        <button type="button" class="chip" [attr.aria-pressed]="calOpen()" (click)="toggleCalendar()">Otra</button>
+        @if (calOpen()) {
+          <div class="cal">
+            <p-datepicker [inline]="true" [ngModel]="calValue()" (onSelect)="onPickerSelect($event)" dateFormat="dd/mm/yy"></p-datepicker>
+          </div>
+        }
+      </div>
+
+      <!-- buscador por nombre (filtra pendientes y la agenda del día) -->
+      <div class="search">
+        <span class="cf-label eyebrow">Buscar</span>
+        <input class="search-input" type="search" placeholder="Nombre del cliente…"
+          [ngModel]="query()" (ngModelChange)="setQuery($event)" aria-label="Buscar por nombre" />
+      </div>
+
+      <!-- filtro por cancha (solo si hay más de una con turnos ese día) -->
+      @if (canchas().length > 1) {
+        <div class="cancha-filter">
+          <span class="cf-label eyebrow">Cancha</span>
+          <div class="days cf-chips">
+            <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === null"
+              (click)="setCanchaFilter(null)">Todas</button>
+            @for (c of canchas(); track c) {
+              <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === c"
+                (click)="setCanchaFilter(c)">{{ c }}</button>
+            }
+          </div>
+        </div>
+      }
+
+      @if (loaded() && !loading()) {
+        <div class="count mono">{{ count() }} {{ count() === 1 ? 'turno' : 'turnos' }}</div>
+      }
+    </section>
+  </aside>
+
+  <!-- ===== AGENDA (lista o grilla) ===== -->
+  <section class="block content">
+    <div class="block-h">
+      <span class="t eyebrow">Agenda</span>
+      <span class="ln"></span>
+      <div class="view-toggle">
+        <button type="button" class="vt" [attr.aria-pressed]="vista() === 'lista'" (click)="setVista('lista')">Lista</button>
+        <button type="button" class="vt" [attr.aria-pressed]="vista() === 'grilla'" (click)="setVista('grilla')">Grilla</button>
+      </div>
+    </div>
 
     @if (loading()) {
       <p class="state-msg">Cargando turnos…</p>
+    } @else if (vista() === 'grilla') {
+      @if (grid() === null) {
+        <p class="state-msg empty">No pudimos cargar el horario para la grilla.</p>
+      } @else if (!grid()!.open) {
+        <p class="state-msg empty">El club no abre este día.</p>
+      } @else {
+        <div class="grid-wrap">
+          <div class="grid"
+            [style.grid-template-columns]="'64px repeat(' + grid()!.cols.length + ', minmax(116px, 1fr))'"
+            [style.grid-template-rows]="'auto repeat(' + grid()!.rows.length + ', 46px)'">
+            <div class="g-corner"></div>
+            @for (c of grid()!.cols; track c.id; let ci = $index) {
+              <div class="g-colhead" [style.grid-column]="ci + 2" [style.grid-row]="1">
+                <span class="g-dot" [style.background]="c.color"></span>{{ c.nombre }}
+              </div>
+            }
+            @for (r of grid()!.rows; track r.min; let ri = $index) {
+              <div class="g-time mono" [style.grid-column]="1" [style.grid-row]="ri + 2">{{ r.label }}</div>
+              <div class="g-line" [style.grid-column]="'2 / -1'" [style.grid-row]="ri + 2"></div>
+            }
+            @for (b of grid()!.blocks; track b.turno.id) {
+              <div class="g-block" [style.grid-column]="b.col + 2"
+                [style.grid-row]="(b.rowStart + 2) + ' / span ' + b.rowSpan"
+                [style.border-left-color]="grid()!.cols[b.col].color">
+                <span class="gb-cli">{{ b.turno.clienteNombre }}</span>
+                <span class="gb-time mono">{{ b.turno.hora }}–{{ b.turno.fin }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
     } @else if (empty()) {
       <p class="state-msg empty">No hay turnos para este día.</p>
+    } @else if (noMatch()) {
+      <p class="state-msg empty">No hay turnos en {{ canchaFilter() }}.</p>
+    } @else if (ordered().length === 0) {
+      <p class="state-msg empty">Ningún turno coincide con «{{ query() }}».</p>
     } @else {
       <div class="turnos">
-        @for (t of list(); track t.id) {
+        @for (t of ordered(); track t.id) {
           <div class="turno-row">
             <div class="t-hora mono">{{ t.hora }}<span class="t-dur">{{ t.duracionMinutos }}'</span></div>
             <div class="t-info">

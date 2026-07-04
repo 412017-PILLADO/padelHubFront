@@ -6,11 +6,19 @@ import { loginAsOwner, API, futureDate } from './helpers';
  * visible) usando el chip "Mañana", y la cancela vía el ConfirmDialog.
  */
 test('ver y cancelar un turno del día', async ({ page }) => {
-  // Reserva para mañana (el panel la muestra con el chip "Mañana"). La hora varía por corrida para
-  // que el suite tolere re-ejecuciones sin reseteo previo; idealmente se corre sobre DB reseteada.
+  // Reserva para mañana (el panel la muestra con el chip "Mañana"). La hora se toma de la
+  // disponibilidad real (la grilla depende del turno principal configurado), así el spec no se
+  // rompe si cambia la config o quedan reservas de corridas previas.
   const fecha = futureDate(1);
-  const hh = String(8 + (Date.now() % 13)).padStart(2, '0');
-  const hora = `${hh}:00`;
+  const disp = await page.request.get(`${API}/public/disponibilidad?fecha=${fecha}&duracion=60`, {
+    headers: { 'X-Tenant': 'demo' },
+  });
+  expect(disp.ok(), await disp.text()).toBeTruthy();
+  const slots: Array<{ hora: string; disponible: boolean; canchasLibres: Array<{ id: number }> }> =
+    await disp.json();
+  const libres = slots.filter((s) => s.disponible && s.canchasLibres.some((c) => c.id === 1));
+  expect(libres.length, 'hay slots libres en cancha 1 para mañana').toBeGreaterThan(0);
+  const hora = libres[Date.now() % libres.length].hora;
   const cliente = `Cliente ${Date.now()}`;
 
   const crear = await page.request.post(`${API}/public/reservas`, {

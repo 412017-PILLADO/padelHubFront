@@ -100,6 +100,17 @@ export class Landing {
   readonly mostrarPrecios = computed(() => this.config()?.tenant.mostrarPrecios ?? false);
   readonly requiereTelefono = computed(() => this.config()?.tenant.requiereTelefono ?? true);
 
+  // ── Seña ──────────────────────────────────────────────────────────
+  readonly requiereSena = computed(() => this.config()?.requiereSena ?? false);
+  readonly senaMonto = computed(() => this.config()?.senaMonto ?? null);
+  readonly senaMontoFmt = computed(() => {
+    const m = this.senaMonto();
+    return m != null ? m.toLocaleString('es-AR') : null;
+  });
+  readonly senaAlias = computed(() => this.config()?.senaAlias?.trim() || null);
+  /** Feedback breve del botón "Copiar" del alias en la pantalla de éxito. */
+  readonly aliasCopiado = signal(false);
+
   // ── Info del complejo ─────────────────────────────────────────────
   readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
   readonly mapaUrl = computed(() => this.config()?.complejo.mapaUrl ?? null);
@@ -127,6 +138,20 @@ export class Landing {
   // ── Paso 1 · Duración ─────────────────────────────────────────────
   readonly duraciones = computed(() => this.config()?.duracionesPermitidas ?? [60, 90, 120]);
   readonly duracion = signal<number>(90);
+
+  /**
+   * Mostramos el paso de duración solo si el club permite otras duraciones y hay más de una. Si no,
+   * todos juegan el turno principal y nos salteamos el paso → reserva más rápida.
+   */
+  readonly showDuracion = computed(
+    () => this.config()?.permitirOtrasDuraciones !== false && this.duraciones().length > 1
+  );
+  /** Numeración de los pasos visibles (corre 1 hacia arriba cuando se oculta la duración). */
+  readonly stepNums = computed(() =>
+    this.showDuracion()
+      ? { dur: '01', dia: '02', hora: '03', cancha: '04', datos: '05' }
+      : { dur: '', dia: '01', hora: '02', cancha: '03', datos: '04' }
+  );
 
   // ── Paso 2 · Día ──────────────────────────────────────────────────
   readonly selectedDay = signal<Date | null>(null);
@@ -157,7 +182,22 @@ export class Landing {
     hora: string;
     duracion: number;
     primerNombre: string;
+    nombreCompleto: string;
+    pendiente: boolean;
+    senaMonto: string | null;
+    senaAlias: string | null;
   } | null>(null);
+
+  /** Link de WhatsApp para mandar el comprobante de la seña (usa el turno recién reservado). */
+  readonly whatsappSenaUrl = computed(() => {
+    const wa = this.whatsappRaw();
+    const d = this.successData();
+    if (!wa || !d) return null;
+    const msg =
+      `¡Hola! Soy ${d.nombreCompleto}. Te paso el comprobante de la seña ` +
+      `de mi turno: ${d.cancha}, ${d.dia} a las ${d.hora}.`;
+    return `https://wa.me/${wa.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+  });
 
   // ── Day chips ─────────────────────────────────────────────────────
   readonly chips = computed(() => [
@@ -165,6 +205,13 @@ export class Landing {
     { label: 'Mañana', date: addDays(this.today, 1) },
     { label: 'Pasado', date: addDays(this.today, 2) },
   ]);
+
+  /** Día elegido con el calendario, fuera de los chips Hoy/Mañana/Pasado. */
+  readonly customDay = computed(() => {
+    const day = this.selectedDay();
+    if (!day || this.chips().some((c) => sameDay(day, c.date))) return null;
+    return day;
+  });
 
   // ── Estado derivado ───────────────────────────────────────────────
   readonly dayDone = computed(() => this.selectedDay() !== null);
@@ -277,12 +324,9 @@ export class Landing {
 
   onPickerSelect(value: Date): void {
     if (!value) return;
-    const day = startOfDay(value);
-    this.pickerValue.set(day);
-    this.selectedDay.set(day);
-    this.selectedTime.set(null);
-    this.selectedCancha.set(null);
-    this.loadAvailability(day);
+    this.pickerValue.set(startOfDay(value));
+    // selectDay cierra el calendario (que tapa los horarios) y recarga disponibilidad.
+    this.selectDay(value);
   }
 
   // ── Disponibilidad ────────────────────────────────────────────────
@@ -334,6 +378,23 @@ export class Landing {
     return c.tipoPared ? `${techo} · ${c.tipoPared}` : techo;
   }
 
+  /** Etiqueta del material de la pared para la card de cancha (espeja tipoPared). */
+  materialLabel(c: CanchaLibre): string {
+    switch (c.tipoPared) {
+      case 'MURO': return 'Hormigón';
+      case 'MIXTA': return 'Mixta';
+      case 'CRISTAL': return 'Vidrio';
+      default: return c.tipoPared ?? 'Cancha';
+    }
+  }
+
+  /** Precio total del turno (precio/hora × duración elegida), formateado con separador de miles. */
+  precioTurno(c: CanchaLibre): string | null {
+    if (c.precioHora == null) return null;
+    const total = Math.round((c.precioHora * this.duracion()) / 60);
+    return total.toLocaleString('es-AR');
+  }
+
   // ── Confirmar ─────────────────────────────────────────────────────
   confirm(): void {
     if (!this.canConfirm()) return;
@@ -365,7 +426,12 @@ export class Landing {
             hora: `${hora} hs`,
             duracion: this.duracion(),
             primerNombre: nombre.split(' ')[0],
+            nombreCompleto: nombre,
+            pendiente: res.estado === 'PENDIENTE',
+            senaMonto: this.senaMontoFmt(),
+            senaAlias: this.senaAlias(),
           });
+          this.aliasCopiado.set(false);
           this.success.set(true);
           window.scrollTo(0, 0);
         },
@@ -416,6 +482,28 @@ export class Landing {
   openMaps(): void {
     const url = this.mapaUrl();
     if (url) window.open(url, '_blank');
+  }
+
+  /** Copia el alias de la seña al portapapeles y muestra un feedback breve en el botón. */
+  copyAlias(): void {
+    const alias = this.successData()?.senaAlias;
+    if (!alias) return;
+    const ok = () => {
+      this.aliasCopiado.set(true);
+      this.messages.add({ severity: 'success', summary: 'Alias copiado', detail: alias });
+      setTimeout(() => this.aliasCopiado.set(false), 1800);
+    };
+    const fail = () =>
+      this.messages.add({
+        severity: 'warn',
+        summary: 'No se pudo copiar',
+        detail: 'Copialo manualmente: ' + alias,
+      });
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(alias).then(ok, fail);
+    } else {
+      fail();
+    }
   }
 }
 

@@ -119,7 +119,18 @@ export class ConfigComponent {
   // ── Duraciones ──
   readonly pasoMinutos = signal(30);
   readonly duraciones = signal<number[]>([60, 90, 120]);
+  /** Turno principal: ancla la grilla de horarios y es el único turno si no se permiten otros. */
   readonly duracionDefault = signal(90);
+  readonly permitirOtras = signal(true);
+
+  // ── Precios ──
+  readonly precioModo = signal<'GENERAL' | 'POR_CANCHA'>('POR_CANCHA');
+  readonly precioHoraGeneral = signal<number | null>(null);
+
+  // ── Seña ──
+  readonly requiereSena = signal(false);
+  readonly senaMonto = signal<number | null>(null);
+  readonly senaAlias = signal<string | null>(null);
 
   // ── Canchas ──
   readonly canchas = signal<CanchaConfig[]>([]);
@@ -172,12 +183,41 @@ export class ConfigComponent {
   readonly invalidDuraciones = computed(
     () => this.duraciones().length === 0 || !this.duraciones().includes(this.duracionDefault())
   );
+  readonly invalidPrecio = computed(() => {
+    if (this.precioModo() !== 'GENERAL') return false;
+    const p = this.precioHoraGeneral();
+    return p == null || !(p > 0);
+  });
+  readonly invalidSenaMonto = computed(() => {
+    if (!this.requiereSena()) return false;
+    const m = this.senaMonto();
+    return m == null || !(m > 0);
+  });
+  readonly invalidSenaAlias = computed(() => {
+    if (!this.requiereSena()) return false;
+    const a = this.senaAlias();
+    return a == null || a.trim().length === 0;
+  });
+  readonly invalidSena = computed(() => this.invalidSenaMonto() || this.invalidSenaAlias());
+  /** Algún día abierto con apertura ≥ cierre (las horas "HH:mm" comparan bien como strings). */
+  readonly invalidHorario = computed(() =>
+    this.week().some((d) => d.open && d.from >= d.to)
+  );
+  /** Descanso activo con inicio ≥ fin. */
+  readonly invalidBreak = computed(() => this.breakOn() && this.breakFrom() >= this.breakTo());
   readonly canSave = computed(
-    () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones() && !this.saving()
+    () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones()
+      && !this.invalidHorario() && !this.invalidBreak()
+      && !this.invalidPrecio() && !this.invalidSena() && !this.saving()
   );
   readonly saveState = computed(() => {
+    if (this.invalidHorario()) return 'Revisá el horario: la apertura debe ser antes del cierre';
+    if (this.invalidBreak()) return 'Revisá el descanso: el inicio debe ser antes del fin';
     if (this.invalidPaso()) return 'Revisá el paso (5–180 min)';
-    if (this.invalidDuraciones()) return 'Elegí al menos una duración y un default';
+    if (this.invalidDuraciones()) return 'Elegí el turno principal';
+    if (this.invalidPrecio()) return 'Cargá el precio general por hora';
+    if (this.invalidSenaMonto()) return 'Cargá el monto de la seña';
+    if (this.invalidSenaAlias()) return 'Cargá el alias de la seña';
     return this.dirty() ? 'Cambios sin guardar' : 'Todo guardado';
   });
   readonly breakStateLabel = computed(() =>
@@ -227,6 +267,12 @@ export class ConfigComponent {
     this.pasoMinutos.set(cfg.pasoMinutos);
     this.duraciones.set([...cfg.duraciones].sort((a, b) => a - b));
     this.duracionDefault.set(cfg.duracionDefault);
+    this.permitirOtras.set(cfg.permitirOtrasDuraciones ?? true);
+    this.precioModo.set(cfg.precioModo ?? 'POR_CANCHA');
+    this.precioHoraGeneral.set(cfg.precioHoraGeneral ?? null);
+    this.requiereSena.set(cfg.requiereSena ?? false);
+    this.senaMonto.set(cfg.senaMonto ?? null);
+    this.senaAlias.set(cfg.senaAlias ?? null);
     this.bloqueos.set(cfg.bloqueos ?? []);
     this.canchas.set(cfg.canchas ?? []);
     const c = cfg.contacto ?? {
@@ -282,19 +328,44 @@ export class ConfigComponent {
   // ── Duraciones ──
   isDurActive(d: number): boolean { return this.duraciones().includes(d); }
   toggleDur(d: number): void {
+    // El turno principal no se puede desactivar (siempre tiene que ser reservable).
+    if (d === this.duracionDefault()) return;
     this.duraciones.update((list) =>
       list.includes(d) ? list.filter((x) => x !== d) : [...list, d].sort((a, b) => a - b)
     );
-    // Si el default quedó fuera, reasignar al primero disponible.
-    if (!this.duraciones().includes(this.duracionDefault())) {
-      this.duracionDefault.set(this.duraciones()[0] ?? 0);
+    this.markDirty();
+  }
+  setDefault(d: number): void {
+    this.duracionDefault.set(d);
+    // El turno principal siempre tiene que estar entre las duraciones permitidas.
+    if (!this.duraciones().includes(d)) {
+      this.duraciones.update((list) => [...list, d].sort((a, b) => a - b));
     }
     this.markDirty();
   }
-  setDefault(d: number): void { this.duracionDefault.set(d); this.markDirty(); }
+  togglePermitirOtras(): void { this.permitirOtras.update((v) => !v); this.markDirty(); }
   onPasoInput(value: string): void {
     const n = Number(value);
     this.pasoMinutos.set(Number.isFinite(n) ? Math.round(n) : 0);
+    this.markDirty();
+  }
+
+  // ── Precios ──
+  setPrecioModo(modo: 'GENERAL' | 'POR_CANCHA'): void { this.precioModo.set(modo); this.markDirty(); }
+  // El input es type="number": ngModelChange emite number | null (NumberValueAccessor), no string.
+  onPrecioGeneralInput(value: number | null): void {
+    this.precioHoraGeneral.set(value == null || !Number.isFinite(value) ? null : Math.round(value));
+    this.markDirty();
+  }
+
+  // ── Seña ──
+  toggleSena(): void { this.requiereSena.update((v) => !v); this.markDirty(); }
+  onSenaMontoInput(value: number | null): void {
+    this.senaMonto.set(value == null || !Number.isFinite(value) ? null : Math.round(value));
+    this.markDirty();
+  }
+  onSenaAliasInput(value: string): void {
+    this.senaAlias.set(value.trim() === '' ? null : value);
     this.markDirty();
   }
 
@@ -490,6 +561,20 @@ export class ConfigComponent {
             pasoMinutos: this.pasoMinutos(),
             duraciones: this.duraciones(),
             duracionDefault: this.duracionDefault(),
+            permitirOtrasDuraciones: this.permitirOtras(),
+          })
+        ),
+        concatMap(() =>
+          this.api.putPrecios({
+            precioModo: this.precioModo(),
+            precioHoraGeneral: this.precioModo() === 'GENERAL' ? this.precioHoraGeneral() : null,
+          })
+        ),
+        concatMap(() =>
+          this.api.putSena({
+            requiereSena: this.requiereSena(),
+            senaMonto: this.requiereSena() ? this.senaMonto() : null,
+            senaAlias: this.requiereSena() ? this.senaAlias() : null,
           })
         ),
         concatMap(() => this.api.putContacto(contacto))
@@ -502,11 +587,15 @@ export class ConfigComponent {
         },
         error: () => {
           this.saving.set(false);
+          // Son 5 PUT encadenados y NO son atómicos: si falla uno del medio, los anteriores
+          // ya se persistieron. Recargamos del server para que la UI muestre el estado real
+          // (y no quede el front creyendo que no se guardó nada mientras parte ya está en vivo).
           this.messages.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No pudimos guardar. Probá de nuevo.',
+            severity: 'warn',
+            summary: 'Guardado incompleto',
+            detail: 'Puede que algunos cambios no se hayan aplicado. Recargamos la configuración para mostrarte el estado real.',
           });
+          this.loadConfig();
         },
       });
   }

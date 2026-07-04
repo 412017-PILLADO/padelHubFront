@@ -66,6 +66,13 @@ export interface PublicConfig {
   pasoMinutos: number;
   duracionesPermitidas: number[];
   duracionDefault: number;
+  permitirOtrasDuraciones: boolean;
+  /** Si el complejo pide seña, la reserva queda pendiente hasta que el dueño la valide. */
+  requiereSena: boolean;
+  /** Monto de la seña a mostrarle al cliente (null si no se pide seña). */
+  senaMonto: number | null;
+  /** Alias/CBU al que el cliente transfiere la seña (null si no se pide seña). */
+  senaAlias: string | null;
   canchas: CanchaConfig[];
   horarios: { diaSemana: number; horaInicio: string; horaFin: string }[];
 }
