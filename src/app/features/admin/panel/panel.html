@@ -15,10 +15,10 @@
   <section class="pending-banner">
     <div class="pb-head">
       <span class="pb-title">Pendientes de seña</span>
-      <span class="pb-count mono">{{ pendientes().length }}</span>
+      <span class="pb-count mono">{{ pendientesFiltrados().length }}</span>
     </div>
     <div class="pb-list">
-      @for (p of pendientes(); track p.id) {
+      @for (p of pendientesFiltrados(); track p.id) {
         <div class="pb-row">
           <div class="pb-when">
             <span class="pb-fecha">{{ pendFecha(p) }}</span>
@@ -36,6 +36,9 @@
             <button type="button" class="pb-no" (click)="askRechazarSena(p)">Rechazar</button>
           </div>
         </div>
+      }
+      @if (pendientesFiltrados().length === 0) {
+        <p class="pb-nomatch">Ninguno coincide con «{{ query() }}».</p>
       }
     </div>
   </section>
@@ -68,6 +71,13 @@
         }
       </div>
 
+      <!-- buscador por nombre (filtra pendientes y la agenda del día) -->
+      <div class="search">
+        <span class="cf-label eyebrow">Buscar</span>
+        <input class="search-input" type="search" placeholder="Nombre del cliente…"
+          [ngModel]="query()" (ngModelChange)="setQuery($event)" aria-label="Buscar por nombre" />
+      </div>
+
       <!-- filtro por cancha (solo si hay más de una con turnos ese día) -->
       @if (canchas().length > 1) {
         <div class="cancha-filter">
@@ -89,16 +99,56 @@
     </section>
   </aside>
 
-  <!-- ===== LISTA DE TURNOS ===== -->
+  <!-- ===== AGENDA (lista o grilla) ===== -->
   <section class="block content">
-    <div class="block-h"><span class="t eyebrow">Agenda</span><span class="ln"></span></div>
+    <div class="block-h">
+      <span class="t eyebrow">Agenda</span>
+      <span class="ln"></span>
+      <div class="view-toggle">
+        <button type="button" class="vt" [attr.aria-pressed]="vista() === 'lista'" (click)="setVista('lista')">Lista</button>
+        <button type="button" class="vt" [attr.aria-pressed]="vista() === 'grilla'" (click)="setVista('grilla')">Grilla</button>
+      </div>
+    </div>
 
     @if (loading()) {
       <p class="state-msg">Cargando turnos…</p>
+    } @else if (vista() === 'grilla') {
+      @if (grid() === null) {
+        <p class="state-msg empty">No pudimos cargar el horario para la grilla.</p>
+      } @else if (!grid()!.open) {
+        <p class="state-msg empty">El club no abre este día.</p>
+      } @else {
+        <div class="grid-wrap">
+          <div class="grid"
+            [style.grid-template-columns]="'64px repeat(' + grid()!.cols.length + ', minmax(116px, 1fr))'"
+            [style.grid-template-rows]="'auto repeat(' + grid()!.rows.length + ', 46px)'">
+            <div class="g-corner"></div>
+            @for (c of grid()!.cols; track c.id; let ci = $index) {
+              <div class="g-colhead" [style.grid-column]="ci + 2" [style.grid-row]="1">
+                <span class="g-dot" [style.background]="c.color"></span>{{ c.nombre }}
+              </div>
+            }
+            @for (r of grid()!.rows; track r.min; let ri = $index) {
+              <div class="g-time mono" [style.grid-column]="1" [style.grid-row]="ri + 2">{{ r.label }}</div>
+              <div class="g-line" [style.grid-column]="'2 / -1'" [style.grid-row]="ri + 2"></div>
+            }
+            @for (b of grid()!.blocks; track b.turno.id) {
+              <div class="g-block" [style.grid-column]="b.col + 2"
+                [style.grid-row]="(b.rowStart + 2) + ' / span ' + b.rowSpan"
+                [style.border-left-color]="grid()!.cols[b.col].color">
+                <span class="gb-cli">{{ b.turno.clienteNombre }}</span>
+                <span class="gb-time mono">{{ b.turno.hora }}–{{ b.turno.fin }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      }
     } @else if (empty()) {
       <p class="state-msg empty">No hay turnos para este día.</p>
     } @else if (noMatch()) {
       <p class="state-msg empty">No hay turnos en {{ canchaFilter() }}.</p>
+    } @else if (ordered().length === 0) {
+      <p class="state-msg empty">Ningún turno coincide con «{{ query() }}».</p>
     } @else {
       <div class="turnos">
         @for (t of ordered(); track t.id) {

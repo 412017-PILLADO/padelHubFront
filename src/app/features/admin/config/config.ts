@@ -199,11 +199,20 @@ export class ConfigComponent {
     return a == null || a.trim().length === 0;
   });
   readonly invalidSena = computed(() => this.invalidSenaMonto() || this.invalidSenaAlias());
+  /** Algún día abierto con apertura ≥ cierre (las horas "HH:mm" comparan bien como strings). */
+  readonly invalidHorario = computed(() =>
+    this.week().some((d) => d.open && d.from >= d.to)
+  );
+  /** Descanso activo con inicio ≥ fin. */
+  readonly invalidBreak = computed(() => this.breakOn() && this.breakFrom() >= this.breakTo());
   readonly canSave = computed(
     () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones()
+      && !this.invalidHorario() && !this.invalidBreak()
       && !this.invalidPrecio() && !this.invalidSena() && !this.saving()
   );
   readonly saveState = computed(() => {
+    if (this.invalidHorario()) return 'Revisá el horario: la apertura debe ser antes del cierre';
+    if (this.invalidBreak()) return 'Revisá el descanso: el inicio debe ser antes del fin';
     if (this.invalidPaso()) return 'Revisá el paso (5–180 min)';
     if (this.invalidDuraciones()) return 'Elegí el turno principal';
     if (this.invalidPrecio()) return 'Cargá el precio general por hora';
@@ -578,11 +587,15 @@ export class ConfigComponent {
         },
         error: () => {
           this.saving.set(false);
+          // Son 5 PUT encadenados y NO son atómicos: si falla uno del medio, los anteriores
+          // ya se persistieron. Recargamos del server para que la UI muestre el estado real
+          // (y no quede el front creyendo que no se guardó nada mientras parte ya está en vivo).
           this.messages.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No pudimos guardar. Probá de nuevo.',
+            severity: 'warn',
+            summary: 'Guardado incompleto',
+            detail: 'Puede que algunos cambios no se hayan aplicado. Recargamos la configuración para mostrarte el estado real.',
           });
+          this.loadConfig();
         },
       });
   }

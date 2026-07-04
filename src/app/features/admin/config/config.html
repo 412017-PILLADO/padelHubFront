@@ -24,13 +24,14 @@
             (click)="toggleDay(d.diaSemana)"></button>
           @if (d.open) {
             <div class="day-edit">
-              <select class="tsel" [ngModel]="d.from" (ngModelChange)="setFrom(d.diaSemana, $event)">
+              <select class="tsel" [class.invalid]="d.from >= d.to" [ngModel]="d.from" (ngModelChange)="setFrom(d.diaSemana, $event)">
                 @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
               </select>
               <span class="sep">—</span>
-              <select class="tsel" [ngModel]="d.to" (ngModelChange)="setTo(d.diaSemana, $event)">
+              <select class="tsel" [class.invalid]="d.from >= d.to" [ngModel]="d.to" (ngModelChange)="setTo(d.diaSemana, $event)">
                 @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
               </select>
+              @if (d.from >= d.to) { <span class="day-err">El cierre debe ser después de la apertura</span> }
             </div>
           } @else {
             <span class="closed-badge">Cerrado</span>
@@ -53,14 +54,15 @@
         aria-label="Activar descanso" (click)="toggleBreak()"></button>
     </div>
     <div class="break-times" [class.dim]="!breakOn()">
-      <select class="tsel" [ngModel]="breakFrom()" (ngModelChange)="setBreakFrom($event)">
+      <select class="tsel" [class.invalid]="invalidBreak()" [ngModel]="breakFrom()" (ngModelChange)="setBreakFrom($event)">
         @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
       </select>
       <span class="sep">—</span>
-      <select class="tsel" [ngModel]="breakTo()" (ngModelChange)="setBreakTo($event)">
+      <select class="tsel" [class.invalid]="invalidBreak()" [ngModel]="breakTo()" (ngModelChange)="setBreakTo($event)">
         @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
       </select>
     </div>
+    @if (invalidBreak()) { <span class="day-err">El inicio del descanso debe ser antes del fin</span> }
   </section>
 
   <!-- ===== TURNO Y DURACIONES ===== -->
@@ -320,7 +322,7 @@
 <div class="savebar">
   <div class="save-meta">
     <div class="st eyebrow">Estado</div>
-    <div class="sv" [class.dirty]="dirty() || invalidPaso() || invalidDuraciones() || invalidPrecio() || invalidSena()">{{ saveState() }}</div>
+    <div class="sv" [class.dirty]="dirty() || invalidHorario() || invalidBreak() || invalidPaso() || invalidDuraciones() || invalidPrecio() || invalidSena()">{{ saveState() }}</div>
   </div>
   <button class="save-btn" [disabled]="!canSave()" (click)="save()">Guardar</button>
 </div>

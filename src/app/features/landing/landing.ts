@@ -182,6 +182,7 @@ export class Landing {
     hora: string;
     duracion: number;
     primerNombre: string;
+    nombreCompleto: string;
     pendiente: boolean;
     senaMonto: string | null;
     senaAlias: string | null;
@@ -193,8 +194,8 @@ export class Landing {
     const d = this.successData();
     if (!wa || !d) return null;
     const msg =
-      `¡Hola! Reservé ${d.cancha} el ${d.dia} a las ${d.hora}. ` +
-      `Te paso el comprobante de la seña.`;
+      `¡Hola! Soy ${d.nombreCompleto}. Te paso el comprobante de la seña ` +
+      `de mi turno: ${d.cancha}, ${d.dia} a las ${d.hora}.`;
     return `https://wa.me/${wa.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
   });
 
@@ -425,6 +426,7 @@ export class Landing {
             hora: `${hora} hs`,
             duracion: this.duracion(),
             primerNombre: nombre.split(' ')[0],
+            nombreCompleto: nombre,
             pendiente: res.estado === 'PENDIENTE',
             senaMonto: this.senaMontoFmt(),
             senaAlias: this.senaAlias(),

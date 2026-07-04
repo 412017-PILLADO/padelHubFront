@@ -57,6 +57,14 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .chip[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: #fff; }
 .chip.sm { padding: 7px 12px; font-size: 0.85rem; }
 
+/* Buscador por nombre */
+.search { margin-top: 18px; }
+.search-input {
+  width: 100%; font: inherit; padding: 10px 14px; border-radius: var(--r);
+  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+}
+.search-input:focus { outline: none; border-color: var(--court); }
+
 /* Filtro por cancha */
 .cancha-filter { margin-top: 18px; }
 .cf-label { display: block; color: var(--court-deep); margin-bottom: 8px; }
@@ -162,3 +170,42 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .pb-ok:hover { filter: brightness(1.08); }
 .pb-no { background: transparent; border: 1px solid var(--line-strong); color: var(--clay); }
 .pb-no:hover { border-color: var(--clay); }
+.pb-nomatch { color: var(--ink-faint); font-size: 0.85rem; padding: 4px 2px; }
+
+/* ===== Toggle Lista / Grilla ===== */
+.view-toggle { display: flex; gap: 4px; padding: 3px; background: var(--paper); border: 1px solid var(--line); border-radius: var(--r); }
+.vt {
+  padding: 6px 14px; border: none; border-radius: calc(var(--r) - 3px);
+  background: transparent; color: var(--ink-dim); font-weight: 600; font-size: 0.85rem; cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.vt[aria-pressed='true'] { background: var(--court); color: #fff; }
+
+/* ===== Grilla canchas × horas ===== */
+.grid-wrap { overflow-x: auto; padding-bottom: 4px; }
+.grid { display: grid; position: relative; min-width: max-content; }
+.g-corner { grid-column: 1; grid-row: 1; }
+.g-colhead {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 10px; font-weight: 700; font-size: 0.85rem; color: var(--court-deep);
+  border-bottom: 1px solid var(--line-strong);
+  position: sticky; top: 0; background: var(--paper); z-index: 3;
+}
+.g-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line-strong); }
+.g-time {
+  padding: 4px 8px 0 0; text-align: right;
+  font-size: 0.72rem; color: var(--ink-faint);
+  transform: translateY(-0.5em); /* la etiqueta se alinea con la línea de la franja */
+}
+.g-line { border-top: 1px solid var(--line); }
+.g-block {
+  margin: 2px 3px; padding: 5px 8px; overflow: hidden;
+  display: flex; flex-direction: column; justify-content: center; gap: 2px;
+  background: var(--court-soft);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--court);
+  border-radius: var(--r);
+  z-index: 1;
+}
+.gb-cli { font-weight: 700; font-size: 0.82rem; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gb-time { font-size: 0.72rem; color: var(--ink-dim); }
