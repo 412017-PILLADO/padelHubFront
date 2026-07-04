@@ -127,6 +127,11 @@ export class ConfigComponent {
   readonly precioModo = signal<'GENERAL' | 'POR_CANCHA'>('POR_CANCHA');
   readonly precioHoraGeneral = signal<number | null>(null);
 
+  // ── Seña ──
+  readonly requiereSena = signal(false);
+  readonly senaMonto = signal<number | null>(null);
+  readonly senaAlias = signal<string | null>(null);
+
   // ── Canchas ──
   readonly canchas = signal<CanchaConfig[]>([]);
   /** id de la cancha en edición; null = formulario de alta. */
@@ -183,14 +188,27 @@ export class ConfigComponent {
     const p = this.precioHoraGeneral();
     return p == null || !(p > 0);
   });
+  readonly invalidSenaMonto = computed(() => {
+    if (!this.requiereSena()) return false;
+    const m = this.senaMonto();
+    return m == null || !(m > 0);
+  });
+  readonly invalidSenaAlias = computed(() => {
+    if (!this.requiereSena()) return false;
+    const a = this.senaAlias();
+    return a == null || a.trim().length === 0;
+  });
+  readonly invalidSena = computed(() => this.invalidSenaMonto() || this.invalidSenaAlias());
   readonly canSave = computed(
     () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones()
-      && !this.invalidPrecio() && !this.saving()
+      && !this.invalidPrecio() && !this.invalidSena() && !this.saving()
   );
   readonly saveState = computed(() => {
     if (this.invalidPaso()) return 'Revisá el paso (5–180 min)';
     if (this.invalidDuraciones()) return 'Elegí el turno principal';
     if (this.invalidPrecio()) return 'Cargá el precio general por hora';
+    if (this.invalidSenaMonto()) return 'Cargá el monto de la seña';
+    if (this.invalidSenaAlias()) return 'Cargá el alias de la seña';
     return this.dirty() ? 'Cambios sin guardar' : 'Todo guardado';
   });
   readonly breakStateLabel = computed(() =>
@@ -243,6 +261,9 @@ export class ConfigComponent {
     this.permitirOtras.set(cfg.permitirOtrasDuraciones ?? true);
     this.precioModo.set(cfg.precioModo ?? 'POR_CANCHA');
     this.precioHoraGeneral.set(cfg.precioHoraGeneral ?? null);
+    this.requiereSena.set(cfg.requiereSena ?? false);
+    this.senaMonto.set(cfg.senaMonto ?? null);
+    this.senaAlias.set(cfg.senaAlias ?? null);
     this.bloqueos.set(cfg.bloqueos ?? []);
     this.canchas.set(cfg.canchas ?? []);
     const c = cfg.contacto ?? {
@@ -322,9 +343,20 @@ export class ConfigComponent {
 
   // ── Precios ──
   setPrecioModo(modo: 'GENERAL' | 'POR_CANCHA'): void { this.precioModo.set(modo); this.markDirty(); }
-  onPrecioGeneralInput(value: string): void {
-    const n = Number(value);
-    this.precioHoraGeneral.set(value.trim() === '' || !Number.isFinite(n) ? null : Math.round(n));
+  // El input es type="number": ngModelChange emite number | null (NumberValueAccessor), no string.
+  onPrecioGeneralInput(value: number | null): void {
+    this.precioHoraGeneral.set(value == null || !Number.isFinite(value) ? null : Math.round(value));
+    this.markDirty();
+  }
+
+  // ── Seña ──
+  toggleSena(): void { this.requiereSena.update((v) => !v); this.markDirty(); }
+  onSenaMontoInput(value: number | null): void {
+    this.senaMonto.set(value == null || !Number.isFinite(value) ? null : Math.round(value));
+    this.markDirty();
+  }
+  onSenaAliasInput(value: string): void {
+    this.senaAlias.set(value.trim() === '' ? null : value);
     this.markDirty();
   }
 
@@ -527,6 +559,13 @@ export class ConfigComponent {
           this.api.putPrecios({
             precioModo: this.precioModo(),
             precioHoraGeneral: this.precioModo() === 'GENERAL' ? this.precioHoraGeneral() : null,
+          })
+        ),
+        concatMap(() =>
+          this.api.putSena({
+            requiereSena: this.requiereSena(),
+            senaMonto: this.requiereSena() ? this.senaMonto() : null,
+            senaAlias: this.requiereSena() ? this.senaAlias() : null,
           })
         ),
         concatMap(() => this.api.putContacto(contacto))

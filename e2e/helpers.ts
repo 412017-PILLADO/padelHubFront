@@ -23,9 +23,15 @@ export async function ownerToken(request: APIRequestContext): Promise<string> {
  */
 export async function loginAsOwner(page: Page): Promise<void> {
   await page.goto('/admin/login');
-  await page.locator('#email').fill(OWNER.email);
-  await page.locator('#password').fill(OWNER.password);
-  await page.locator('.confirm').click();
+  // El botón se ata a signals que sólo se actualizan una vez hidratado el SSR; rellenamos y
+  // reintentamos hasta que se habilita, para no clickear un botón deshabilitado por timing.
+  const confirm = page.locator('.confirm');
+  await expect(async () => {
+    await page.locator('#email').fill(OWNER.email);
+    await page.locator('#password').fill(OWNER.password);
+    await expect(confirm).toBeEnabled({ timeout: 1000 });
+  }).toPass({ timeout: 15_000 });
+  await confirm.click();
   await expect(page).toHaveURL(/\/admin$/, { timeout: 15_000 });
 }
 

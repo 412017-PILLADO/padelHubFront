@@ -77,6 +77,10 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 }
 .paso-input.invalid { border-color: var(--clay); }
 .paso-msg.err { color: var(--clay); font-size: 0.82rem; }
+/* El alias es un texto largo: input más ancho, la fila envuelve en mobile. */
+.sena-alias-row { flex-wrap: wrap; margin-top: 10px; }
+.sena-alias { width: 260px; max-width: 100%; }
+.sena-alias-hint { margin-top: 6px; }
 
 /* — Contacto — */
 .contact-form { display: flex; flex-direction: column; gap: 16px; }

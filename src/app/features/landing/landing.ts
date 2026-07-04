@@ -100,6 +100,17 @@ export class Landing {
   readonly mostrarPrecios = computed(() => this.config()?.tenant.mostrarPrecios ?? false);
   readonly requiereTelefono = computed(() => this.config()?.tenant.requiereTelefono ?? true);
 
+  // ── Seña ──────────────────────────────────────────────────────────
+  readonly requiereSena = computed(() => this.config()?.requiereSena ?? false);
+  readonly senaMonto = computed(() => this.config()?.senaMonto ?? null);
+  readonly senaMontoFmt = computed(() => {
+    const m = this.senaMonto();
+    return m != null ? m.toLocaleString('es-AR') : null;
+  });
+  readonly senaAlias = computed(() => this.config()?.senaAlias?.trim() || null);
+  /** Feedback breve del botón "Copiar" del alias en la pantalla de éxito. */
+  readonly aliasCopiado = signal(false);
+
   // ── Info del complejo ─────────────────────────────────────────────
   readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
   readonly mapaUrl = computed(() => this.config()?.complejo.mapaUrl ?? null);
@@ -171,7 +182,21 @@ export class Landing {
     hora: string;
     duracion: number;
     primerNombre: string;
+    pendiente: boolean;
+    senaMonto: string | null;
+    senaAlias: string | null;
   } | null>(null);
+
+  /** Link de WhatsApp para mandar el comprobante de la seña (usa el turno recién reservado). */
+  readonly whatsappSenaUrl = computed(() => {
+    const wa = this.whatsappRaw();
+    const d = this.successData();
+    if (!wa || !d) return null;
+    const msg =
+      `¡Hola! Reservé ${d.cancha} el ${d.dia} a las ${d.hora}. ` +
+      `Te paso el comprobante de la seña.`;
+    return `https://wa.me/${wa.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+  });
 
   // ── Day chips ─────────────────────────────────────────────────────
   readonly chips = computed(() => [
@@ -352,6 +377,16 @@ export class Landing {
     return c.tipoPared ? `${techo} · ${c.tipoPared}` : techo;
   }
 
+  /** Etiqueta del material de la pared para la card de cancha (espeja tipoPared). */
+  materialLabel(c: CanchaLibre): string {
+    switch (c.tipoPared) {
+      case 'MURO': return 'Hormigón';
+      case 'MIXTA': return 'Mixta';
+      case 'CRISTAL': return 'Vidrio';
+      default: return c.tipoPared ?? 'Cancha';
+    }
+  }
+
   /** Precio total del turno (precio/hora × duración elegida), formateado con separador de miles. */
   precioTurno(c: CanchaLibre): string | null {
     if (c.precioHora == null) return null;
@@ -390,7 +425,11 @@ export class Landing {
             hora: `${hora} hs`,
             duracion: this.duracion(),
             primerNombre: nombre.split(' ')[0],
+            pendiente: res.estado === 'PENDIENTE',
+            senaMonto: this.senaMontoFmt(),
+            senaAlias: this.senaAlias(),
           });
+          this.aliasCopiado.set(false);
           this.success.set(true);
           window.scrollTo(0, 0);
         },
@@ -441,6 +480,28 @@ export class Landing {
   openMaps(): void {
     const url = this.mapaUrl();
     if (url) window.open(url, '_blank');
+  }
+
+  /** Copia el alias de la seña al portapapeles y muestra un feedback breve en el botón. */
+  copyAlias(): void {
+    const alias = this.successData()?.senaAlias;
+    if (!alias) return;
+    const ok = () => {
+      this.aliasCopiado.set(true);
+      this.messages.add({ severity: 'success', summary: 'Alias copiado', detail: alias });
+      setTimeout(() => this.aliasCopiado.set(false), 1800);
+    };
+    const fail = () =>
+      this.messages.add({
+        severity: 'warn',
+        summary: 'No se pudo copiar',
+        detail: 'Copialo manualmente: ' + alias,
+      });
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(alias).then(ok, fail);
+    } else {
+      fail();
+    }
   }
 }
 
