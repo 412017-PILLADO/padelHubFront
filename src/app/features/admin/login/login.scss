@@ -87,3 +87,25 @@
   padding: 2px 7px; border-radius: 4px; font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.05em;
 }
+
+/* ===== Mobile: marca compacta arriba + formulario CENTRADO en el resto =====
+   (va al final para ganarle por orden de fuente a las reglas base de arriba). */
+@media (max-width: 859px) {
+  .login-shell { grid-template-rows: auto 1fr; }
+  .brand-panel {
+    min-height: 0;
+    flex-direction: row; align-items: center; justify-content: flex-start;
+    padding: 15px clamp(18px, 6vw, 26px);
+  }
+  .brand-panel .bp-title,
+  .brand-panel .bp-foot,
+  .watermark { display: none; }
+  /* el form-panel toma el 1fr restante y centra su card → login al centro de la pantalla */
+  .form-panel { align-items: center; padding-block: clamp(20px, 6vw, 40px); }
+  /* "Volver" a la derecha, aclarado para leerse sobre la banda azul (no pisa el logo) */
+  .back {
+    top: 13px; right: 13px; left: auto;
+    color: #fff; background: rgba(255, 255, 255, 0.18);
+  }
+  .back:hover { color: #fff; background: rgba(255, 255, 255, 0.28); }
+}

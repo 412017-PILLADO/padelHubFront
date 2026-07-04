@@ -35,7 +35,18 @@
 .navlink.on { background: var(--court-soft); color: var(--court-deep); }
 .navlink.out:hover { color: var(--clay); border-color: color-mix(in srgb, var(--clay) 40%, transparent); }
 
-@media (max-width: 520px) {
+/* Mobile: todo en UNA línea. Sacamos el logo para ganar ancho, el nombre del club se trunca
+   si es largo, y los 3 iconos quedan arriba a la derecha (sin envolver a una segunda fila). */
+@media (max-width: 620px) {
+  .adminnav { flex-wrap: nowrap; gap: 10px; padding: 12px clamp(12px, 4vw, 18px); }
+  .brand { min-width: 0; gap: 0; }
+  .brand-mark { display: none; }
+  .logo-type { min-width: 0; }
+  .logo-type .name {
+    font-size: 1.02rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .links { flex-shrink: 0; gap: 4px; }
   .navlink span { display: none; }
-  .navlink { padding: 9px 11px; }
+  .navlink { padding: 9px 10px; }
 }

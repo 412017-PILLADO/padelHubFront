@@ -1,10 +1,13 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   inject,
+  PLATFORM_ID,
   signal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 import { ToastModule } from 'primeng/toast';
@@ -108,8 +111,15 @@ export class PanelComponent {
 
   // ── Buscador por nombre (aplica a pendientes y a la agenda del día) ──
   readonly query = signal('');
-  // ── Vista de la agenda: lista o grilla (canchas × horas) ──
-  readonly vista = signal<'lista' | 'grilla'>('lista');
+  // ── Vista de la agenda: grilla (canchas × horas) por default; se recuerda en localStorage ──
+  private static readonly VISTA_KEY = 'padel_panel_vista';
+  private readonly platformId = inject(PLATFORM_ID);
+  readonly vista = signal<'lista' | 'grilla'>('grilla');
+  /** En mobile la grilla genera scroll horizontal feo → forzamos Lista (y ocultamos el toggle). */
+  readonly isMobile = signal(false);
+  readonly vistaEfectiva = computed<'lista' | 'grilla'>(() =>
+    this.isMobile() ? 'lista' : this.vista()
+  );
   /** Config de agenda (horario/paso/canchas) para armar la grilla. */
   private readonly agenda = signal<AgendaConfig | null>(null);
 
@@ -222,7 +232,12 @@ export class PanelComponent {
   }
 
   setQuery(v: string): void { this.query.set(v); }
-  setVista(v: 'lista' | 'grilla'): void { this.vista.set(v); }
+  setVista(v: 'lista' | 'grilla'): void {
+    this.vista.set(v);
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem(PanelComponent.VISTA_KEY, v);
+    }
+  }
 
   /** Mostramos siempre la cancha del turno. */
   readonly showCancha = computed(() => true);
@@ -232,6 +247,14 @@ export class PanelComponent {
     this.load(this.today);
     this.loadPendientes();
     this.loadAgenda();
+    // Preferencia de vista guardada + detección de mobile (solo browser; no rompe SSR/hidratación).
+    afterNextRender(() => {
+      const v = localStorage.getItem(PanelComponent.VISTA_KEY);
+      if (v === 'lista' || v === 'grilla') this.vista.set(v);
+      const mq = window.matchMedia('(max-width: 760px)');
+      this.isMobile.set(mq.matches);
+      mq.addEventListener('change', (e) => this.isMobile.set(e.matches));
+    });
   }
 
   /** Config de agenda para la grilla. Si falla, la grilla queda deshabilitada (la lista sigue). */

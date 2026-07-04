@@ -381,36 +381,39 @@
    Vive DENTRO de la columna derecha (.booking-flow): el afiche izquierdo queda fijo y el éxito no
    toma toda la pantalla. En desktop se centra vertical en la columna; en mobile va en su lugar
    natural (entre las dos bandas de marca), altura natural. */
-.booking-flow.is-success { justify-content: center; align-items: center; }
+/* `safe center`: centra el éxito en la columna, pero si el contenido (recap + seña) es más alto
+   que el viewport, alinea al inicio en vez de RECORTAR arriba/abajo (así el check y el botón
+   siempre quedan accesibles). La compactación de abajo lo hace entrar sin scroll en notebooks. */
+.booking-flow.is-success { justify-content: safe center; align-items: center; }
 .success {
   display: flex; flex-direction: column; align-items: center;
   text-align: center;
   width: 100%; max-width: 400px;
-  padding: clamp(16px, 3vh, 32px) 0;
-  gap: 12px;
+  padding: clamp(8px, 1.6vh, 20px) 0;
+  gap: 8px;
 }
 .check-ring {
-  width: 76px; height: 76px;
+  width: 62px; height: 62px;
   display: grid; place-items: center;
   border-radius: 50%;
   background: var(--court-soft);
   color: var(--court);
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
-.check-ring svg { width: 38px; height: 38px; }
-.success .big { font-size: clamp(2.4rem, 7vw, 3.6rem); }
-.success .closing { font-size: 1.1rem; color: var(--ink-dim); margin-bottom: 12px; }
+.check-ring svg { width: 30px; height: 30px; }
+.success .big { font-size: clamp(2rem, 5.5vw, 3rem); line-height: 1.02; }
+.success .closing { font-size: 1.05rem; color: var(--ink-dim); margin-bottom: 6px; }
 .recap {
   width: 100%; max-width: 340px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  padding: 8px 18px;
-  margin: 12px 0 20px;
+  padding: 2px 18px;
+  margin: 6px 0 12px;
 }
 .recap-row {
   display: flex; justify-content: space-between; gap: 16px;
-  padding: 12px 0;
+  padding: 9px 0;
   border-bottom: 1px solid var(--line);
 }
 .recap-row:last-child { border-bottom: none; }
@@ -433,15 +436,15 @@
   background: var(--court-soft);
   border: 1px solid var(--court);
   border-radius: var(--r-lg);
-  padding: 16px 18px;
-  margin: 0 0 20px;
+  padding: 14px 16px;
+  margin: 0 0 12px;
   text-align: left;
 }
-.sena-title { font-weight: 700; color: var(--court-deep); margin-bottom: 6px; }
-.sena-text { font-size: 0.92rem; color: var(--ink-dim); line-height: 1.45; margin: 0; }
+.sena-title { font-weight: 700; color: var(--court-deep); margin-bottom: 5px; }
+.sena-text { font-size: 0.9rem; color: var(--ink-dim); line-height: 1.4; margin: 0; }
 .sena-wa {
   display: inline-flex; align-items: center; justify-content: center;
-  margin-top: 14px; width: 100%; height: 46px;
+  margin-top: 12px; width: 100%; height: 44px;
   background: var(--court); color: #fff;
   border-radius: var(--r); font-weight: 700; text-decoration: none;
   transition: filter 0.15s ease;
@@ -451,8 +454,8 @@
 /* Alias de transferencia + botón copiar (dentro del aviso de seña) */
 .sena-alias-row {
   display: flex; align-items: center; gap: 10px;
-  margin-top: 12px;
-  padding: 10px 12px;
+  margin-top: 10px;
+  padding: 9px 12px;
   background: var(--surface);
   border: 1px solid var(--court);
   border-radius: var(--r);

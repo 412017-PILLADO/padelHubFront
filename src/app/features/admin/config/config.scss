@@ -1,15 +1,28 @@
 :host { display: block; min-height: 100svh; background: var(--paper); padding-bottom: 96px; }
 
-.pagehead { max-width: 760px; margin-inline: auto; padding: clamp(20px, 4vw, 32px) clamp(16px, 4vw, 24px) 8px; }
+.pagehead { max-width: 1120px; margin-inline: auto; padding: clamp(20px, 4vw, 32px) clamp(16px, 4vw, 24px) 8px; }
 .greet { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .greet strong { font-size: clamp(1.5rem, 3.5vw, 2.2rem); text-transform: uppercase; }
 .hdash { flex: 1; min-width: 20px; height: 2px; background: var(--line-strong); }
 .greet .mono { color: var(--ink-dim); font-size: 0.8rem; }
 
-main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24px); }
+main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24px); }
 
-.block { padding: 22px 0; border-top: 1px solid var(--line); }
-.block:first-child { border-top: none; }
+/* Cada sección es una card modular (clara de leer en mobile, se separa sola).
+   En desktop las cards se acomodan en 2 columnas (masonry) para aprovechar el ancho
+   en vez de quedar como una sola columna angosta estilo mobile. */
+.block {
+  break-inside: avoid;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 20px clamp(16px, 2.5vw, 22px);
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+@media (min-width: 900px) {
+  main { columns: 2; column-gap: 24px; }
+}
 .block-h { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 .block-h .t { color: var(--court-deep); }
 .block-h .ln { flex: 1; height: 1px; background: var(--line); }
@@ -33,7 +46,7 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .week { display: flex; flex-direction: column; gap: 8px; }
 .day-row {
   display: flex; align-items: center; gap: 14px;
-  background: var(--surface); border: 1px solid var(--line);
+  background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--r); padding: 10px 14px;
 }
 .day-row.off { opacity: 0.65; }
@@ -42,7 +55,7 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .closed-badge { margin-left: auto; font-size: 0.8rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
 .tsel {
   font: inherit; padding: 7px 10px; border-radius: var(--r);
-  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
 }
 .tsel.invalid { border-color: var(--clay); }
 .day-err { flex-basis: 100%; color: var(--clay); font-size: 0.78rem; margin-top: 4px; }
@@ -75,7 +88,7 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .paso-label { font-size: 0.85rem; color: var(--ink-dim); font-weight: 600; }
 .paso-input {
   font: inherit; width: 90px; padding: 8px 12px; border-radius: var(--r);
-  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
 }
 .paso-input.invalid { border-color: var(--clay); }
 .paso-msg.err { color: var(--clay); font-size: 0.82rem; }
@@ -90,21 +103,21 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .cf-label { font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); }
 .cf-input {
   font: inherit; padding: 11px 14px; border-radius: var(--r);
-  border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
 }
 .cf-input:focus { outline: none; border-color: var(--court); }
 .cf-hint { font-size: 0.78rem; color: var(--ink-faint); }
 
 /* — Bloqueos — */
 .blk-form { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
-@media (min-width: 560px) { .blk-form { grid-template-columns: 1fr 1.4fr; } }
+@media (min-width: 1120px) { .blk-form { grid-template-columns: 1fr 1.4fr; } }
 .blk-field { display: flex; flex-direction: column; gap: 6px; }
 :host ::ng-deep .p-select { width: 100%; }
 .cal { margin-bottom: 18px; }
 .blk-list { display: flex; flex-direction: column; gap: 8px; }
 .blk-item {
   display: flex; align-items: center; gap: 14px;
-  background: var(--surface); border: 1px solid var(--line);
+  background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--r); padding: 10px 14px;
 }
 .when { display: flex; flex-direction: column; align-items: center; min-width: 56px; }
@@ -125,7 +138,7 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .cancha-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
 .cancha-item {
   display: flex; align-items: center; gap: 14px;
-  background: var(--surface); border: 1px solid var(--line);
+  background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--r); padding: 10px 14px;
 }
 .cancha-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; border: 1px solid var(--line-strong); }
@@ -148,10 +161,11 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .cancha-del:hover { border-color: var(--clay); }
 .cancha-form {
   display: grid; grid-template-columns: 1fr; gap: 14px;
-  background: var(--surface); border: 1px solid var(--line);
+  background: var(--paper); border: 1px solid var(--line);
   border-radius: var(--r); padding: 16px;
 }
-@media (min-width: 560px) { .cancha-form { grid-template-columns: 1fr 1fr; } }
+/* container query no: dentro de una columna angosta el form se queda en 1 columna hasta que hay lugar */
+@media (min-width: 1120px) { .cancha-form { grid-template-columns: 1fr 1fr; } }
 .cf-inline { flex-direction: row; align-items: center; justify-content: space-between; }
 .cancha-color {
   width: 48px; height: 36px; padding: 2px; border-radius: var(--r);
@@ -182,7 +196,7 @@ main { max-width: 760px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24p
 .savebar {
   position: fixed; bottom: 0; left: 0; right: 0;
   display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  max-width: 760px; margin-inline: auto;
+  max-width: 1120px; margin-inline: auto;
   padding: 12px clamp(16px, 4vw, 24px);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   backdrop-filter: blur(8px);

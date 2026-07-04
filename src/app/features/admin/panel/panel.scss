@@ -123,9 +123,12 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .act.cancel { color: var(--clay); }
 .act.cancel:hover { border-color: var(--clay); background: color-mix(in srgb, var(--clay) 8%, var(--surface)); transform: translateY(-1px); }
 
-/* ===== Pendientes de seña (banner sobre la agenda) ===== */
+/* ===== Pendientes de seña (banner sobre la agenda) =====
+   Vive fuera de <main>, así que se alinea con el mismo contenedor (max-width + padding)
+   para que NO se estire a todo el ancho de la pantalla. */
+.pending-wrap { max-width: 1280px; margin-inline: auto; padding-inline: clamp(16px, 4vw, 24px); }
 .pending-banner {
-  margin: 0 0 20px;
+  margin: 4px 0 8px;
   background: var(--court-soft);
   border: 1px solid var(--court);
   border-radius: var(--r-lg);
@@ -180,6 +183,8 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   transition: background 0.15s ease, color 0.15s ease;
 }
 .vt[aria-pressed='true'] { background: var(--court); color: #fff; }
+/* En mobile solo se muestra la Lista (la grilla scrollea horizontal) → ocultamos el toggle. */
+@media (max-width: 760px) { .view-toggle { display: none; } }
 
 /* ===== Grilla canchas × horas ===== */
 .grid-wrap { overflow-x: auto; padding-bottom: 4px; }

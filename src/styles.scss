@@ -130,6 +130,14 @@ button {
   border-radius: 3px;
 }
 
+/* — ConfirmDialog (rechazo de seña, cancelar turno, etc.): en mobile tomaba todo el ancho.
+   Lo acotamos a un ancho cómodo y centrado, sin romper el look en desktop. Se monta en <body>,
+   por eso va en estilos globales. — */
+.p-confirmdialog {
+  width: min(92vw, 420px);
+  max-width: 92vw;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *,

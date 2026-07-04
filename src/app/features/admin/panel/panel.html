@@ -12,6 +12,7 @@
 </header>
 
 @if (tienePendientes()) {
+  <div class="pending-wrap">
   <section class="pending-banner">
     <div class="pb-head">
       <span class="pb-title">Pendientes de seña</span>
@@ -42,6 +43,7 @@
       }
     </div>
   </section>
+  </div>
 }
 
 <main class="layout">
@@ -112,7 +114,7 @@
 
     @if (loading()) {
       <p class="state-msg">Cargando turnos…</p>
-    } @else if (vista() === 'grilla') {
+    } @else if (vistaEfectiva() === 'grilla') {
       @if (grid() === null) {
         <p class="state-msg empty">No pudimos cargar el horario para la grilla.</p>
       } @else if (!grid()!.open) {
