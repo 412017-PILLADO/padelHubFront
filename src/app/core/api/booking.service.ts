@@ -50,9 +50,15 @@ export interface PublicConfig {
   tenant: {
     nombre: string;
     colorPrimario: string;
+    /** Color secundario del tenant (acento); null → se usa el primario. */
+    colorSecundario: string | null;
     fuente: string;
+    /** URL del logo del club (relativa al backend o absoluta); null → mostrar solo el nombre. */
+    logoUrl: string | null;
     mostrarPrecios: boolean;
     requiereTelefono: boolean;
+    /** Plantilla de landing: 'A' (poster), 'B' (hero centrado), 'C' (compacta tipo app). */
+    plantilla: string;
   };
   complejo: {
     id: number;

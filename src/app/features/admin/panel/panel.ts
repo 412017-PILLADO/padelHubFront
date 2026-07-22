@@ -112,7 +112,9 @@ export class PanelComponent {
   // ── Buscador por nombre (aplica a pendientes y a la agenda del día) ──
   readonly query = signal('');
   // ── Vista de la agenda: grilla (canchas × horas) por default; se recuerda en localStorage ──
-  private static readonly VISTA_KEY = 'padel_panel_vista';
+  // v2: bump de la clave para resetear preferencias viejas ('lista') a la default (grilla) una vez.
+  // De acá en más sigue recordando la elección del usuario bajo la clave nueva.
+  private static readonly VISTA_KEY = 'padel_panel_vista_v2';
   private readonly platformId = inject(PLATFORM_ID);
   readonly vista = signal<'lista' | 'grilla'>('grilla');
   /** En mobile la grilla genera scroll horizontal feo → forzamos Lista (y ocultamos el toggle). */

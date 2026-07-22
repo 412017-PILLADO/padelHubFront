@@ -32,6 +32,9 @@ test('ver y cancelar un turno del día', async ({ page }) => {
 
   await loginAsOwner(page); // queda en /admin (panel)
 
+  // El panel arranca en vista Grilla (default); las filas .turno-row viven en la vista Lista.
+  await page.getByRole('button', { name: 'Lista' }).click();
+
   await page.getByRole('button', { name: 'Mañana' }).click();
 
   const row = page.locator('.turno-row', { hasText: cliente });

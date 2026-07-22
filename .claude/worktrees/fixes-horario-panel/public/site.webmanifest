@@ -1,0 +1,25 @@
+{
+  "name": "Padel-HUB · El turnero de tu club de pádel",
+  "short_name": "Padel-HUB",
+  "description": "Software de gestión de turnos para clubes de pádel: reservas online, agenda por cancha y panel en tiempo real.",
+  "lang": "es-AR",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f6fb",
+  "theme_color": "#2747ff",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
