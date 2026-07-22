@@ -4,4 +4,6 @@ export const environment = {
   production: true,
   apiBase: 'https://api.padel-hub.com.ar',
   baseDomain: 'padel-hub.com.ar',
+  // URL pública de un club a partir de su slug (reemplazar "{slug}").
+  tenantBaseUrl: 'https://{slug}.padel-hub.com.ar/',
 };

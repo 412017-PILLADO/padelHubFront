@@ -1,0 +1,188 @@
+<div class="wrap">
+  <header class="head">
+    <div>
+      <div class="eyebrow">Plataforma · modo desarrollador</div>
+      <h1 class="title">Clubes</h1>
+    </div>
+    <div class="head-actions">
+      <button type="button" class="btn primary" (click)="toggleForm()">
+        {{ showForm() ? 'Cerrar' : '+ Nuevo club' }}
+      </button>
+      <button type="button" class="btn ghost" (click)="logout()">Salir</button>
+    </div>
+  </header>
+
+  @if (notice(); as n) { <div class="banner ok">{{ n }}</div> }
+  @if (errorMsg(); as e) { <div class="banner err">{{ e }} <button type="button" (click)="errorMsg.set(null)">✕</button></div> }
+
+  <!-- ===== Credenciales del club recién creado (se muestran una sola vez) ===== -->
+  @if (createdCreds(); as c) {
+    <section class="card creds">
+      <div class="creds-head">
+        <h2>Club creado</h2>
+        <button type="button" class="btn ghost sm" (click)="dismissCreds()">✕</button>
+      </div>
+      <p class="creds-warn">Guardalas ahora: la contraseña no se vuelve a mostrar.</p>
+      <dl class="creds-list">
+        <dt>URL</dt><dd><a [href]="c.url" target="_blank" rel="noopener">{{ c.url }}</a></dd>
+        <dt>Email</dt><dd>{{ c.email }}</dd>
+        <dt>Contraseña</dt><dd class="mono">{{ c.password }}</dd>
+      </dl>
+      <button type="button" class="btn primary sm" (click)="copyCreds()">
+        {{ credsCopied() ? '¡Copiado!' : 'Copiar credenciales' }}
+      </button>
+    </section>
+  }
+
+  <!-- ===== Contraseña reseteada (se muestra una sola vez) ===== -->
+  @if (resetSuccess(); as r) {
+    <section class="card creds">
+      <div class="creds-head">
+        <h2>Contraseña reseteada · {{ r.name }}</h2>
+        <button type="button" class="btn ghost sm" (click)="dismissResetSuccess()">✕</button>
+      </div>
+      <p class="creds-warn">Guardala ahora: no se vuelve a mostrar.</p>
+      <dl class="creds-list">
+        <dt>Contraseña nueva</dt><dd class="mono">{{ r.password }}</dd>
+      </dl>
+      <button type="button" class="btn primary sm" (click)="copyResetPassword()">
+        {{ resetCopied() ? '¡Copiado!' : 'Copiar contraseña' }}
+      </button>
+    </section>
+  }
+
+  <!-- ===== Alta ===== -->
+  @if (showForm()) {
+    <section class="card form">
+      <h2>Nuevo club</h2>
+      <div class="grid">
+        <label>Slug *<input placeholder="riopadel" [ngModel]="fSlug()" (ngModelChange)="fSlug.set($event)" spellcheck="false" /></label>
+        <label>Nombre *<input placeholder="Rio Padel Club" [ngModel]="fName()" (ngModelChange)="fName.set($event)" /></label>
+        <label>Email owner *<input type="email" placeholder="owner@club.com" [ngModel]="fOwnerEmail()" (ngModelChange)="fOwnerEmail.set($event)" spellcheck="false" /></label>
+        <label>Contraseña owner *<input type="text" placeholder="mínimo 6" [ngModel]="fOwnerPassword()" (ngModelChange)="fOwnerPassword.set($event)" /></label>
+        <label class="color">Color primario
+          <span class="crow">
+            <input type="color" [ngModel]="fColorPrimario()" (ngModelChange)="fColorPrimario.set($event)" />
+            <input class="hex" [ngModel]="fColorPrimario()" (ngModelChange)="fColorPrimario.set($event)" spellcheck="false" />
+          </span>
+        </label>
+        <label class="color">Color secundario (opcional)
+          <span class="crow">
+            <input type="color" [ngModel]="fColorSecundario() ?? '#000000'" (ngModelChange)="setColorSec($event)" />
+            <input class="hex" placeholder="sin definir" [ngModel]="fColorSecundario() ?? ''" (ngModelChange)="setColorSec($event)" spellcheck="false" />
+          </span>
+        </label>
+        <label class="wide">Plantilla de landing
+          <select [ngModel]="fPlantilla()" (ngModelChange)="fPlantilla.set($event)">
+            @for (p of plantillas; track p.value) { <option [value]="p.value">{{ p.label }} — {{ p.hint }}</option> }
+          </select>
+        </label>
+        <label>Dirección<input placeholder="Costanera 100, Rosario" [ngModel]="fDireccion()" (ngModelChange)="fDireccion.set($event)" /></label>
+        <label>WhatsApp<input placeholder="5493410000000" [ngModel]="fWhatsapp()" (ngModelChange)="fWhatsapp.set($event)" spellcheck="false" /></label>
+        <label class="wide">Hosts (coma o espacio)<input placeholder="riopadel.localhost riopadel.padel-hub.com.ar" [ngModel]="fHosts()" (ngModelChange)="fHosts.set($event)" spellcheck="false" /></label>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn primary" [disabled]="!canCreate()" (click)="crear()">
+          {{ creating() ? 'Creando…' : 'Crear club' }}
+        </button>
+        <span class="hint">El alta crea el club + complejo base + 2 canchas + horarios 08–23 + usuario owner.</span>
+      </div>
+    </section>
+  }
+
+  <!-- ===== Listado ===== -->
+  @if (loading()) {
+    <p class="muted">Cargando clubes…</p>
+  } @else {
+    <div class="table">
+      <div class="tr th">
+        <span class="c-club">Club</span>
+        <span class="c-estado">Estado</span>
+        <span class="c-colors">Colores</span>
+        <span class="c-acc">Acciones</span>
+      </div>
+      @for (t of tenants(); track t.id) {
+        @if (editingId() === t.id) {
+          <div class="tr edit">
+            <div class="e-grid">
+              <label>Nombre<input [ngModel]="eName()" (ngModelChange)="eName.set($event)" /></label>
+              <label>Estado
+                <select [ngModel]="eStatus()" (ngModelChange)="eStatus.set($event)">
+                  <option value="ACTIVE">Activo</option>
+                  <option value="INACTIVE">Inactivo</option>
+                </select>
+              </label>
+              <label>Plantilla
+                <select [ngModel]="ePlantilla()" (ngModelChange)="ePlantilla.set($event)">
+                  @for (p of plantillas; track p.value) { <option [value]="p.value">{{ p.label }}</option> }
+                </select>
+              </label>
+              <label class="color">Primario
+                <span class="crow">
+                  <input type="color" [ngModel]="eColorPrimario()" (ngModelChange)="eColorPrimario.set($event)" />
+                  <input class="hex" [ngModel]="eColorPrimario()" (ngModelChange)="eColorPrimario.set($event)" spellcheck="false" />
+                </span>
+              </label>
+              <label class="color">Secundario
+                <span class="crow">
+                  <input type="color" [ngModel]="eColorSecundario() ?? '#000000'" (ngModelChange)="setEditColorSec($event)" />
+                  <input class="hex" placeholder="sin definir" [ngModel]="eColorSecundario() ?? ''" (ngModelChange)="setEditColorSec($event)" spellcheck="false" />
+                </span>
+              </label>
+            </div>
+            <div class="e-actions">
+              <button type="button" class="btn primary sm" [disabled]="savingEdit()" (click)="saveEdit(t)">{{ savingEdit() ? 'Guardando…' : 'Guardar' }}</button>
+              <button type="button" class="btn ghost sm" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </div>
+        } @else {
+          <div class="tr">
+            <span class="c-club">
+              @if (logoSrc(t); as src) { <img class="logo" [src]="src" [alt]="t.name" /> }
+              <span class="club-txt"><b>{{ t.name }}</b><em>{{ t.slug }} · plantilla {{ t.plantilla || 'A' }}</em></span>
+            </span>
+            <span class="c-estado">
+              <span class="badge" [class.on]="t.status === 'ACTIVE'">{{ t.status === 'ACTIVE' ? 'Activo' : 'Inactivo' }}</span>
+            </span>
+            <span class="c-colors">
+              <span class="sw" [style.background]="t.colorPrimario || '#2747ff'" title="Primario"></span>
+              @if (t.colorSecundario) { <span class="sw" [style.background]="t.colorSecundario" title="Secundario"></span> }
+              @else { <span class="sw none" title="Sin secundario">—</span> }
+            </span>
+            <span class="c-acc">
+              @if (confirmDeleteId() === t.id) {
+                <span class="del-confirm">¿Borrar “{{ t.name }}” y todos sus datos?</span>
+                <button type="button" class="btn sm danger" [disabled]="deleting()" (click)="confirmDelete(t)">
+                  {{ deleting() ? 'Borrando…' : 'Sí, borrar' }}
+                </button>
+                <button type="button" class="btn ghost sm" [disabled]="deleting()" (click)="cancelDelete()">No</button>
+              } @else {
+                <button type="button" class="btn ghost sm" (click)="startEdit(t)">Editar</button>
+                <button type="button" class="btn sm" [class.warn]="t.status === 'ACTIVE'" (click)="toggleEstado(t)">
+                  {{ t.status === 'ACTIVE' ? 'Desactivar' : 'Activar' }}
+                </button>
+                <a class="btn ghost sm" [href]="tenantUrl(t)" target="_blank" rel="noopener">Ver</a>
+                <button type="button" class="btn ghost sm" (click)="startReset(t)">Resetear contraseña</button>
+                <button type="button" class="btn ghost sm warn" (click)="askDelete(t)">Borrar</button>
+              }
+            </span>
+          </div>
+          @if (resettingId() === t.id) {
+            <div class="tr reset-row">
+              <span class="reset-label">Nueva contraseña del owner de "{{ t.name }}"</span>
+              <input class="reset-input" type="text" placeholder="mínimo 8 caracteres"
+                [ngModel]="rPassword()" (ngModelChange)="rPassword.set($event)" />
+              <div class="e-actions">
+                <button type="button" class="btn primary sm" [disabled]="!canReset()" (click)="confirmReset(t)">
+                  {{ resetSaving() ? 'Reseteando…' : 'Resetear' }}
+                </button>
+                <button type="button" class="btn ghost sm" [disabled]="resetSaving()" (click)="cancelReset()">Cancelar</button>
+              </div>
+            </div>
+          }
+        }
+      }
+      @if (!tenants().length) { <p class="muted pad">No hay clubes todavía.</p> }
+    </div>
+  }
+</div>

@@ -1,3 +1,5 @@
+import { inject, REQUEST } from '@angular/core';
+import type { CanMatchFn } from '@angular/router';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -8,9 +10,22 @@ import { environment } from '../../../environments/environment';
  */
 const DEV_FALLBACK_SLUG = 'demo';
 
-/** Hostname actual, SSR-safe (en server/prerender no hay `window`). */
+/**
+ * Hostname actual (sin puerto), SSR-safe:
+ *  - en el browser sale de `location.hostname`;
+ *  - en SSR sale del header `Host` de la request entrante, vía el token `REQUEST` de Angular
+ *    (solo se provee cuando la ruta se renderiza con `RenderMode.Server`; en prerender/build
+ *    o si por algún motivo no está disponible, `inject(REQUEST)` resuelve `null` → host vacío
+ *    → apex → landing de marketing, el fallback más seguro).
+ *
+ * Debe invocarse dentro de un contexto de inyección (componente, interceptor, guard funcional):
+ * es lo que permite que la MISMA función sirva para decidir tenant-vs-marketing tanto en el
+ * browser como en el server, sin duplicar lógica de hostname en dos lugares.
+ */
 function currentHost(): string {
-  return typeof window !== 'undefined' ? window.location.hostname : '';
+  if (typeof window !== 'undefined') return window.location.hostname;
+  const host = inject(REQUEST)?.headers.get('host') ?? '';
+  return host.split(':')[0]; // el header Host puede traer ":puerto" (ej. "demo.localhost:4400")
 }
 
 /**
@@ -36,3 +51,12 @@ export function tenantSubdomain(host: string = currentHost()): string | null {
 export function currentTenantSlug(host: string = currentHost()): string {
   return tenantSubdomain(host) ?? DEV_FALLBACK_SLUG;
 }
+
+/**
+ * `canMatch` de la ruta '': con subdominio de tenant (`la-cancha.padel-hub.com.ar`) → la landing de
+ * reserva del club. Corre tanto en el browser como en el server (la ruta '' se renderiza con
+ * `RenderMode.Server`, ver app.routes.server.ts), así el HTML servido para cada subdominio ya sale
+ * con el componente correcto — sin el flash de marketing hasta hidratar y siendo indexable por host.
+ * Si no matchea (apex/www), el router sigue con la próxima ruta '' (marketing) en app.routes.ts.
+ */
+export const tenantHostMatch: CanMatchFn = () => tenantSubdomain() !== null;

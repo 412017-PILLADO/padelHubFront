@@ -15,7 +15,9 @@
   min-height: 100svh;
 }
 @media (min-width: 900px) {
-  :host { height: 100svh; overflow: hidden; }
+  /* Solo la plantilla A (poster) clava el viewport y scrollea internamente la columna derecha.
+     B y C usan scroll de documento normal. */
+  :host([data-tpl='A']) { height: 100svh; overflow: hidden; }
   .poster {
     height: 100svh;
     min-height: 0;
@@ -42,12 +44,15 @@
   .addr { margin-bottom: 8px; }
 }
 
-/* ===================== AFICHE (marca) ===================== */
+/* ===================== AFICHE (marca) =====================
+   Texto del afiche: usa --ink-on-accent (blanco u oscuro según la luminancia del color del tenant,
+   ver BrandingService/Landing.applyBranding) en vez de blanco fijo, para que un club con color claro
+   (amarillo, celeste) siga siendo legible (M11). Fallback #fff = comportamiento previo. */
 .poster-brand {
   position: relative;
   overflow: hidden;
   background: linear-gradient(150deg, var(--court), var(--court-deep));
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
   padding: clamp(24px, 3vw, 40px);
   isolation: isolate;
   display: flex;
@@ -60,7 +65,7 @@
   bottom: -0.18em;
   font-size: clamp(7rem, 16vw, 12rem);
   line-height: 0.8;
-  color: rgba(255, 255, 255, 0.08);
+  color: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
   z-index: 0;
   pointer-events: none;
   user-select: none;
@@ -69,24 +74,34 @@
 
 .pb-head { flex: none; }
 .brand { display: flex; align-items: center; gap: 12px; }
-.brand-mark { width: 34px; height: 34px; color: #fff; }
+/* Ícono paleta por defecto (sin logo): cuerpo del color de texto del afiche; el grip usa el
+   color secundario del tenant si está definido (se ve distinto al primario del fondo), si no, el mismo. */
+.brand-mark { width: 34px; height: 34px; color: var(--ink-on-accent, #fff); --paddle-grip: var(--court-2, currentColor); }
 .brand-mark svg { width: 100%; height: 100%; }
+/* Logo subido por el club (si lo tiene); si no, se muestra solo el nombre.
+   Chip claro detrás: el afiche es del color del tenant, así cualquier logo (oscuro o a color) se lee. */
+.brand-logo {
+  display: inline-flex; align-items: center;
+  background: #fff; border-radius: 10px;
+  padding: 8px 12px;
+}
+.brand-logo img { height: 40px; width: auto; max-width: 168px; object-fit: contain; display: block; }
 .logo-type .name {
   font-size: clamp(1.5rem, 2.6vw, 2.2rem);
   line-height: 0.92;
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
 }
-.logo-type .rule { height: 2px; width: 46px; background: rgba(255, 255, 255, 0.6); margin: 8px 0 6px; }
-.logo-type .sub { color: rgba(255, 255, 255, 0.85); }
+.logo-type .rule { height: 2px; width: 46px; background: color-mix(in srgb, var(--ink-on-accent, #fff) 60%, transparent); margin: 8px 0 6px; }
+.logo-type .sub { color: color-mix(in srgb, var(--ink-on-accent, #fff) 85%, transparent); }
 
 .poster-hero {
   flex: none;
   font-size: clamp(2rem, 3.4vw, 3rem);
   line-height: 0.92;
   margin: clamp(12px, 2vh, 22px) 0;
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
 }
-.poster-hero span { color: rgba(255, 255, 255, 0.55); }
+.poster-hero span { color: color-mix(in srgb, var(--ink-on-accent, #fff) 55%, transparent); }
 
 /* — Info (altura natural, SIN scroll: el afiche izquierdo queda fijo y se ve completo) — */
 .info {
@@ -97,50 +112,56 @@
   gap: 20px;
 }
 .info-h { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
-.info-h .t { color: rgba(255, 255, 255, 0.85); }
-.info-h .ln { flex: 1; height: 1px; background: rgba(255, 255, 255, 0.22); }
+.info-h .t { color: color-mix(in srgb, var(--ink-on-accent, #fff) 85%, transparent); }
+.info-h .ln { flex: 1; height: 1px; background: color-mix(in srgb, var(--ink-on-accent, #fff) 22%, transparent); }
 .hours { list-style: none; display: flex; flex-direction: column; gap: 6px; }
 .hours li { display: flex; justify-content: space-between; gap: 16px; font-size: 0.95rem; }
-.hours .d { color: rgba(255, 255, 255, 0.92); }
-.hours .h { color: rgba(255, 255, 255, 0.75); }
-.hours .closed { color: rgba(255, 255, 255, 0.45); }
-.addr { color: rgba(255, 255, 255, 0.9); margin-bottom: 12px; }
+.hours .d { color: color-mix(in srgb, var(--ink-on-accent, #fff) 92%, transparent); }
+.hours .h { color: color-mix(in srgb, var(--ink-on-accent, #fff) 75%, transparent); }
+.hours .closed { color: color-mix(in srgb, var(--ink-on-accent, #fff) 45%, transparent); }
+.addr { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); margin-bottom: 12px; }
 .map-stub {
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 25%, transparent);
   border-radius: var(--r);
   padding: 12px 14px;
   cursor: pointer;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.map-stub:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.5); }
+.map-stub:hover {
+  background: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ink-on-accent, #fff) 50%, transparent);
+}
 .mlabel { display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; }
 .mlabel svg { width: 18px; height: 18px; }
 .actions { display: flex; flex-direction: column; gap: 10px; }
 .link-row {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 25%, transparent);
   border-radius: var(--r);
   padding: 12px 14px;
   transition: background 0.15s ease, border-color 0.15s ease;
 }
-.link-row:hover { background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.5); }
+.link-row:hover {
+  background: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ink-on-accent, #fff) 50%, transparent);
+}
 .lr-l { display: inline-flex; align-items: center; gap: 12px; }
 .lr-ic { width: 22px; height: 22px; flex-shrink: 0; }
 .lr-t { display: block; font-weight: 600; font-size: 0.95rem; }
-.lr-s { display: block; font-size: 0.78rem; color: rgba(255, 255, 255, 0.7); }
+.lr-s { display: block; font-size: 0.78rem; color: color-mix(in srgb, var(--ink-on-accent, #fff) 70%, transparent); }
 .arr { width: 18px; height: 18px; opacity: 0.7; }
 
 .pb-foot {
   flex: none;
   margin-top: auto; /* empuja el footer al fondo del afiche cuando sobra alto */
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  border-top: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 18%, transparent);
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
   font-size: 0.78rem;
 }
-.pb-foot .cr { color: rgba(255, 255, 255, 0.7); }
-.pb-foot .panel-link { color: rgba(255, 255, 255, 0.9); font-weight: 600; }
-.pb-foot .panel-link:hover { color: #fff; text-decoration: underline; }
+.pb-foot .cr { color: color-mix(in srgb, var(--ink-on-accent, #fff) 70%, transparent); }
+.pb-foot .panel-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-weight: 600; }
+.pb-foot .panel-link:hover { color: var(--ink-on-accent, #fff); text-decoration: underline; }
 
 /* ===================== FLUJO ===================== */
 .booking-flow {
@@ -188,6 +209,17 @@
 .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .step-num { color: var(--court); font-size: 0.95rem; font-weight: 700; }
 .step-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
+/* Precio del turno (M2), junto al selector de horario cuando el club lo muestra. */
+.step-price {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--court-deep);
+  background: var(--court-soft);
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
 .step-hint { color: var(--ink-faint); font-size: 0.95rem; }
 
 /* la grilla de horarios es el bloque más alto; vive dentro del scroll de .flow-body */
@@ -209,11 +241,11 @@
 .chip[aria-pressed='true'] {
   background: var(--court);
   border-color: var(--court);
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
 }
 .chip .c-label { font-weight: 700; font-size: 1rem; }
 .chip .c-date { font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
-.chip[aria-pressed='true'] .c-date { color: rgba(255, 255, 255, 0.8); }
+.chip[aria-pressed='true'] .c-date { color: color-mix(in srgb, var(--ink-on-accent, #fff) 80%, transparent); }
 
 /* — Calendario — */
 /* El día es el contexto de posicionamiento del calendario (popover flotante). */
@@ -255,7 +287,7 @@
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }
 .slot:hover:not(:disabled) { border-color: var(--court); transform: translateY(-1px); }
-.slot[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: #fff; }
+.slot[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
 .slot:disabled {
   color: var(--ink-faint);
   text-decoration: line-through;
@@ -362,13 +394,29 @@
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); }
 .field input { width: 100%; }
+.field input[aria-invalid='true'] { border-color: var(--clay); }
+.field-hint { font-size: 0.78rem; color: var(--clay); }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* Recap compacto del turno, junto al botón de confirmar (M10) */
+.recap-mini {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 4px 14px;
+}
+.recap-mini-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; }
+.recap-mini-row + .recap-mini-row { border-top: 1px solid var(--line); }
+.recap-mini-row .k { color: var(--ink-dim); font-size: 0.85rem; }
+.recap-mini-row .v { font-weight: 700; font-size: 0.9rem; }
+
 .confirm {
   height: 50px;
   border: none;
   border-radius: var(--r);
   background: var(--court);
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
   font-weight: 700;
   font-size: 1rem;
   box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--court) 80%, transparent);
@@ -376,6 +424,7 @@
 }
 .confirm:hover:not(:disabled) { background: var(--court-deep); transform: translateY(-1px); }
 .confirm:disabled { background: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
+.confirm-hint { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-dim); text-align: center; }
 
 /* ===================== ÉXITO =====================
    Vive DENTRO de la columna derecha (.booking-flow): el afiche izquierdo queda fijo y el éxito no
@@ -445,7 +494,7 @@
 .sena-wa {
   display: inline-flex; align-items: center; justify-content: center;
   margin-top: 12px; width: 100%; height: 44px;
-  background: var(--court); color: #fff;
+  background: var(--court); color: var(--ink-on-accent, #fff);
   border-radius: var(--r); font-weight: 700; text-decoration: none;
   transition: filter 0.15s ease;
 }
@@ -466,7 +515,7 @@
 .sa-copy {
   flex: none;
   height: 38px; padding: 0 16px;
-  background: var(--court); color: #fff;
+  background: var(--court); color: var(--ink-on-accent, #fff);
   border: none; border-radius: var(--r);
   font-weight: 700; font-size: 0.85rem;
   cursor: pointer;
@@ -489,7 +538,7 @@
   .pb-head {
     order: 1;
     background: linear-gradient(150deg, var(--court), var(--court-deep));
-    color: #fff;
+    color: var(--ink-on-accent, #fff);
     padding: 30px clamp(18px, 6vw, 26px) 26px;
   }
   .logo-type .name { font-size: clamp(2rem, 8.5vw, 2.8rem); }
@@ -509,14 +558,14 @@
     flex: 0 0 auto;
     margin-top: 0;
     background: linear-gradient(150deg, var(--court-deep), var(--court));
-    color: #fff;
+    color: var(--ink-on-accent, #fff);
     padding: 28px clamp(18px, 6vw, 26px) 18px;
   }
   .pb-foot {
     order: 4;
     margin-top: 0;
     background: var(--court-deep);
-    color: #fff;
+    color: var(--ink-on-accent, #fff);
     padding: 14px clamp(18px, 6vw, 26px) 26px;
   }
 
@@ -527,4 +576,137 @@
   .times { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
   .slot { padding: 12px 8px; }
   .form { max-width: none; }
+}
+
+/* ===================================================================
+   MARCA + TARJETAS DE INFO compartidas por las plantillas B y C
+   =================================================================== */
+.tpl-mark { display: inline-flex; width: 40px; height: 40px; color: var(--court); --paddle-grip: var(--court-2, var(--court-deep)); }
+.tpl-mark svg { width: 100%; height: 100%; }
+.tpl-logo { display: inline-flex; align-items: center; }
+.tpl-logo img { height: 40px; width: auto; max-width: 160px; object-fit: contain; display: block; }
+
+.ic-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; }
+.ic-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ic-ic { width: 32px; height: 32px; border-radius: 9px; background: var(--court-soft); color: var(--court); display: grid; place-items: center; flex: none; }
+.ic-ic svg { width: 17px; height: 17px; }
+.ic-t { font-weight: 700; font-size: 0.98rem; color: var(--ink); }
+.ic-hours { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.ic-hours li { display: flex; justify-content: space-between; gap: 14px; font-size: 0.9rem; }
+.ic-hours .d { color: var(--ink-dim); }
+.ic-hours .h { color: var(--ink); font-weight: 600; }
+.ic-hours .closed { color: var(--ink-faint); }
+.ic-addr { color: var(--ink-dim); font-size: 0.92rem; margin-bottom: 10px; }
+.ic-links { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.ic-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0;
+  cursor: pointer; color: var(--court-deep); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.ic-link:hover { text-decoration: underline; }
+
+/* ===================================================================
+   PLANTILLA B · Liquid Glass — paneles frosted translúcidos sobre una malla de luz teñida por el
+   color del tenant. El color es luz ambiente, no bloques; la identidad es el vidrio, no el tono.
+   =================================================================== */
+.tpl-b {
+  min-height: 100svh; display: flex; flex-direction: column; color: var(--ink);
+  background:
+    radial-gradient(58% 48% at 12% -5%, color-mix(in srgb, var(--court) 26%, transparent), transparent 70%),
+    radial-gradient(52% 42% at 92% 12%, color-mix(in srgb, var(--court-2, var(--court)) 22%, transparent), transparent 72%),
+    radial-gradient(75% 60% at 50% 108%, color-mix(in srgb, var(--court) 16%, transparent), transparent 70%),
+    var(--paper);
+  background-attachment: fixed;
+}
+/* pilar del vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno */
+%b-glass {
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
+  border: 1px solid color-mix(in srgb, #fff 60%, transparent);
+  box-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.b-nav {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; gap: 16px;
+  padding: 13px clamp(16px, 5vw, 40px);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
+  border-bottom: 1px solid color-mix(in srgb, #fff 45%, transparent);
+}
+.b-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.b-brandline .tpl-mark { width: 30px; height: 30px; }
+.b-brandline .tpl-logo img { height: 32px; }
+.b-brandname { font-size: 1.12rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.b-hero { text-align: center; padding: clamp(48px, 9vw, 96px) clamp(16px, 5vw, 40px) clamp(28px, 5vw, 52px); }
+.b-hero-mark { display: inline-flex; margin-bottom: 18px; }
+.b-hero-mark .tpl-mark, .b-hero-mark .tpl-logo { @extend %b-glass; border-radius: 22px; padding: 14px; }
+.b-hero-mark .tpl-mark { width: 58px; height: 58px; }
+.b-hero-mark .tpl-logo img { height: 54px; max-width: 220px; }
+.b-title { font-size: clamp(2.4rem, 7vw, 3.6rem); line-height: 1.0; color: var(--ink); letter-spacing: -0.03em; }
+.b-lede { margin: 14px auto 0; max-width: 42ch; color: var(--ink-dim); font-size: clamp(1rem, 2.5vw, 1.15rem); }
+.b-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
+.b-btn { display: inline-flex; align-items: center; justify-content: center; height: 50px; padding: 0 28px;
+  border-radius: 14px; font-weight: 700; text-decoration: none; font-size: 1rem; transition: transform 0.15s ease; }
+.b-btn:hover { transform: translateY(-1px); }
+.b-btn.primary { background: var(--court); color: var(--ink-on-accent, #fff);
+  box-shadow: 0 14px 28px -10px color-mix(in srgb, var(--court) 75%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
+.b-btn.ghost { @extend %b-glass; color: var(--ink); }
+
+.b-book { width: 100%; max-width: 880px; margin: 0 auto;
+  padding: clamp(8px, 3vw, 28px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px); scroll-margin-top: 76px; }
+.tpl-b .booking-flow { @extend %b-glass; border-radius: 28px; overflow: visible; }
+
+.b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }
+.tpl-b .ic-card { @extend %b-glass; border-radius: 20px; }
+.tpl-b .ic-ic { background: color-mix(in srgb, var(--court) 16%, transparent); }
+.b-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
+  border-top: 1px solid color-mix(in srgb, #fff 40%, transparent);
+  display: flex; justify-content: space-between; gap: 12px; font-size: 0.78rem; color: var(--ink-faint); }
+.b-foot a { color: var(--ink-dim); text-decoration: none; }
+.b-foot a:hover { color: var(--court-deep); }
+
+/* ===================================================================
+   PLANTILLA C · Minimalista — rail claro con hairlines, mucho blanco, mono; el color del tenant
+   aparece solo como acento (marca + item activo). El acceso al panel va abajo, discreto.
+   =================================================================== */
+.tpl-c { min-height: 100svh; background: var(--paper); color: var(--ink); }
+.c-rail { background: var(--surface); border-right: 1px solid var(--line);
+  padding: 26px 22px; display: flex; flex-direction: column; gap: 24px; }
+.c-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.c-brandline .tpl-mark { width: 30px; height: 30px; }
+.c-brandline .tpl-logo img { height: 30px; max-width: 140px; }
+.c-brandname { font-size: 1.02rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c-nav { display: flex; flex-direction: column; gap: 2px; }
+.c-navitem { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
+  color: var(--ink-dim); text-decoration: none; font-weight: 600; font-size: 0.92rem;
+  transition: background 0.14s ease, color 0.14s ease; }
+.c-navitem:hover { background: var(--paper); color: var(--ink); }
+.c-navitem.is-active { color: var(--ink); background: color-mix(in srgb, var(--court) 9%, transparent); }
+.c-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--court); flex: none; opacity: 0.35; }
+.c-navitem.is-active .c-dot { opacity: 1; }
+.c-main { min-width: 0; display: flex; flex-direction: column;
+  padding: clamp(20px, 3vw, 40px) clamp(16px, 3vw, 40px) clamp(24px, 4vw, 44px);
+  gap: clamp(20px, 4vw, 36px); }
+.c-book { width: 100%; max-width: 920px; scroll-margin-top: 16px; }
+.tpl-c .booking-flow { overflow: visible; padding: 0; }
+.c-info { width: 100%; max-width: 920px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px; scroll-margin-top: 16px; }
+.tpl-c .ic-card { border-radius: 14px; }
+.tpl-c .ic-ic { background: color-mix(in srgb, var(--court) 10%, transparent); }
+.c-foot { margin-top: 8px; padding-top: 18px; border-top: 1px solid var(--line);
+  display: flex; justify-content: space-between; gap: 12px; font-size: 0.78rem; color: var(--ink-faint); }
+.c-foot a { color: var(--ink-dim); text-decoration: none; }
+.c-foot a:hover { color: var(--court-deep); }
+
+@media (min-width: 900px) {
+  .tpl-c { display: grid; grid-template-columns: 250px 1fr; }
+  .c-rail { position: sticky; top: 0; height: 100svh; }
+}
+@media (max-width: 899px) {
+  .c-rail { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px 16px; gap: 10px 14px;
+    border-right: none; border-bottom: 1px solid var(--line); }
+  .c-brandline { flex: 1 1 auto; }
+  .c-nav { flex-direction: row; flex-basis: 100%; gap: 6px; }
+  .c-navitem { padding: 7px 12px; }
 }

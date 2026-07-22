@@ -4,9 +4,13 @@ import {
   computed,
   inject,
   signal,
+  PLATFORM_ID,
 } from '@angular/core';
+import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { environment } from '../../../environments/environment';
 import { RouterLink } from '@angular/router';
+import { Meta, Title } from '@angular/platform-browser';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
@@ -22,6 +26,7 @@ import {
   PublicConfig,
   Slot,
 } from '../../core/api/booking.service';
+import { inkOnAccent } from '../../core/branding/branding.service';
 
 const MES_ABBR = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
@@ -30,6 +35,8 @@ const MES_ABBR = [
 const DOWS = [
   'Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado',
 ];
+/** Abreviatura del día para el recap compacto ("Vie 24/07"). Índice = Date.getDay() (0=Domingo). */
+const DOW_ABBR = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 /** diaSemana 0..6 → Lunes..Domingo (matchea el contrato de /public/config). */
 const DIA_SEMANA = [
   'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
@@ -81,21 +88,35 @@ function sameDay(a: Date | null, b: Date | null): boolean {
   selector: 'app-landing',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, DatePickerModule, InputTextModule, ToastModule],
+  imports: [FormsModule, RouterLink, DatePickerModule, InputTextModule, ToastModule, NgTemplateOutlet],
   providers: [MessageService],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
+  host: { '[attr.data-tpl]': 'plantilla()' },
 })
 export class Landing {
   private readonly booking = inject(BookingService);
   private readonly messages = inject(MessageService);
   private readonly primeng = inject(PrimeNG);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly title = inject(Title);
+  private readonly meta = inject(Meta);
 
   // ── Config pública del tenant (GET /public/config) ────────────────
   readonly config = signal<PublicConfig | null>(null);
 
   readonly tenantNombre = computed(() => this.config()?.complejo.nombre ?? 'Tu club');
   readonly tenantPrimerNombre = computed(() => this.tenantNombre().split(/\s+/)[0]);
+
+  /** Plantilla de landing elegida por el club: 'A' (poster), 'B' (hero), 'C' (app). Default 'A'. */
+  readonly plantilla = computed(() => (this.config()?.tenant.plantilla ?? 'A').toUpperCase());
+
+  /** Logo del club: si el tenant tiene uno, la URL absoluta lista para el <img>; si no, null. */
+  readonly logoSrc = computed(() => {
+    const u = this.config()?.tenant.logoUrl;
+    if (!u) return null;
+    return /^https?:\/\//i.test(u) ? u : environment.apiBase + u;
+  });
 
   readonly mostrarPrecios = computed(() => this.config()?.tenant.mostrarPrecios ?? false);
   readonly requiereTelefono = computed(() => this.config()?.tenant.requiereTelefono ?? true);
@@ -237,14 +258,75 @@ export class Landing {
     () => this.currentSlot()?.canchasLibres ?? []
   );
 
-  readonly formValid = computed(() => {
-    const nombreOk = this.nombre().trim().length >= 2;
-    if (!this.requiereTelefono()) return nombreOk;
-    const phoneDigits = this.whatsapp().replace(/\D/g, '');
-    return nombreOk && phoneDigits.length >= 6;
+  // Validación por campo (antes era silenciosa: formValid las combinaba sin exponer el motivo).
+  readonly nombreValid = computed(() => this.nombre().trim().length >= 2);
+  readonly whatsappValid = computed(() => {
+    if (!this.requiereTelefono()) return true;
+    return this.whatsapp().replace(/\D/g, '').length >= 6;
   });
+  readonly formValid = computed(() => this.nombreValid() && this.whatsappValid());
   readonly canConfirm = computed(() => this.canchaDone() && this.formValid());
   readonly formOpen = computed(() => this.canchaDone());
+
+  /** Tocado = el campo perdió el foco al menos una vez; recién ahí mostramos su hint de error. */
+  readonly nombreTouched = signal(false);
+  readonly whatsappTouched = signal(false);
+
+  /** Por qué está deshabilitado "Confirmar turno" (null si puede confirmarse). Solo considera los
+   * campos ya tocados, para no arrancar la pantalla con errores antes de que el cliente escriba. */
+  readonly confirmBlockedReason = computed(() => {
+    if (!this.nombreValid() && this.nombreTouched()) return 'Ingresá tu nombre (mínimo 2 letras).';
+    if (!this.whatsappValid() && this.whatsappTouched()) {
+      return 'Ingresá un WhatsApp válido (mínimo 6 dígitos).';
+    }
+    if (!this.formValid()) return 'Completá tu nombre' + (this.requiereTelefono() ? ' y WhatsApp.' : '.');
+    return null;
+  });
+
+  /**
+   * Precio a mostrar junto al horario y en el recap (M2): con una cancha puntual elegida, el precio
+   * exacto de esa cancha; con autoasignación o "Cualquiera disponible", el precio exacto si todas las
+   * canchas activas cobran lo mismo (modo GENERAL en el back), o "desde $mínimo" si varía por cancha
+   * (modo POR_CANCHA) — sin necesidad de exponer el modo en sí: alcanza con comparar los precios ya
+   * presentes en `config().canchas`. null si el club no muestra precios o ninguna cancha tiene precio.
+   */
+  readonly precioResumen = computed<{ texto: string; desde: boolean } | null>(() => {
+    if (!this.mostrarPrecios()) return null;
+    const canchas = this.config()?.canchas ?? [];
+    const seleccion = this.selectedCancha();
+    if (seleccion !== null && seleccion !== this.ANY) {
+      const c = canchas.find((x) => x.id === seleccion);
+      const precio = c ? this.precioTurno(c) : null;
+      return precio ? { texto: `$${precio}`, desde: false } : null;
+    }
+    const precios = canchas
+      .map((c) => c.precioHora)
+      .filter((p): p is number => p != null && p > 0);
+    if (!precios.length) return null;
+    const min = Math.min(...precios);
+    const max = Math.max(...precios);
+    const total = Math.round((min * this.duracion()) / 60).toLocaleString('es-AR');
+    return min === max ? { texto: `$${total}`, desde: false } : { texto: `desde $${total}`, desde: true };
+  });
+
+  /** Recap compacto del turno elegido, junto al botón "Confirmar turno" (M10). */
+  readonly recap = computed(() => {
+    const day = this.selectedDay();
+    const hora = this.selectedTime();
+    if (!day || !hora) return null;
+    const cancha = !this.showCancha()
+      ? 'Se asigna al confirmar'
+      : this.selectedCancha() === this.ANY
+        ? 'Cualquiera disponible'
+        : (this.canchasDelSlot().find((c) => c.id === this.selectedCancha())?.nombre ?? 'Se asigna al confirmar');
+    return {
+      dia: this.recapDay(day),
+      hora: `${hora} hs`,
+      duracion: this.duracion(),
+      cancha,
+      precio: this.precioResumen(),
+    };
+  });
 
   readonly timeHint = computed(() => {
     if (!this.selectedDay()) return 'Elegí primero el día.';
@@ -267,6 +349,8 @@ export class Landing {
     this.booking.config().subscribe({
       next: (cfg) => {
         this.config.set(cfg);
+        this.applyBranding(cfg);
+        this.applySeo(cfg);
         this.duracion.set(cfg.duracionDefault);
         this.initDefaultDay();
       },
@@ -280,6 +364,44 @@ export class Landing {
         });
       },
     });
+  }
+
+  /**
+   * Aplica la colorimetría del tenant al :root: el color primario y sus derivados (deep/soft, con
+   * color-mix). Así cada club sale con su propio color sin tocar los estilos. Solo en browser
+   * (en SSR no hay document). El logo se resuelve aparte vía logoSrc().
+   */
+  private applyBranding(cfg: PublicConfig): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const root = document.documentElement.style;
+    const color = cfg.tenant.colorPrimario?.trim();
+    if (color) {
+      root.setProperty('--court', color);
+      root.setProperty('--court-deep', `color-mix(in srgb, ${color} 82%, #000)`);
+      root.setProperty('--court-soft', `color-mix(in srgb, ${color} 12%, #fff)`);
+      // M11: texto legible sobre el primario (chips/botones/afiche) si el club usa un color claro.
+      root.setProperty('--ink-on-accent', inkOnAccent(color));
+    }
+    // Color secundario (acento; ej. el grip de la paleta). Si no hay, el CSS cae al primario.
+    const colorSec = cfg.tenant.colorSecundario?.trim();
+    if (colorSec) root.setProperty('--court-2', colorSec);
+    else root.removeProperty('--court-2');
+  }
+
+  /**
+   * Title + meta description por club, para que cada subdominio salga indexado con SU nombre (no el
+   * de Padel-HUB, que es lo que trae index.html por defecto). Corre en SSR también: el fetch de
+   * `/public/config` no está gateado a browser, así que esto ya queda seteado en el HTML servido
+   * (la ruta '' se renderiza con RenderMode.Server — ver app.routes.server.ts).
+   */
+  private applySeo(cfg: PublicConfig): void {
+    const nombre = cfg.complejo.nombre?.trim() || cfg.tenant.nombre?.trim() || 'Tu club';
+    this.title.setTitle(`${nombre} — Reservá tu cancha`);
+    const direccion = cfg.complejo.direccion?.trim();
+    const desc = direccion
+      ? `Reservá tu cancha en ${nombre} online, en segundos. ${direccion}.`
+      : `Reservá tu cancha en ${nombre} online, en segundos.`;
+    this.meta.updateTag({ name: 'description', content: desc });
   }
 
   /** Proba HOY/MAÑANA/PASADO con la duración elegida; arranca en el primero con disponibilidad. */
@@ -477,6 +599,13 @@ export class Landing {
 
   private fmtRecapDay(d: Date): string {
     return `${DOWS[d.getDay()]} ${d.getDate()} ${MES_ABBR[d.getMonth()]}`;
+  }
+
+  /** Fecha compacta para el recap del turno antes de confirmar (M10), ej. "Vie 24/07". */
+  private recapDay(d: Date): string {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    return `${DOW_ABBR[d.getDay()]} ${dd}/${mm}`;
   }
 
   backHome(): void {

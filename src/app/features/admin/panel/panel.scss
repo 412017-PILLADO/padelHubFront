@@ -56,6 +56,11 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .chip:hover { border-color: var(--court); }
 .chip[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: #fff; }
 .chip.sm { padding: 7px 12px; font-size: 0.85rem; }
+/* El filtro por cancha usa el color secundario del tenant (acento sutil); cae al primario si no hay. */
+.cancha-filter .chip.sm[aria-pressed='true'] {
+  background: var(--court-2, var(--court));
+  border-color: var(--court-2, var(--court));
+}
 
 /* Buscador por nombre */
 .search { margin-top: 18px; }
@@ -108,6 +113,15 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .t-info { flex: 1; min-width: 0; }
 .t-cliente { font-weight: 700; }
 .t-meta { font-size: 0.82rem; color: var(--ink-dim); }
+
+/* Badge "Seña pendiente": mismo tono de alerta suave que el banner de pendientes. */
+.badge-pend {
+  display: inline-flex; align-items: center; margin-left: 8px;
+  padding: 2px 8px; border-radius: 999px;
+  background: color-mix(in srgb, var(--clay) 14%, #fff);
+  color: var(--clay); font-size: 0.68rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.03em; vertical-align: middle;
+}
 .t-actions { display: flex; gap: 8px; }
 .act {
   display: grid; place-items: center;
