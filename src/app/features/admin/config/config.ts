@@ -25,6 +25,15 @@ import {
   DiaConfig,
   ReservaAfectada,
 } from '../../../core/api/agenda-config.service';
+
+/** Franja horaria de precio especial en edición: `tempId` es un id local (no viaja al back),
+ *  necesario para trackear filas nuevas que todavía no tienen `id` del servidor. */
+interface FranjaEdit {
+  tempId: number;
+  desde: string;
+  hasta: string;
+  precioHora: number | null;
+}
 import { CanchaConfig } from '../../../core/api/booking.service';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
 import { BrandingService } from '../../../core/branding/branding.service';
@@ -172,6 +181,10 @@ export class ConfigComponent {
   readonly precioModo = signal<'GENERAL' | 'POR_CANCHA'>('POR_CANCHA');
   readonly precioHoraGeneral = signal<number | null>(null);
 
+  // ── Precio por horario (franjas) ──
+  readonly precioFranjas = signal<FranjaEdit[]>([]);
+  private franjaSeq = 0;
+
   // ── Seña ──
   readonly requiereSena = signal(false);
   readonly senaMonto = signal<number | null>(null);
@@ -248,6 +261,34 @@ export class ConfigComponent {
     const p = this.precioHoraGeneral();
     return p == null || !(p > 0);
   });
+  /** Mensaje del primer problema en las franjas de precio por horario (espeja las validaciones
+   *  del back: precio > 0, desde < hasta con medianoche, sin solapes entre franjas). null si está OK. */
+  readonly precioFranjasError = computed<string | null>(() => {
+    const franjas = this.precioFranjas();
+    for (const f of franjas) {
+      if (f.precioHora == null || !(f.precioHora > 0)) {
+        return 'Cargá un precio mayor a $0 en todas las franjas horarias';
+      }
+    }
+    for (const f of franjas) {
+      if (f.hasta !== '00:00' && f.desde >= f.hasta) {
+        return 'En cada franja horaria, el desde debe ser antes del hasta';
+      }
+    }
+    const rangos = franjas.map((f) => ({
+      from: hhmmToMin(f.desde),
+      to: f.hasta === '00:00' ? 24 * 60 : hhmmToMin(f.hasta),
+    }));
+    for (let i = 0; i < rangos.length; i++) {
+      for (let j = i + 1; j < rangos.length; j++) {
+        if (rangos[i].from < rangos[j].to && rangos[j].from < rangos[i].to) {
+          return 'Hay franjas horarias que se superponen';
+        }
+      }
+    }
+    return null;
+  });
+  readonly invalidPrecioFranjas = computed(() => this.precioFranjasError() !== null);
   readonly invalidSenaMonto = computed(() => {
     if (!this.requiereSena()) return false;
     const m = this.senaMonto();
@@ -269,7 +310,7 @@ export class ConfigComponent {
   readonly canSave = computed(
     () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones()
       && !this.invalidHorario() && !this.invalidBreak()
-      && !this.invalidPrecio() && !this.invalidSena() && !this.saving()
+      && !this.invalidPrecio() && !this.invalidPrecioFranjas() && !this.invalidSena() && !this.saving()
   );
   readonly saveState = computed(() => {
     if (this.invalidHorario()) return 'Revisá el horario: la apertura debe ser antes del cierre';
@@ -277,6 +318,7 @@ export class ConfigComponent {
     if (this.invalidPaso()) return 'Revisá el paso (5–180 min)';
     if (this.invalidDuraciones()) return 'Elegí el turno principal';
     if (this.invalidPrecio()) return 'Cargá el precio general por hora';
+    if (this.invalidPrecioFranjas()) return this.precioFranjasError() ?? 'Revisá el precio por horario';
     if (this.invalidSenaMonto()) return 'Cargá el monto de la seña';
     if (this.invalidSenaAlias()) return 'Cargá el alias de la seña';
     return this.dirty() ? 'Cambios sin guardar' : 'Todo guardado';
@@ -473,6 +515,14 @@ export class ConfigComponent {
     this.permitirOtras.set(cfg.permitirOtrasDuraciones ?? true);
     this.precioModo.set(cfg.precioModo ?? 'POR_CANCHA');
     this.precioHoraGeneral.set(cfg.precioHoraGeneral ?? null);
+    this.precioFranjas.set(
+      (cfg.precioFranjas ?? []).map((f) => ({
+        tempId: ++this.franjaSeq,
+        desde: f.desde,
+        hasta: f.hasta,
+        precioHora: f.precioHora,
+      }))
+    );
     this.requiereSena.set(cfg.requiereSena ?? false);
     this.senaMonto.set(cfg.senaMonto ?? null);
     this.senaAlias.set(cfg.senaAlias ?? null);
@@ -564,6 +614,39 @@ export class ConfigComponent {
   // El input es type="number": ngModelChange emite number | null (NumberValueAccessor), no string.
   onPrecioGeneralInput(value: number | null): void {
     this.precioHoraGeneral.set(value == null || !Number.isFinite(value) ? null : Math.round(value));
+    this.markDirty();
+  }
+
+  // ── Precio por horario (franjas) ──
+  addFranja(): void {
+    this.precioFranjas.update((list) => [
+      ...list,
+      { tempId: ++this.franjaSeq, desde: '15:00', hasta: '18:00', precioHora: null },
+    ]);
+    this.markDirty();
+  }
+  removeFranja(tempId: number): void {
+    this.precioFranjas.update((list) => list.filter((f) => f.tempId !== tempId));
+    this.markDirty();
+  }
+  setFranjaDesde(tempId: number, value: string): void {
+    this.precioFranjas.update((list) =>
+      list.map((f) => (f.tempId === tempId ? { ...f, desde: value } : f))
+    );
+    this.markDirty();
+  }
+  setFranjaHasta(tempId: number, value: string): void {
+    this.precioFranjas.update((list) =>
+      list.map((f) => (f.tempId === tempId ? { ...f, hasta: value } : f))
+    );
+    this.markDirty();
+  }
+  // El input es type="number": ngModelChange emite number | null (NumberValueAccessor), no string.
+  onFranjaPrecioInput(tempId: number, value: number | null): void {
+    const precioHora = value == null || !Number.isFinite(value) ? null : Math.round(value);
+    this.precioFranjas.update((list) =>
+      list.map((f) => (f.tempId === tempId ? { ...f, precioHora } : f))
+    );
     this.markDirty();
   }
 
@@ -863,6 +946,16 @@ export class ConfigComponent {
           return this.api.putPrecios({
             precioModo: this.precioModo(),
             precioHoraGeneral: this.precioHoraGeneral(),
+          });
+        }),
+        concatMap(() => {
+          seccion = 'Precio por horario';
+          return this.api.putPrecioFranjas({
+            franjas: this.precioFranjas().map((f) => ({
+              desde: f.desde,
+              hasta: f.hasta,
+              precioHora: f.precioHora as number,
+            })),
           });
         }),
         concatMap(() => {

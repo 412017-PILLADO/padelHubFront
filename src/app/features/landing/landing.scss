@@ -370,8 +370,16 @@
 }
 .cc-chip svg { width: 14px; height: 14px; }
 .cc-chip.lit { color: #9a6412; border-color: rgba(214, 150, 40, 0.42); background: rgba(255, 224, 160, 0.8); }
-.cc-price { align-self: flex-end; flex: none; }
+.cc-price { align-self: flex-end; flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .cc-price .amount { font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--plan-ink); }
+/* Precio pisado por una franja horaria especial (M-precio-franjas): chip discreto, misma línea
+   visual que .cc-chip.lit (ámbar) para no sumar un color nuevo al sistema. */
+.cc-price-tag {
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: #9a6412; background: rgba(255, 224, 160, 0.85);
+  border: 1px solid rgba(214, 150, 40, 0.42); border-radius: 999px;
+  padding: 2px 8px; white-space: nowrap;
+}
 
 /* Seleccionada */
 .ccard.is-selected { outline: 3px solid var(--court); outline-offset: -2px; }

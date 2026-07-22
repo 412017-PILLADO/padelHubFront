@@ -285,29 +285,65 @@ export class Landing {
 
   /**
    * Precio a mostrar junto al horario y en el recap (M2): con una cancha puntual elegida, el precio
-   * exacto de esa cancha; con autoasignación o "Cualquiera disponible", el precio exacto si todas las
-   * canchas activas cobran lo mismo (modo GENERAL en el back), o "desde $mínimo" si varía por cancha
-   * (modo POR_CANCHA) — sin necesidad de exponer el modo en sí: alcanza con comparar los precios ya
-   * presentes en `config().canchas`. null si el club no muestra precios o ninguna cancha tiene precio.
+   * EFECTIVO de esa cancha en el slot elegido (ya viene con la franja horaria aplicada por el back);
+   * con autoasignación o "Cualquiera disponible" y un horario ya elegido, el precio exacto si todas
+   * las canchas del slot cobran lo mismo, o "desde $mínimo" si varía por cancha — usando siempre los
+   * precios efectivos del slot, no el precio estático de la config pública. Antes de elegir horario
+   * (todavía no hay slot), cae al precio estático por cancha, considerando también el mínimo de las
+   * franjas horarias configuradas (`precioFranjas`): puede haber un horario más barato que el precio
+   * base. null si el club no muestra precios o no hay ningún precio cargado.
    */
   readonly precioResumen = computed<{ texto: string; desde: boolean } | null>(() => {
     if (!this.mostrarPrecios()) return null;
-    const canchas = this.config()?.canchas ?? [];
     const seleccion = this.selectedCancha();
+
     if (seleccion !== null && seleccion !== this.ANY) {
-      const c = canchas.find((x) => x.id === seleccion);
+      // Cancha puntual elegida: precio efectivo de esa cancha en el slot seleccionado.
+      const c = this.canchasDelSlot().find((x) => x.id === seleccion);
       const precio = c ? this.precioTurno(c) : null;
       return precio ? { texto: `$${precio}`, desde: false } : null;
     }
-    const precios = canchas
+
+    if (this.selectedTime() !== null) {
+      // Horario ya elegido (autoasignación / "cualquiera disponible"): precios efectivos del slot.
+      const precios = this.canchasDelSlot()
+        .map((c) => c.precioHora)
+        .filter((p): p is number => p != null && p > 0);
+      if (!precios.length) return null;
+      const min = Math.min(...precios);
+      const max = Math.max(...precios);
+      const total = Math.round((min * this.duracion()) / 60).toLocaleString('es-AR');
+      return min === max ? { texto: `$${total}`, desde: false } : { texto: `desde $${total}`, desde: true };
+    }
+
+    // Sin horario elegido todavía: precio estático por cancha + el mínimo de las franjas horarias
+    // (puede haber un horario puntual más barato que el precio base de cualquier cancha).
+    const canchas = this.config()?.canchas ?? [];
+    const franjas = this.config()?.precioFranjas ?? [];
+    const basePrecios = canchas
       .map((c) => c.precioHora)
       .filter((p): p is number => p != null && p > 0);
+    const franjaPrecios = franjas
+      .map((f) => f.precioHora)
+      .filter((p): p is number => p != null && p > 0);
+    const precios = [...basePrecios, ...franjaPrecios];
     if (!precios.length) return null;
     const min = Math.min(...precios);
     const max = Math.max(...precios);
     const total = Math.round((min * this.duracion()) / 60).toLocaleString('es-AR');
-    return min === max ? { texto: `$${total}`, desde: false } : { texto: `desde $${total}`, desde: true };
+    // Si hay franjas cargadas el precio siempre puede variar según el horario, aunque hoy el
+    // mínimo coincida con el máximo: mostramos "desde" para no prometer un precio fijo.
+    const desde = min !== max || franjaPrecios.length > 0;
+    return desde ? { texto: `desde $${total}`, desde: true } : { texto: `$${total}`, desde: false };
   });
+
+  /** true si el precio efectivo de esta cancha en el slot difiere del precio habitual (estático) de
+   *  esa misma cancha en la config pública: indica que está pisado por una franja horaria especial. */
+  precioEsEspecial(c: CanchaLibre): boolean {
+    if (c.precioHora == null) return false;
+    const base = this.config()?.canchas.find((x) => x.id === c.id)?.precioHora ?? null;
+    return base != null && base !== c.precioHora;
+  }
 
   /** Recap compacto del turno elegido, junto al botón "Confirmar turno" (M10). */
   readonly recap = computed(() => {

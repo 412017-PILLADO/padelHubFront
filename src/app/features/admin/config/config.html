@@ -234,6 +234,47 @@
     }
   </section>
 
+  <!-- ===== PRECIO POR HORARIO ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Precio por horario</span><span class="ln"></span></div>
+    <p class="block-sub">El precio por horario pisa el precio general y el de cada cancha en esa franja.
+      El turno paga según su hora de inicio.</p>
+
+    @if (precioFranjas().length > 0) {
+      <div class="franja-list">
+        @for (f of precioFranjas(); track f.tempId) {
+          <div class="franja-item">
+            <div class="franja-times">
+              <select class="tsel" [ngModel]="f.desde" (ngModelChange)="setFranjaDesde(f.tempId, $event)">
+                @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+              </select>
+              <span class="sep">—</span>
+              <select class="tsel" [ngModel]="f.hasta" (ngModelChange)="setFranjaHasta(f.tempId, $event)">
+                @for (t of times; track t) { <option [value]="t">{{ timeLabel(t) }}</option> }
+              </select>
+            </div>
+            <label class="cf franja-price-field">
+              <span class="cf-label">Precio / hora</span>
+              <input class="paso-input" type="number" inputmode="numeric" min="0" step="100" placeholder="Ej: 8000"
+                [ngModel]="f.precioHora" (ngModelChange)="onFranjaPrecioInput(f.tempId, $event)" />
+            </label>
+            <button type="button" class="cancha-del" aria-label="Quitar franja" (click)="removeFranja(f.tempId)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        }
+      </div>
+    } @else {
+      <div class="blk-empty">No hay franjas de precio especial cargadas.</div>
+    }
+
+    @if (precioFranjasError(); as err) {
+      <p class="precio-aviso">⚠ {{ err }}</p>
+    }
+
+    <button type="button" class="cancha-add" (click)="addFranja()">+ Agregar franja</button>
+  </section>
+
   <!-- ===== SEÑA ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Seña</span><span class="ln"></span></div>

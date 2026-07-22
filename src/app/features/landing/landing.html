@@ -185,7 +185,10 @@
                       }
                     </span>
                     @if (mostrarPrecios() && precioTurno(c); as precio) {
-                      <span class="cc-price"><span class="amount mono">${{ precio }}</span></span>
+                      <span class="cc-price">
+                        @if (precioEsEspecial(c)) { <span class="cc-price-tag">Precio especial</span> }
+                        <span class="amount mono">${{ precio }}</span>
+                      </span>
                     }
                   </span>
                 </span>

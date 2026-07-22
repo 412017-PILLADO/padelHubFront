@@ -24,6 +24,13 @@ export interface Slot {
   canchasLibres: CanchaLibre[];
 }
 
+/** Franja horaria con precio especial en la config pública (sin id: solo lo que necesita la landing). */
+export interface PrecioFranjaPublic {
+  desde: string;
+  hasta: string;
+  precioHora: number;
+}
+
 export interface ReservaCreada {
   id: number;
   canchaId: number;
@@ -81,6 +88,8 @@ export interface PublicConfig {
   senaAlias: string | null;
   /** Si es true, el sistema asigna la cancha automáticamente y la landing oculta el paso de elegir. */
   autoasignacion: boolean;
+  /** Franjas horarias con precio especial (pisan el precio general/por cancha en ese rango, todos los días). */
+  precioFranjas: PrecioFranjaPublic[];
   canchas: CanchaConfig[];
   horarios: { diaSemana: number; horaInicio: string; horaFin: string }[];
 }
