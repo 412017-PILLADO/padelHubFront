@@ -237,8 +237,9 @@
   <!-- ===== PRECIO POR HORARIO ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Precio por horario</span><span class="ln"></span></div>
-    <p class="block-sub">El precio por horario pisa el precio general y el de cada cancha en esa franja.
-      El turno paga según su hora de inicio.</p>
+    <p class="block-sub">Descuento o recargo porcentual que se aplica sobre el precio de cada cancha
+      (o el general) en esa franja: todas mantienen su precio relativo. El turno paga según su hora
+      de inicio.</p>
 
     @if (precioFranjas().length > 0) {
       <div class="franja-list">
@@ -253,10 +254,17 @@
                 @for (t of times; track t) { <option [value]="t">{{ timeLabel(t) }}</option> }
               </select>
             </div>
+            <label class="cf franja-tipo-field">
+              <span class="cf-label">Ajuste</span>
+              <select class="tsel" [ngModel]="f.tipo" (ngModelChange)="setFranjaTipo(f.tempId, $event)">
+                <option value="DESCUENTO">Descuento</option>
+                <option value="RECARGO">Recargo</option>
+              </select>
+            </label>
             <label class="cf franja-price-field">
-              <span class="cf-label">Precio / hora</span>
-              <input class="paso-input" type="number" inputmode="numeric" min="0" step="100" placeholder="Ej: 8000"
-                [ngModel]="f.precioHora" (ngModelChange)="onFranjaPrecioInput(f.tempId, $event)" />
+              <span class="cf-label">%</span>
+              <input class="paso-input" type="number" inputmode="numeric" min="1" max="300" step="5" placeholder="Ej: 20"
+                [ngModel]="f.pct" (ngModelChange)="onFranjaPctInput(f.tempId, $event)" />
             </label>
             <button type="button" class="cancha-del" aria-label="Quitar franja" (click)="removeFranja(f.tempId)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

@@ -45,14 +45,15 @@ export interface PrecioFranjaItem {
   id: number;
   desde: string;
   hasta: string;
-  precioHora: number;
+  /** Negativo = descuento (-20 → paga 80%), positivo = recargo. */
+  ajustePorcentaje: number;
 }
 
 /** Una franja tal como se manda en el body de `PUT /api/v1/agenda/precio-franjas` (sin id). */
 export interface PrecioFranjaInput {
   desde: string;
   hasta: string;
-  precioHora: number;
+  ajustePorcentaje: number;
 }
 
 /** Config de agenda devuelta por `GET /api/v1/agenda/config`. */

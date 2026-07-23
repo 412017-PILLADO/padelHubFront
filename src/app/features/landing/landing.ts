@@ -316,24 +316,25 @@ export class Landing {
       return min === max ? { texto: `$${total}`, desde: false } : { texto: `desde $${total}`, desde: true };
     }
 
-    // Sin horario elegido todavía: precio estático por cancha + el mínimo de las franjas horarias
-    // (puede haber un horario puntual más barato que el precio base de cualquier cancha).
+    // Sin horario elegido todavía: candidatos = precio base de cada cancha y ese mismo precio con
+    // cada ajuste porcentual de franja aplicado (un descuento en cierto horario puede dejar un
+    // turno más barato que el precio base de cualquier cancha).
     const canchas = this.config()?.canchas ?? [];
     const franjas = this.config()?.precioFranjas ?? [];
     const basePrecios = canchas
       .map((c) => c.precioHora)
       .filter((p): p is number => p != null && p > 0);
-    const franjaPrecios = franjas
-      .map((f) => f.precioHora)
-      .filter((p): p is number => p != null && p > 0);
-    const precios = [...basePrecios, ...franjaPrecios];
-    if (!precios.length) return null;
+    if (!basePrecios.length) return null;
+    const conAjustes = basePrecios.flatMap((p) =>
+      franjas.map((f) => Math.round((p * (100 + f.ajustePorcentaje)) / 100)),
+    );
+    const precios = [...basePrecios, ...conAjustes];
     const min = Math.min(...precios);
     const max = Math.max(...precios);
     const total = Math.round((min * this.duracion()) / 60).toLocaleString('es-AR');
     // Si hay franjas cargadas el precio siempre puede variar según el horario, aunque hoy el
     // mínimo coincida con el máximo: mostramos "desde" para no prometer un precio fijo.
-    const desde = min !== max || franjaPrecios.length > 0;
+    const desde = min !== max || franjas.length > 0;
     return desde ? { texto: `desde $${total}`, desde: true } : { texto: `$${total}`, desde: false };
   });
 

@@ -24,11 +24,12 @@ export interface Slot {
   canchasLibres: CanchaLibre[];
 }
 
-/** Franja horaria con precio especial en la config pública (sin id: solo lo que necesita la landing). */
+/** Franja horaria con ajuste porcentual en la config pública (sin id: solo lo que necesita la
+ *  landing). Negativo = descuento (-20 → paga 80%), positivo = recargo. */
 export interface PrecioFranjaPublic {
   desde: string;
   hasta: string;
-  precioHora: number;
+  ajustePorcentaje: number;
 }
 
 export interface ReservaCreada {

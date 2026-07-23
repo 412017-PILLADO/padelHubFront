@@ -26,13 +26,16 @@ import {
   ReservaAfectada,
 } from '../../../core/api/agenda-config.service';
 
-/** Franja horaria de precio especial en edición: `tempId` es un id local (no viaja al back),
- *  necesario para trackear filas nuevas que todavía no tienen `id` del servidor. */
+/** Franja horaria de ajuste porcentual en edición: `tempId` es un id local (no viaja al back),
+ *  necesario para trackear filas nuevas que todavía no tienen `id` del servidor. El signo se maneja
+ *  con `tipo` (descuento/recargo) + `pct` positivo, que es como lo piensa el dueño; al guardar se
+ *  convierte al `ajustePorcentaje` con signo del back. */
 interface FranjaEdit {
   tempId: number;
   desde: string;
   hasta: string;
-  precioHora: number | null;
+  tipo: 'DESCUENTO' | 'RECARGO';
+  pct: number | null;
 }
 import { CanchaConfig } from '../../../core/api/booking.service';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
@@ -262,12 +265,18 @@ export class ConfigComponent {
     return p == null || !(p > 0);
   });
   /** Mensaje del primer problema en las franjas de precio por horario (espeja las validaciones
-   *  del back: precio > 0, desde < hasta con medianoche, sin solapes entre franjas). null si está OK. */
+   *  del back: ajuste != 0 en rango, desde < hasta con medianoche, sin solapes). null si está OK. */
   readonly precioFranjasError = computed<string | null>(() => {
     const franjas = this.precioFranjas();
     for (const f of franjas) {
-      if (f.precioHora == null || !(f.precioHora > 0)) {
-        return 'Cargá un precio mayor a $0 en todas las franjas horarias';
+      if (f.pct == null || !(f.pct > 0)) {
+        return 'Cargá el porcentaje en todas las franjas horarias (mayor a 0)';
+      }
+      if (f.tipo === 'DESCUENTO' && f.pct > 99) {
+        return 'El descuento máximo es 99% (a 100% el turno saldría gratis)';
+      }
+      if (f.tipo === 'RECARGO' && f.pct > 300) {
+        return 'El recargo máximo es 300%';
       }
     }
     for (const f of franjas) {
@@ -520,7 +529,8 @@ export class ConfigComponent {
         tempId: ++this.franjaSeq,
         desde: f.desde,
         hasta: f.hasta,
-        precioHora: f.precioHora,
+        tipo: (f.ajustePorcentaje < 0 ? 'DESCUENTO' : 'RECARGO') as FranjaEdit['tipo'],
+        pct: Math.abs(f.ajustePorcentaje),
       }))
     );
     this.requiereSena.set(cfg.requiereSena ?? false);
@@ -621,7 +631,7 @@ export class ConfigComponent {
   addFranja(): void {
     this.precioFranjas.update((list) => [
       ...list,
-      { tempId: ++this.franjaSeq, desde: '15:00', hasta: '18:00', precioHora: null },
+      { tempId: ++this.franjaSeq, desde: '15:00', hasta: '18:00', tipo: 'DESCUENTO' as const, pct: null },
     ]);
     this.markDirty();
   }
@@ -641,11 +651,17 @@ export class ConfigComponent {
     );
     this.markDirty();
   }
-  // El input es type="number": ngModelChange emite number | null (NumberValueAccessor), no string.
-  onFranjaPrecioInput(tempId: number, value: number | null): void {
-    const precioHora = value == null || !Number.isFinite(value) ? null : Math.round(value);
+  setFranjaTipo(tempId: number, tipo: FranjaEdit['tipo']): void {
     this.precioFranjas.update((list) =>
-      list.map((f) => (f.tempId === tempId ? { ...f, precioHora } : f))
+      list.map((f) => (f.tempId === tempId ? { ...f, tipo } : f))
+    );
+    this.markDirty();
+  }
+  // El input es type="number": ngModelChange emite number | null (NumberValueAccessor), no string.
+  onFranjaPctInput(tempId: number, value: number | null): void {
+    const pct = value == null || !Number.isFinite(value) ? null : Math.abs(Math.round(value));
+    this.precioFranjas.update((list) =>
+      list.map((f) => (f.tempId === tempId ? { ...f, pct } : f))
     );
     this.markDirty();
   }
@@ -954,7 +970,7 @@ export class ConfigComponent {
             franjas: this.precioFranjas().map((f) => ({
               desde: f.desde,
               hasta: f.hasta,
-              precioHora: f.precioHora as number,
+              ajustePorcentaje: f.tipo === 'DESCUENTO' ? -(f.pct as number) : (f.pct as number),
             })),
           });
         }),
