@@ -183,9 +183,16 @@
                           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19" /></svg>Aire libre
                         </span>
                       }
+                      @if (precioEsEspecial(c)) {
+                        <span class="cc-chip cc-price-tag">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4 11 3.8H4v7l9.6 9.6a2 2 0 0 0 2.8 0l4.2-4.2a2 2 0 0 0 0-2.8Z" /><circle cx="8.5" cy="8.5" r="1.2" /></svg>Precio especial
+                        </span>
+                      }
                     </span>
                     @if (mostrarPrecios() && precioTurno(c); as precio) {
-                      <span class="cc-price"><span class="amount mono">${{ precio }}</span></span>
+                      <span class="cc-price">
+                        <span class="amount mono">${{ precio }}</span>
+                      </span>
                     }
                   </span>
                 </span>

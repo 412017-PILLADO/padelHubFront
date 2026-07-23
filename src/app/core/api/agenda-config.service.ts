@@ -38,6 +38,23 @@ export interface Contacto {
   instagram: string | null;
 }
 
+/** Franja horaria general del complejo con precio especial (pisa el precio habitual de todas
+ *  las canchas). Aplica todos los días. Un turno paga según su hora de inicio: `desde` incluida,
+ *  `hasta` excluida; `hasta` "00:00" significa medianoche (24:00). */
+export interface PrecioFranjaItem {
+  id: number;
+  desde: string;
+  hasta: string;
+  precioHora: number;
+}
+
+/** Una franja tal como se manda en el body de `PUT /api/v1/agenda/precio-franjas` (sin id). */
+export interface PrecioFranjaInput {
+  desde: string;
+  hasta: string;
+  precioHora: number;
+}
+
 /** Config de agenda devuelta por `GET /api/v1/agenda/config`. */
 export interface AgendaConfig {
   nombre: string;
@@ -48,6 +65,8 @@ export interface AgendaConfig {
   permitirOtrasDuraciones: boolean;
   precioModo: 'GENERAL' | 'POR_CANCHA';
   precioHoraGeneral: number | null;
+  /** Franjas horarias con precio especial (pisan el precio general/por cancha en ese rango). */
+  precioFranjas: PrecioFranjaItem[];
   requiereSena: boolean;
   senaMonto: number | null;
   senaAlias: string | null;
@@ -80,6 +99,12 @@ export interface GuardarDuracionesRequest {
 export interface GuardarPreciosRequest {
   precioModo: 'GENERAL' | 'POR_CANCHA';
   precioHoraGeneral: number | null;
+}
+
+/** Body de `PUT /api/v1/agenda/precio-franjas`. Replace-all: la lista completa pisa las franjas
+ *  existentes; lista vacía borra todas. 400 con `{error}` si hay solapes o valores inválidos. */
+export interface GuardarPrecioFranjasRequest {
+  franjas: PrecioFranjaInput[];
 }
 
 /** Body de `PUT /api/v1/agenda/sena`. `senaMonto` (>0) y `senaAlias` requeridos si `requiereSena`. */
@@ -195,6 +220,11 @@ export class AgendaConfigService {
   /** Actualiza el modo de precio (general/por cancha) + el precio general. */
   putPrecios(body: GuardarPreciosRequest): Observable<AgendaConfig> {
     return this.http.put<AgendaConfig>('/api/v1/agenda/precios', body);
+  }
+
+  /** Reescribe las franjas horarias con precio especial (replace-all). Devuelve la config actualizada. */
+  putPrecioFranjas(body: GuardarPrecioFranjasRequest): Observable<AgendaConfig> {
+    return this.http.put<AgendaConfig>('/api/v1/agenda/precio-franjas', body);
   }
 
   /** Activa/desactiva el módulo de señas + el monto. */

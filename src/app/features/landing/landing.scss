@@ -372,6 +372,11 @@
 .cc-chip.lit { color: #9a6412; border-color: rgba(214, 150, 40, 0.42); background: rgba(255, 224, 160, 0.8); }
 .cc-price { align-self: flex-end; flex: none; }
 .cc-price .amount { font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--plan-ink); }
+/* Precio pisado por una franja horaria especial (M-precio-franjas): chip en la fila de chips de la
+   cancha (junto a material/iluminación), en ámbar como .cc-chip.lit para no sumar un color nuevo. */
+.cc-chip.cc-price-tag {
+  color: #9a6412; border-color: rgba(214, 150, 40, 0.42); background: rgba(255, 224, 160, 0.8);
+}
 
 /* Seleccionada */
 .ccard.is-selected { outline: 3px solid var(--court); outline-offset: -2px; }

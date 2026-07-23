@@ -102,6 +102,17 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   background: color-mix(in srgb, var(--clay) 10%, #fff);
   border-radius: var(--r); padding: 9px 12px;
 }
+/* — Precio por horario — */
+.franja-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.franja-item {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 10px 14px;
+}
+.franja-times { display: flex; align-items: center; gap: 8px; }
+.franja-price-field { flex-direction: row; align-items: center; gap: 8px; margin-left: auto; }
+.franja-price-field .paso-input { width: 110px; }
+
 /* El alias es un texto largo: input más ancho, la fila envuelve en mobile. */
 .sena-alias-row { flex-wrap: wrap; margin-top: 10px; }
 .sena-alias { width: 260px; max-width: 100%; }
