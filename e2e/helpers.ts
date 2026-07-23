@@ -41,9 +41,40 @@ export async function gotoAgenda(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/admin\/config/, { timeout: 10_000 });
 }
 
-/** Una fecha futura (YYYY-MM-DD) para no chocar con slots ya pasados. */
+/** Una fecha futura (YYYY-MM-DD) para no chocar con slots ya pasados. Se arma con la fecha
+ *  LOCAL: con toISOString() (UTC), de noche en UTC-3 el día ya cambió y quedaba corrida en +1
+ *  respecto de los chips Hoy/Mañana del panel. */
 export function futureDate(days = 5): string {
   const d = new Date();
   d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/** Elige el primer día de la semana con un slot libre y lo clickea, dejando visible el paso de
+ *  canchas. De noche "Hoy" puede no tener turnos restantes (el horario demo cierra 23:00), así que
+ *  no se puede asumir el primer chip; y la grilla se re-renderiza al recargar disponibilidad, así
+ *  que el click se reintenta hasta que el slot quede estable y aparezcan sus canchas (mismo patrón
+ *  que sena.spec). */
+export async function elegirDiaYSlot(page: Page): Promise<void> {
+  // El último chip ("Otra") no es un día: abre el datepicker inline y su overlay taparía los slots.
+  const dias = page.locator('.days .chip', { hasNot: page.locator('.c-label', { hasText: 'Otra' }) });
+  const slot = page.locator('.times .slot:not([disabled])').first();
+  const n = await dias.count();
+  for (let i = 0; i < n; i++) {
+    await dias.nth(i).click();
+    // waitFor y no isVisible(): isVisible no espera (devuelve el estado del momento).
+    const hay = await slot.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
+    if (!hay) continue;
+    try {
+      await expect(async () => {
+        await slot.click({ timeout: 2_000 });
+        await expect(page.locator('.ccard.any')).toBeVisible({ timeout: 1_000 });
+      }).toPass({ timeout: 10_000 });
+      return;
+    } catch {
+      // La grilla del día quedó vacía tras el refresh: probar el siguiente día.
+    }
+  }
+  throw new Error('ningún día de la semana tiene slots libres');
 }

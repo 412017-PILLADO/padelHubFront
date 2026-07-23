@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { RESERVA_URL } from './helpers';
+import { RESERVA_URL, elegirDiaYSlot } from './helpers';
 
 /**
  * Flujo público de reserva en 5 pasos sobre demo.localhost.
@@ -12,13 +12,8 @@ test('reserva pública: 5 pasos hasta el éxito @smoke', async ({ page }) => {
   await expect(page.locator('.dur-chips .chip').first()).toBeVisible();
   await page.locator('.dur-chips .chip').first().click();
 
-  // 02 · Día — "Hoy" (primer chip de .days).
-  await page.locator('.days .chip').first().click();
-
-  // 03 · Horario — primer slot disponible (no deshabilitado).
-  const slot = page.locator('.times .slot:not([disabled])').first();
-  await expect(slot).toBeVisible({ timeout: 15_000 });
-  await slot.click();
+  // 02/03 · Día y horario — primer día con slot libre (de noche "Hoy" puede no tener).
+  await elegirDiaYSlot(page);
 
   // 04 · Cancha — "Cualquiera disponible".
   await page.locator('.ccard.any').click();

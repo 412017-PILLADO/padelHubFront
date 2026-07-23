@@ -9,8 +9,8 @@ test('alta, edición y baja de una cancha', async ({ page }) => {
   const nombre = `Cancha E2E ${Date.now()}`;
   const renombrada = `${nombre} (editada)`;
 
-  // ── Alta ──
-  await page.locator('.cancha-add').click();
+  // ── Alta ── (por nombre: la clase .cancha-add la comparte "+ Agregar franja")
+  await page.getByRole('button', { name: '+ Agregar cancha' }).click();
   await page.locator('#cName').fill(nombre);
   // tipoPared queda en su default (CRISTAL); precio/color opcionales.
   await page.locator('.cancha-save').click();
