@@ -137,7 +137,7 @@ export class ConfigComponent {
   readonly today = startOfDay(new Date());
 
   // ── Marca (color primario + secundario + logo del club) ──
-  readonly marcaColor = signal('#2747ff');
+  readonly marcaColor = signal('#0a8a99');
   /** Color secundario (acento). null = sin definir → se usa el primario. */
   readonly marcaColorSec = signal<string | null>(null);
   /** Valor para el <input type=color> del secundario (no acepta null): cae al primario si no hay. */
@@ -203,7 +203,7 @@ export class ConfigComponent {
   readonly cTechada = signal(false);
   readonly cTipoPared = signal('CRISTAL');
   readonly cPrecio = signal<number | null>(null);
-  readonly cColor = signal('#2747ff');
+  readonly cColor = signal('#0a8a99');
   /** Estado de la cancha en edición ('ACTIVO'/'INACTIVO'); se preserva al editar, no se pisa. */
   readonly cEstado = signal('ACTIVO');
   readonly canchaSaving = signal(false);
@@ -409,12 +409,12 @@ export class ConfigComponent {
     const hex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
     const color = this.marcaColor().trim();
     if (!hex.test(color)) {
-      this.messages.add({ severity: 'warn', summary: 'Color inválido', detail: 'Usá un hex como #2747ff.' });
+      this.messages.add({ severity: 'warn', summary: 'Color inválido', detail: 'Usá un hex como #0a8a99.' });
       return;
     }
     const colorSec = this.marcaColorSec()?.trim() || null;
     if (colorSec && !hex.test(colorSec)) {
-      this.messages.add({ severity: 'warn', summary: 'Secundario inválido', detail: 'Usá un hex como #2747ff.' });
+      this.messages.add({ severity: 'warn', summary: 'Secundario inválido', detail: 'Usá un hex como #0a8a99.' });
       return;
     }
     this.savingMarca.set(true);
@@ -672,7 +672,7 @@ export class ConfigComponent {
     this.cTechada.set(false);
     this.cTipoPared.set('CRISTAL');
     this.cPrecio.set(null);
-    this.cColor.set('#2747ff');
+    this.cColor.set('#0a8a99');
     this.cEstado.set('ACTIVO');
     this.canchaFormOpen.set(true);
   }
@@ -684,7 +684,7 @@ export class ConfigComponent {
     this.cTechada.set(c.techada);
     this.cTipoPared.set(c.tipoPared ?? 'CRISTAL');
     this.cPrecio.set(c.precioHora);
-    this.cColor.set(c.color ?? '#2747ff');
+    this.cColor.set(c.color ?? '#0a8a99');
     this.cEstado.set(c.estado || 'ACTIVO');
     this.canchaFormOpen.set(true);
   }

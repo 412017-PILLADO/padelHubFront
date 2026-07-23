@@ -47,7 +47,7 @@ export class PlatformPanelComponent {
   readonly fName = signal('');
   readonly fOwnerEmail = signal('');
   readonly fOwnerPassword = signal('');
-  readonly fColorPrimario = signal('#2747ff');
+  readonly fColorPrimario = signal('#0a8a99');
   readonly fColorSecundario = signal<string | null>(null);
   readonly fPlantilla = signal('A');
   readonly fDireccion = signal('');
@@ -70,7 +70,7 @@ export class PlatformPanelComponent {
   readonly editingId = signal<number | null>(null);
   readonly savingEdit = signal(false);
   readonly eName = signal('');
-  readonly eColorPrimario = signal('#2747ff');
+  readonly eColorPrimario = signal('#0a8a99');
   readonly eColorSecundario = signal<string | null>(null);
   readonly ePlantilla = signal('A');
   readonly eStatus = signal('ACTIVE');
@@ -197,7 +197,7 @@ export class PlatformPanelComponent {
     this.fName.set('');
     this.fOwnerEmail.set('');
     this.fOwnerPassword.set('');
-    this.fColorPrimario.set('#2747ff');
+    this.fColorPrimario.set('#0a8a99');
     this.fColorSecundario.set(null);
     this.fPlantilla.set('A');
     this.fDireccion.set('');
@@ -209,7 +209,7 @@ export class PlatformPanelComponent {
   startEdit(t: TenantResumen): void {
     this.editingId.set(t.id);
     this.eName.set(t.name);
-    this.eColorPrimario.set(t.colorPrimario || '#2747ff');
+    this.eColorPrimario.set(t.colorPrimario || '#0a8a99');
     this.eColorSecundario.set(t.colorSecundario);
     this.ePlantilla.set(t.plantilla || 'A');
     this.eStatus.set(t.status);

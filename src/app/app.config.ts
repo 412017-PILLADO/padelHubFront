@@ -16,22 +16,22 @@ import { authInterceptor } from './core/auth/auth.interceptor';
 import { platformInterceptor } from './core/platform/platform.interceptor';
 import { tenantInterceptor } from './core/tenant/tenant.interceptor';
 
-// El primary por defecto de Aura es esmeralda; lo pisamos con la paleta cobalto de la app
-// (#2747ff) para que datepickers, diálogos y demás componentes PrimeNG no desentonen.
-const CobaltAura = definePreset(Aura, {
+// El primary por defecto de Aura es esmeralda; lo pisamos con la paleta teal de la marca
+// (#0a8a99, del logo) para que datepickers, diálogos y demás componentes PrimeNG no desentonen.
+const TealAura = definePreset(Aura, {
   semantic: {
     primary: {
-      50: '#eef1ff',
-      100: '#dfe4ff',
-      200: '#c3ccff',
-      300: '#9dadff',
-      400: '#6f84ff',
-      500: '#2747ff',
-      600: '#1f38e6',
-      700: '#1a2fbf',
-      800: '#172a99',
-      900: '#16267a',
-      950: '#0d1747',
+      50: '#e8f6f8',
+      100: '#d0edf0',
+      200: '#a3dde3',
+      300: '#6cc7d1',
+      400: '#38aebc',
+      500: '#0a8a99',
+      600: '#087a88',
+      700: '#076572',
+      800: '#065057',
+      900: '#053e44',
+      950: '#03292e',
     },
   },
 });
@@ -52,7 +52,7 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     providePrimeNG({
       theme: {
-        preset: CobaltAura,
+        preset: TealAura,
         options: {
           darkModeSelector: '.app-dark',
         },

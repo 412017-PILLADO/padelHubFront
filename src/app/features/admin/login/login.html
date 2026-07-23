@@ -14,24 +14,7 @@
         @if (logoSrc(); as logo) {
           <span class="brand-logo"><img [src]="logo" alt="Logo del club" /></span>
         } @else {
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="0 0 40 40" fill="none">
-              <g transform="rotate(35 20 20)">
-                <mask id="paddleLogin">
-                  <rect width="40" height="40" fill="#000" />
-                  <path d="M20 2.2 C26.6 2.2 30.5 7.2 30.5 13.4 C30.5 19 27.2 23.2 23.8 24.6 L23.2 24.9 L24 30.4 C24.3 32.6 22.6 33.6 20 33.6 C17.4 33.6 15.7 32.6 16 30.4 L16.8 24.9 L16.2 24.6 C12.8 23.2 9.5 19 9.5 13.4 C9.5 7.2 13.4 2.2 20 2.2 Z" fill="#fff" />
-                  <rect x="16.6" y="30.2" width="6.8" height="8.8" rx="2.4" fill="#fff" />
-                  <g fill="#000">
-                    <circle cx="15.2" cy="10" r="1.45" /><circle cx="20" cy="9.3" r="1.45" /><circle cx="24.8" cy="10" r="1.45" />
-                    <circle cx="15.2" cy="15" r="1.45" /><circle cx="20" cy="14.3" r="1.45" /><circle cx="24.8" cy="15" r="1.45" />
-                    <circle cx="17.4" cy="19.6" r="1.45" /><circle cx="22.6" cy="19.6" r="1.45" />
-                  </g>
-                </mask>
-                <rect width="40" height="40" fill="currentColor" mask="url(#paddleLogin)" />
-                <path d="M16.6 33.6 h6.8 v3 a2.4 2.4 0 0 1 -2.4 2.4 h-2 a2.4 2.4 0 0 1 -2.4 -2.4 Z" fill="var(--paddle-grip, currentColor)" />
-              </g>
-            </svg>
-          </span>
+          <span class="brand-logo"><img src="logo-padelhub.png" alt="Padel Hub" /></span>
         }
         <div class="logo-type">
           <div class="name display">Padel-<span class="hub">HUB</span></div>

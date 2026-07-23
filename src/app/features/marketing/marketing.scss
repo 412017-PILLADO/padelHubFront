@@ -26,11 +26,11 @@
 .brand-mark {
   width: 27px;
   height: 27px;
-  color: var(--court);
 }
-.brand-mark svg {
+.brand-mark img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 .brand-type {
   font-family: var(--display);
@@ -216,7 +216,7 @@
   background-image: linear-gradient(
     100deg,
     var(--court) 0 42%,
-    #aebcff 50%,
+    #9fdde6 50%,
     var(--court) 58% 100%
   );
 }

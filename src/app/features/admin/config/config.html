@@ -45,7 +45,7 @@
           <input type="color" class="color-swatch" [ngModel]="marcaColor()"
             (ngModelChange)="marcaColor.set($event)" aria-label="Elegí el color primario" />
           <input type="text" class="color-hex mono" [ngModel]="marcaColor()"
-            (ngModelChange)="marcaColor.set($event)" placeholder="#2747ff" spellcheck="false" />
+            (ngModelChange)="marcaColor.set($event)" placeholder="#0a8a99" spellcheck="false" />
         </div>
       </div>
 
@@ -372,7 +372,7 @@
       <div class="cancha-list">
         @for (c of canchasOrdenadas(); track c.id) {
           <div class="cancha-item" [class.inactive]="c.estado !== 'ACTIVO'">
-            <span class="cancha-dot" [style.background]="c.color || '#2747ff'"></span>
+            <span class="cancha-dot" [style.background]="c.color || '#0a8a99'"></span>
             <div class="cancha-info">
               <span class="cancha-name">
                 {{ c.nombre }}
