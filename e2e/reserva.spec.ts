@@ -21,7 +21,7 @@ test('reserva pública: 5 pasos hasta el éxito @smoke', async ({ page }) => {
   await slot.click();
 
   // 04 · Cancha — "Cualquiera disponible".
-  await page.locator('.court.any').click();
+  await page.locator('.ccard.any').click();
 
   // 05 · Datos. Teléfono único por corrida: el back limita reservas por teléfono (anti-abuso),
   // así el smoke es re-ejecutable sin chocar con ese límite.

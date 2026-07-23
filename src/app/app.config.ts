@@ -13,6 +13,7 @@ import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { platformInterceptor } from './core/platform/platform.interceptor';
 import { tenantInterceptor } from './core/tenant/tenant.interceptor';
 
 // El primary por defecto de Aura es esmeralda; lo pisamos con la paleta cobalto de la app
@@ -46,7 +47,7 @@ export const appConfig: ApplicationConfig = {
     // back (apiBase) + agrega X-Tenant; el clone preserva el Authorization ya puesto.
     provideHttpClient(
       withFetch(),
-      withInterceptors([authInterceptor, tenantInterceptor])
+      withInterceptors([authInterceptor, platformInterceptor, tenantInterceptor])
     ),
     provideAnimationsAsync(),
     providePrimeNG({

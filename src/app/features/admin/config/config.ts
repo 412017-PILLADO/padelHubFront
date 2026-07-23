@@ -1,11 +1,15 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
+  PLATFORM_ID,
   computed,
   inject,
   signal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
@@ -19,9 +23,13 @@ import {
   AgendaConfigService,
   BloqueoItem,
   DiaConfig,
+  ReservaAfectada,
 } from '../../../core/api/agenda-config.service';
 import { CanchaConfig } from '../../../core/api/booking.service';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
+import { BrandingService } from '../../../core/branding/branding.service';
+import { UnsavedChangesService } from '../unsaved-changes.service';
+import { environment } from '../../../../environments/environment';
 
 /** Tipos de cerramiento de la cancha (espeja el enum TipoPared del backend). */
 const TIPO_PARED_OPCIONES = [
@@ -78,6 +86,13 @@ function parseYmd(s: string): Date {
   const [y, m, d] = s.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
+function hhmmToMin(s: string): number {
+  const [h, m] = s.split(':').map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+function minToHhmm(m: number): string {
+  return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
 
 @Component({
   selector: 'app-admin-config',
@@ -100,6 +115,10 @@ export class ConfigComponent {
   private readonly messages = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
   private readonly primeng = inject(PrimeNG);
+  private readonly branding = inject(BrandingService);
+  private readonly unsaved = inject(UnsavedChangesService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly times = timeOptions();
   readonly dowLabels = DOW;
@@ -107,6 +126,32 @@ export class ConfigComponent {
   readonly durOpciones = DURACION_OPCIONES;
   readonly tipoParedOpciones = TIPO_PARED_OPCIONES;
   readonly today = startOfDay(new Date());
+
+  // ── Marca (color primario + secundario + logo del club) ──
+  readonly marcaColor = signal('#2747ff');
+  /** Color secundario (acento). null = sin definir → se usa el primario. */
+  readonly marcaColorSec = signal<string | null>(null);
+  /** Valor para el <input type=color> del secundario (no acepta null): cae al primario si no hay. */
+  readonly marcaColorSecPicker = computed(() => this.marcaColorSec() ?? this.marcaColor());
+  /** Plantilla de landing elegida por el club (A poster / B hero / C compacta). */
+  readonly marcaPlantilla = signal('A');
+  readonly plantillas = [
+    { value: 'A', label: 'A · Poster', hint: 'Afiche a un lado + reserva' },
+    { value: 'B', label: 'B · Hero centrado', hint: 'Marca grande centrada, más comercial' },
+    { value: 'C', label: 'C · Compacta (app)', hint: 'Barra lateral + grilla, directo a reservar' },
+  ];
+  readonly marcaLogoUrl = signal<string | null>(null);
+  readonly savingMarca = signal(false);
+  readonly uploadingLogo = signal(false);
+  /** Cambia tras subir/quitar el logo para bustear la caché del <img> de preview. */
+  private readonly logoBust = signal(0);
+  /** URL absoluta del logo para la preview (con cache-bust), o null si no hay logo. */
+  readonly logoPreview = computed(() => {
+    const u = this.marcaLogoUrl();
+    if (!u) return null;
+    const abs = /^https?:\/\//i.test(u) ? u : environment.apiBase + u;
+    return abs + (abs.includes('?') ? '&' : '?') + 'v=' + this.logoBust();
+  });
 
   // ── Horario semanal (index 0=Lun … 6=Dom) ──
   readonly week = signal<DiaConfig[]>([]);
@@ -146,7 +191,11 @@ export class ConfigComponent {
   readonly cTipoPared = signal('CRISTAL');
   readonly cPrecio = signal<number | null>(null);
   readonly cColor = signal('#2747ff');
+  /** Estado de la cancha en edición ('ACTIVO'/'INACTIVO'); se preserva al editar, no se pisa. */
+  readonly cEstado = signal('ACTIVO');
   readonly canchaSaving = signal(false);
+  /** id de cancha con el toggle activar/desactivar en curso (deshabilita el botón mientras pega al back). */
+  readonly canchaTogglingId = signal<number | null>(null);
 
   readonly canchasOrdenadas = computed(() =>
     [...this.canchas()].sort((a, b) => a.orden - b.orden)
@@ -154,6 +203,11 @@ export class ConfigComponent {
   readonly canCanchaSave = computed(
     () => this.cNombre().trim().length > 0 && !this.canchaSaving()
   );
+  /** Canchas activas sin precio cargado (sólo aplica en modo POR_CANCHA): el público no ve precio en esos turnos. */
+  readonly canchasSinPrecio = computed(() => {
+    if (this.precioModo() !== 'POR_CANCHA') return [];
+    return this.canchas().filter((c) => c.estado === 'ACTIVO' && c.precioHora == null);
+  });
 
   // ── Bloqueos ──
   readonly bloqueos = signal<BloqueoItem[]>([]);
@@ -161,6 +215,9 @@ export class ConfigComponent {
   /** null = todo el complejo. */
   readonly bloqueoCanchaId = signal<number | null>(null);
   readonly bloqueoMotivo = signal('');
+
+  /** Reservas que quedaron fuera del horario recién guardado o dentro de un bloqueo recién creado. */
+  readonly reservasAfectadas = signal<ReservaAfectada[]>([]);
 
   readonly canchaOpciones = computed(() => [
     { label: 'Todo el complejo', value: null as number | null },
@@ -202,9 +259,10 @@ export class ConfigComponent {
     return a == null || a.trim().length === 0;
   });
   readonly invalidSena = computed(() => this.invalidSenaMonto() || this.invalidSenaAlias());
-  /** Algún día abierto con apertura ≥ cierre (las horas "HH:mm" comparan bien como strings). */
+  /** Algún día abierto con apertura ≥ cierre (las horas "HH:mm" comparan bien como strings).
+   *  Caso especial: cierre "00:00" significa medianoche (24:00), siempre después de cualquier apertura. */
   readonly invalidHorario = computed(() =>
-    this.week().some((d) => d.open && d.from >= d.to)
+    this.week().some((d) => d.open && d.to !== '00:00' && d.from >= d.to)
   );
   /** Descanso activo con inicio ≥ fin. */
   readonly invalidBreak = computed(() => this.breakOn() && this.breakFrom() >= this.breakTo());
@@ -226,6 +284,26 @@ export class ConfigComponent {
   readonly breakStateLabel = computed(() =>
     this.breakOn() ? `${this.breakFrom()} — ${this.breakTo()}` : 'Sin pausa'
   );
+  /** Aviso informativo (no bloqueante) por día: si la franja abierta no es múltiplo del turno
+   *  principal, el resto al final del día queda sin poder reservarse. */
+  readonly horarioAvisos = computed(() => {
+    const dur = this.duracionDefault();
+    if (!(dur > 0)) return [];
+    const out: string[] = [];
+    for (const d of this.week()) {
+      if (!d.open || (d.to !== '00:00' && d.from >= d.to)) continue;
+      const fromMin = hhmmToMin(d.from);
+      const toMin = d.to === '00:00' ? 24 * 60 : hhmmToMin(d.to);
+      const total = toMin - fromMin;
+      const resto = total % dur;
+      if (resto > 0) {
+        const desde = minToHhmm(toMin - resto);
+        const hasta = minToHhmm(toMin);
+        out.push(`El horario de ${this.dowFull[d.diaSemana]} termina ${desde}–${hasta}: los últimos ${resto} min no se podrán reservar.`);
+      }
+    }
+    return out;
+  });
   readonly bloqueosOrdenados = computed(() =>
     [...this.bloqueos()].sort((a, b) => a.fecha.localeCompare(b.fecha))
   );
@@ -242,6 +320,128 @@ export class ConfigComponent {
   constructor() {
     this.primeng.setTranslation(ES_TRANSLATION);
     this.loadConfig();
+    this.loadMarca();
+
+    // Cambios sin guardar: si el usuario cierra/recarga la pestaña, avisar antes de perderlos.
+    // Sólo en browser (SSR no tiene window) y se limpia al destruir el componente.
+    if (isPlatformBrowser(this.platformId)) {
+      const onBeforeUnload = (e: BeforeUnloadEvent): void => {
+        if (!this.dirty()) return;
+        e.preventDefault();
+        e.returnValue = '';
+      };
+      window.addEventListener('beforeunload', onBeforeUnload);
+      this.destroyRef.onDestroy(() => {
+        window.removeEventListener('beforeunload', onBeforeUnload);
+        this.unsaved.setDirty(false);
+      });
+    }
+  }
+
+  private loadMarca(): void {
+    this.api.getMarca().subscribe({
+      next: (m) => {
+        if (m.colorPrimario) this.marcaColor.set(m.colorPrimario);
+        this.marcaColorSec.set(m.colorSecundario);
+        if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
+        this.marcaLogoUrl.set(m.logoUrl);
+      },
+      error: () => {
+        /* la marca es secundaria: si falla, el resto del panel sigue funcionando. */
+      },
+    });
+  }
+
+  /** Fija el color secundario (acento) desde el picker/hex. */
+  setColorSec(v: string): void {
+    this.marcaColorSec.set(v && v.trim() ? v.trim() : null);
+  }
+
+  /** Quita el color secundario: vuelve a usarse el primario para los acentos. */
+  clearColorSec(): void {
+    this.marcaColorSec.set(null);
+  }
+
+  /** Guarda los colores (primario + secundario) del club. Aplican a acentos de la página y el panel. */
+  saveMarca(): void {
+    const hex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
+    const color = this.marcaColor().trim();
+    if (!hex.test(color)) {
+      this.messages.add({ severity: 'warn', summary: 'Color inválido', detail: 'Usá un hex como #2747ff.' });
+      return;
+    }
+    const colorSec = this.marcaColorSec()?.trim() || null;
+    if (colorSec && !hex.test(colorSec)) {
+      this.messages.add({ severity: 'warn', summary: 'Secundario inválido', detail: 'Usá un hex como #2747ff.' });
+      return;
+    }
+    this.savingMarca.set(true);
+    this.api.putMarca({ colorPrimario: color, colorSecundario: colorSec, plantilla: this.marcaPlantilla() }).subscribe({
+      next: (m) => {
+        this.savingMarca.set(false);
+        if (m.colorPrimario) this.marcaColor.set(m.colorPrimario);
+        this.marcaColorSec.set(m.colorSecundario);
+        if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
+        // Aplicar en vivo: recolorea el panel (nav/acentos) sin recargar.
+        this.branding.apply(m.colorPrimario, m.colorSecundario, this.marcaLogoUrl());
+        this.messages.add({ severity: 'success', summary: 'Guardado', detail: 'Marca actualizada' });
+      },
+      error: () => {
+        this.savingMarca.set(false);
+        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos guardar los colores.' });
+      },
+    });
+  }
+
+  /** Sube el logo elegido en el input file. Valida tipo/tamaño antes de mandar. */
+  onLogoChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = ''; // permite re-subir el mismo archivo
+    if (!file) return;
+    const okTipo = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'].includes(file.type);
+    if (!okTipo) {
+      this.messages.add({ severity: 'warn', summary: 'Formato no soportado', detail: 'Usá PNG, JPG, WEBP o SVG.' });
+      return;
+    }
+    if (file.size > 512 * 1024) {
+      this.messages.add({ severity: 'warn', summary: 'Muy pesado', detail: 'El logo debe pesar menos de 512 KB.' });
+      return;
+    }
+    this.uploadingLogo.set(true);
+    this.api.uploadLogo(file).subscribe({
+      next: (m) => {
+        this.uploadingLogo.set(false);
+        this.marcaLogoUrl.set(m.logoUrl);
+        this.logoBust.update((n) => n + 1);
+        // Refleja el logo nuevo en la nav del panel al instante.
+        this.branding.apply(this.marcaColor(), this.marcaColorSec(), m.logoUrl);
+        this.messages.add({ severity: 'success', summary: 'Logo actualizado', detail: 'Ya se ve en tu página.' });
+      },
+      error: () => {
+        this.uploadingLogo.set(false);
+        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos subir el logo.' });
+      },
+    });
+  }
+
+  /** Quita el logo del club (vuelve a mostrarse solo el nombre). */
+  removeLogo(): void {
+    this.uploadingLogo.set(true);
+    this.api.deleteLogo().subscribe({
+      next: (m) => {
+        this.uploadingLogo.set(false);
+        this.marcaLogoUrl.set(m.logoUrl);
+        this.logoBust.update((n) => n + 1);
+        // Vuelve a mostrar el ícono/nombre por defecto en la nav.
+        this.branding.apply(this.marcaColor(), this.marcaColorSec(), m.logoUrl);
+        this.messages.add({ severity: 'success', summary: 'Logo quitado', detail: 'Se muestra solo el nombre.' });
+      },
+      error: () => {
+        this.uploadingLogo.set(false);
+        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos quitar el logo.' });
+      },
+    });
   }
 
   private loadConfig(): void {
@@ -288,10 +488,15 @@ export class ConfigComponent {
     this.mapaUrl.set(c.mapaUrl ?? '');
     this.instagram.set(c.instagram ?? '');
     this.dirty.set(false);
+    this.unsaved.setDirty(false);
     this.loaded.set(true);
   }
 
   // ── Horario ──
+  /** Etiqueta de una hora en el select de cierre: aclara que "00:00" es medianoche (24:00). */
+  timeLabel(t: string): string {
+    return t === '00:00' ? '00:00 (medianoche)' : t;
+  }
   toggleDay(i: number): void {
     this.week.update((w) => {
       const next = [...w];
@@ -385,6 +590,7 @@ export class ConfigComponent {
     this.cTipoPared.set('CRISTAL');
     this.cPrecio.set(null);
     this.cColor.set('#2747ff');
+    this.cEstado.set('ACTIVO');
     this.canchaFormOpen.set(true);
   }
 
@@ -396,6 +602,7 @@ export class ConfigComponent {
     this.cTipoPared.set(c.tipoPared ?? 'CRISTAL');
     this.cPrecio.set(c.precioHora);
     this.cColor.set(c.color ?? '#2747ff');
+    this.cEstado.set(c.estado || 'ACTIVO');
     this.canchaFormOpen.set(true);
   }
 
@@ -445,10 +652,62 @@ export class ConfigComponent {
         error: fail,
       });
     } else {
+      // Nunca hardcodeamos el estado acá: se manda el que ya tenía la cancha (el toggle
+      // activar/desactivar es un flujo aparte, ver `toggleCanchaEstado`).
       this.api
-        .putCancha(editingId, { nombre, orden, techada, tipoPared, precioHora, color, estado: 'ACTIVO' })
+        .putCancha(editingId, { nombre, orden, techada, tipoPared, precioHora, color, estado: this.cEstado() })
         .subscribe({ next: (saved) => done(saved, 'Cancha actualizada'), error: fail });
     }
+  }
+
+  /** Activa/desactiva una cancha. Al desactivar, pide confirmación (deja de ofrecerse, no borra reservas). */
+  toggleCanchaEstado(c: CanchaConfig): void {
+    const activando = c.estado !== 'ACTIVO';
+    if (!activando) {
+      this.confirm.confirm({
+        header: 'Desactivar cancha',
+        message: `¿Desactivar "${c.nombre}"? Deja de ofrecerse al público para reservar; las reservas ya hechas se conservan.`,
+        acceptLabel: 'Desactivar',
+        rejectLabel: 'Volver',
+        acceptButtonStyleClass: 'p-button-danger',
+        accept: () => this.doToggleCanchaEstado(c, 'INACTIVO'),
+      });
+    } else {
+      this.doToggleCanchaEstado(c, 'ACTIVO');
+    }
+  }
+
+  private doToggleCanchaEstado(c: CanchaConfig, estado: string): void {
+    this.canchaTogglingId.set(c.id);
+    this.api
+      .putCancha(c.id, {
+        nombre: c.nombre,
+        orden: c.orden,
+        techada: c.techada,
+        tipoPared: c.tipoPared ?? 'CRISTAL',
+        precioHora: c.precioHora,
+        color: c.color,
+        estado,
+      })
+      .subscribe({
+        next: (saved) => {
+          this.canchaTogglingId.set(null);
+          this.canchas.update((list) => list.map((x) => (x.id === saved.id ? saved : x)));
+          this.messages.add({
+            severity: 'success',
+            summary: estado === 'ACTIVO' ? 'Activada' : 'Desactivada',
+            detail: c.nombre,
+          });
+        },
+        error: () => {
+          this.canchaTogglingId.set(null);
+          this.messages.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No pudimos cambiar el estado de la cancha. Probá de nuevo.',
+          });
+        },
+      });
   }
 
   askDeleteCancha(c: CanchaConfig): void {
@@ -494,11 +753,23 @@ export class ConfigComponent {
     const fecha = ymd(startOfDay(value));
     this.calValue.set(null);
     const canchaId = this.bloqueoCanchaId();
+    const canchaLabel = this.canchaOpciones().find((o) => o.value === canchaId)?.label ?? 'todo el complejo';
+    this.confirm.confirm({
+      header: 'Bloquear día',
+      message: `¿Bloquear el ${this.fechaLarga(fecha)} para ${canchaLabel}?`,
+      acceptLabel: 'Bloquear',
+      rejectLabel: 'Volver',
+      accept: () => this.doCrearBloqueo(fecha, canchaId),
+    });
+  }
+
+  private doCrearBloqueo(fecha: string, canchaId: number | null): void {
     const motivo = this.bloqueoMotivo().trim() || null;
     this.api.postBloqueo({ fecha, canchaId, motivo }).subscribe({
       next: (created) => {
         this.bloqueos.update((list) => [...list, created]);
         this.bloqueoMotivo.set('');
+        this.reservasAfectadas.set(created.reservasAfectadas ?? []);
         this.messages.add({ severity: 'success', summary: 'Bloqueado', detail: this.fechaLarga(fecha) });
       },
       error: () => {
@@ -509,6 +780,10 @@ export class ConfigComponent {
         });
       },
     });
+  }
+
+  dismissReservasAfectadas(): void {
+    this.reservasAfectadas.set([]);
   }
 
   removeBloqueo(b: BloqueoItem): void {
@@ -541,7 +816,10 @@ export class ConfigComponent {
   }
 
   // ── Guardar ──
-  private markDirty(): void { this.dirty.set(true); }
+  private markDirty(): void {
+    this.dirty.set(true);
+    this.unsaved.setDirty(true);
+  }
 
   save(): void {
     if (!this.canSave()) return;
@@ -555,6 +833,11 @@ export class ConfigComponent {
       instagram: norm(this.instagram()),
     };
 
+    // Nombre de la sección que se está guardando en cada paso: se usa para señalar en el
+    // toast de error cuál PUT falló (los pasos son secuenciales, así que en el momento del
+    // error `seccion` siempre refleja el que está en curso).
+    let seccion = 'Horario';
+
     this.api
       .putHorarios({
         breakOn: this.breakOn(),
@@ -563,29 +846,41 @@ export class ConfigComponent {
         week: this.week(),
       })
       .pipe(
-        concatMap(() =>
-          this.api.putDuraciones({
+        concatMap((res) => {
+          this.reservasAfectadas.set(res.reservasAfectadas ?? []);
+          seccion = 'Duraciones';
+          return this.api.putDuraciones({
             pasoMinutos: this.pasoMinutos(),
             duraciones: this.duraciones(),
             duracionDefault: this.duracionDefault(),
             permitirOtrasDuraciones: this.permitirOtras(),
-          })
-        ),
-        concatMap(() =>
-          this.api.putPrecios({
+          });
+        }),
+        concatMap(() => {
+          seccion = 'Precios';
+          // Mandamos siempre lo que hay cargado en el form (aunque el modo activo sea otro):
+          // el back preserva el valor, así no se pisa lo que el usuario ya cargó si vuelve a cambiar de modo.
+          return this.api.putPrecios({
             precioModo: this.precioModo(),
-            precioHoraGeneral: this.precioModo() === 'GENERAL' ? this.precioHoraGeneral() : null,
-          })
-        ),
-        concatMap(() =>
-          this.api.putSena({
+            precioHoraGeneral: this.precioHoraGeneral(),
+          });
+        }),
+        concatMap(() => {
+          seccion = 'Seña';
+          return this.api.putSena({
             requiereSena: this.requiereSena(),
-            senaMonto: this.requiereSena() ? this.senaMonto() : null,
-            senaAlias: this.requiereSena() ? this.senaAlias() : null,
-          })
-        ),
-        concatMap(() => this.api.putAutoasignacion({ autoasignacion: this.autoasignacion() })),
-        concatMap(() => this.api.putContacto(contacto))
+            senaMonto: this.senaMonto(),
+            senaAlias: this.senaAlias(),
+          });
+        }),
+        concatMap(() => {
+          seccion = 'Elección de cancha';
+          return this.api.putAutoasignacion({ autoasignacion: this.autoasignacion() });
+        }),
+        concatMap(() => {
+          seccion = 'Contacto';
+          return this.api.putContacto(contacto);
+        })
       )
       .subscribe({
         next: (cfg) => {
@@ -593,15 +888,18 @@ export class ConfigComponent {
           this.saving.set(false);
           this.messages.add({ severity: 'success', summary: 'Guardado', detail: 'Cambios guardados' });
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           this.saving.set(false);
           // Son varios PUT encadenados y NO son atómicos: si falla uno del medio, los anteriores
           // ya se persistieron. Recargamos del server para que la UI muestre el estado real
           // (y no quede el front creyendo que no se guardó nada mientras parte ya está en vivo).
+          const backendMsg: string | undefined = err?.error?.error;
           this.messages.add({
             severity: 'warn',
             summary: 'Guardado incompleto',
-            detail: 'Puede que algunos cambios no se hayan aplicado. Recargamos la configuración para mostrarte el estado real.',
+            detail: backendMsg
+              ? `${seccion}: ${backendMsg}`
+              : 'Puede que algunos cambios no se hayan aplicado. Recargamos la configuración para mostrarte el estado real.',
           });
           this.loadConfig();
         },

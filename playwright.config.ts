@@ -11,6 +11,10 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // IMPORTANTE: correr SIEMPRE con el path → `npx playwright test e2e`. El comando pelado
+  // (sin path) escanea de más (unit specs de src/, worktrees en .claude/, el proyecto hermano
+  // BarberApp) y carga dos @playwright/test, corrompiendo el runner ("did not expect test()").
+  // El filtro posicional `e2e` evita cargar esos specs ajenos.
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,

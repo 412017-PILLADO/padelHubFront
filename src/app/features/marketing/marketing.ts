@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 
 interface Feature {
   icon: 'globe' | 'grid' | 'bell' | 'chart';
@@ -31,6 +32,7 @@ interface AgendaRow {
   selector: 'app-marketing',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink],
   templateUrl: './marketing.html',
   styleUrl: './marketing.scss',
 })
@@ -71,13 +73,13 @@ export class MarketingLanding {
     },
     {
       icon: 'bell',
-      title: 'Avisos automáticos',
-      desc: 'Recordatorios por WhatsApp antes del turno. Menos ausencias y menos canchas vacías.',
+      title: 'Contacto directo',
+      desc: 'Cada reserva llega con el WhatsApp del cliente a mano: le escribís vos, sin intermediarios.',
     },
     {
       icon: 'chart',
-      title: 'Ocupación a la vista',
-      desc: 'Mirá qué horarios se llenan y cuáles no, para mover precios o promos donde más rinde.',
+      title: 'Tu marca, tu página',
+      desc: 'Cada club tiene su propia página de reservas, con su nombre, su logo y su color.',
     },
   ];
 

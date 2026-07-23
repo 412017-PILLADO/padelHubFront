@@ -44,9 +44,9 @@ test.describe('señas', () => {
     await expect(slots.first()).toBeVisible({ timeout: 15_000 });
     await expect(async () => {
       await slots.first().click();
-      await expect(page.locator('.court.any')).toBeVisible({ timeout: 1000 });
+      await expect(page.locator('.ccard.any')).toBeVisible({ timeout: 1000 });
     }).toPass({ timeout: 15_000 });
-    await page.locator('.court.any').click();                        // 04 · Cancha (cualquiera)
+    await page.locator('.ccard.any').click();                        // 04 · Cancha (cualquiera)
 
     await page.locator('#fName').fill(cliente);                      // 05 · Datos
     const phone = page.locator('#fPhone');

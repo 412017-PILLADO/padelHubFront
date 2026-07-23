@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+/** `estado`: 'CONFIRMADO' o 'PENDIENTE' (de seña; el endpoint incluye pendientes vigentes del día). */
 export interface Turno {
   id: number;
   hora: string;
@@ -10,7 +11,7 @@ export interface Turno {
   clienteNombre: string;
   clienteWhatsapp: string;
   canchaNombre: string;
-  estado: string;
+  estado: 'CONFIRMADO' | 'PENDIENTE';
 }
 
 export interface TurnoCancelado {
@@ -35,7 +36,7 @@ export interface Pendiente {
 export class TurnosService {
   private readonly http = inject(HttpClient);
 
-  /** Turnos del día (CONFIRMADO) para la fecha `YYYY-MM-DD`. */
+  /** Turnos del día para la fecha `YYYY-MM-DD` (CONFIRMADO + PENDIENTE de seña vigentes). */
   turnosDelDia(fecha: string): Observable<Turno[]> {
     const params = new HttpParams().set('fecha', fecha);
     return this.http.get<Turno[]>('/api/v1/turnos', { params });

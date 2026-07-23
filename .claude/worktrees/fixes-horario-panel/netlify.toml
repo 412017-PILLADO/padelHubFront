@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist/padel-hub/browser"
+
+# SPA fallback: toda ruta sirve index.html para que el router de Angular resuelva
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

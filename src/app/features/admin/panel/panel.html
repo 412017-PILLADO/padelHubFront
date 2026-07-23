@@ -140,6 +140,7 @@
                 [style.border-left-color]="grid()!.cols[b.col].color">
                 <span class="gb-cli">{{ b.turno.clienteNombre }}</span>
                 <span class="gb-time mono">{{ b.turno.hora }}–{{ b.turno.fin }}</span>
+                @if (b.turno.estado === 'PENDIENTE') { <span class="badge-pend">Seña pendiente</span> }
               </div>
             }
           </div>
@@ -157,7 +158,9 @@
           <div class="turno-row">
             <div class="t-hora mono">{{ t.hora }}<span class="t-dur">{{ t.duracionMinutos }}'</span></div>
             <div class="t-info">
-              <div class="t-cliente">{{ t.clienteNombre }}</div>
+              <div class="t-cliente">{{ t.clienteNombre }}
+                @if (t.estado === 'PENDIENTE') { <span class="badge-pend">Seña pendiente</span> }
+              </div>
               <div class="t-meta">@if (showCancha()) { {{ t.canchaNombre }} · }{{ t.hora }}–{{ t.fin }}</div>
             </div>
             <div class="t-actions">

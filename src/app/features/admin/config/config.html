@@ -11,6 +11,98 @@
 </header>
 
 <main>
+  @if (reservasAfectadas().length > 0) {
+    <section class="block ra-block">
+      <div class="ra-head">
+        <span class="ra-warn">⚠ {{ reservasAfectadas().length }} {{ reservasAfectadas().length === 1 ? 'reserva queda' : 'reservas quedan' }} fuera del nuevo horario</span>
+        <button type="button" class="ra-close" (click)="dismissReservasAfectadas()" aria-label="Cerrar aviso">✕</button>
+      </div>
+      <div class="ra-list">
+        @for (r of reservasAfectadas(); track r.id) {
+          <div class="ra-row">
+            <span class="ra-fecha mono">{{ r.fecha }}</span>
+            <span class="ra-hora mono">{{ r.hora }}</span>
+            <span class="ra-cancha">{{ r.cancha }}</span>
+            <span class="ra-cliente">{{ r.cliente }}</span>
+          </div>
+        }
+      </div>
+      <p class="ra-hint">Las reservas siguen vigentes: contactá a los clientes o cancelalas desde Turnos.</p>
+    </section>
+  }
+
+  <!-- ===== MARCA (color + logo) ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Marca</span><span class="ln"></span></div>
+    <p class="block-sub">Los colores y el logo con los que se ve tu página de reserva. El primario pinta los
+      acentos (botones, chips, pasos); el secundario es un acento opcional (ej: el grip del ícono de paleta).
+      El logo aparece arriba a la izquierda; sin logo, se muestra solo el nombre.</p>
+
+    <div class="marca">
+      <div class="marca-field">
+        <label class="marca-label">Color primario</label>
+        <div class="color-row">
+          <input type="color" class="color-swatch" [ngModel]="marcaColor()"
+            (ngModelChange)="marcaColor.set($event)" aria-label="Elegí el color primario" />
+          <input type="text" class="color-hex mono" [ngModel]="marcaColor()"
+            (ngModelChange)="marcaColor.set($event)" placeholder="#2747ff" spellcheck="false" />
+        </div>
+      </div>
+
+      <div class="marca-field">
+        <label class="marca-label">Color secundario <span class="marca-opt">(opcional)</span></label>
+        <div class="color-row">
+          <input type="color" class="color-swatch" [ngModel]="marcaColorSecPicker()"
+            (ngModelChange)="setColorSec($event)" aria-label="Elegí el color secundario" />
+          <input type="text" class="color-hex mono" [ngModel]="marcaColorSec() ?? ''"
+            (ngModelChange)="setColorSec($event)" placeholder="Sin definir · usa el primario" spellcheck="false" />
+          @if (marcaColorSec()) {
+            <button type="button" class="btn-ghost" (click)="clearColorSec()">Quitar</button>
+          }
+          <button type="button" class="btn-save" [disabled]="savingMarca()" (click)="saveMarca()">
+            {{ savingMarca() ? 'Guardando…' : 'Guardar marca' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="marca-field">
+        <label class="marca-label">Plantilla de la landing</label>
+        <div class="plantilla-row">
+          <select class="plantilla-sel" [ngModel]="marcaPlantilla()" (ngModelChange)="marcaPlantilla.set($event)"
+            aria-label="Plantilla de la landing">
+            @for (p of plantillas; track p.value) { <option [value]="p.value">{{ p.label }} — {{ p.hint }}</option> }
+          </select>
+          <span class="marca-opt">Cambia el diseño de tu página pública. Se aplica al guardar la marca.</span>
+        </div>
+      </div>
+
+      <div class="marca-field">
+        <label class="marca-label">Logo del club</label>
+        <div class="logo-row">
+          <div class="logo-box" [class.empty]="!logoPreview()">
+            @if (logoPreview(); as src) {
+              <img [src]="src" alt="Logo del club" />
+            } @else {
+              <span class="logo-empty">Sin logo</span>
+            }
+          </div>
+          <div class="logo-actions">
+            <label class="btn-file" [class.busy]="uploadingLogo()">
+              {{ uploadingLogo() ? 'Subiendo…' : (logoPreview() ? 'Cambiar logo' : 'Subir logo') }}
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                (change)="onLogoChange($event)" [disabled]="uploadingLogo()" hidden />
+            </label>
+            @if (logoPreview()) {
+              <button type="button" class="btn-ghost" [disabled]="uploadingLogo()" (click)="removeLogo()">Quitar</button>
+            }
+            <span class="logo-hint">PNG, JPG, WEBP o SVG · máx 512 KB<br />
+              Ideal: cuadrado, ~320×320 px, con fondo transparente (también sirve horizontal).</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ===== HORARIO SEMANAL ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Horario semanal</span><span class="ln"></span></div>
@@ -24,14 +116,14 @@
             (click)="toggleDay(d.diaSemana)"></button>
           @if (d.open) {
             <div class="day-edit">
-              <select class="tsel" [class.invalid]="d.from >= d.to" [ngModel]="d.from" (ngModelChange)="setFrom(d.diaSemana, $event)">
+              <select class="tsel" [class.invalid]="d.to !== '00:00' && d.from >= d.to" [ngModel]="d.from" (ngModelChange)="setFrom(d.diaSemana, $event)">
                 @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
               </select>
               <span class="sep">—</span>
-              <select class="tsel" [class.invalid]="d.from >= d.to" [ngModel]="d.to" (ngModelChange)="setTo(d.diaSemana, $event)">
-                @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+              <select class="tsel" [class.invalid]="d.to !== '00:00' && d.from >= d.to" [ngModel]="d.to" (ngModelChange)="setTo(d.diaSemana, $event)">
+                @for (t of times; track t) { <option [value]="t">{{ timeLabel(t) }}</option> }
               </select>
-              @if (d.from >= d.to) { <span class="day-err">El cierre debe ser después de la apertura</span> }
+              @if (d.to !== '00:00' && d.from >= d.to) { <span class="day-err">El cierre debe ser después de la apertura</span> }
             </div>
           } @else {
             <span class="closed-badge">Cerrado</span>
@@ -39,6 +131,11 @@
         </div>
       }
     </div>
+    @if (horarioAvisos().length > 0) {
+      <div class="horario-avisos">
+        @for (a of horarioAvisos(); track a) { <p class="horario-aviso">ℹ {{ a }}</p> }
+      </div>
+    }
   </section>
 
   <!-- ===== DESCANSO ===== -->
@@ -128,6 +225,12 @@
       </div>
     } @else {
       <p class="block-sub mt">Cada cancha define su precio abajo, en la sección Canchas.</p>
+      @if (canchasSinPrecio().length > 0) {
+        <p class="precio-aviso">
+          ⚠ {{ canchasSinPrecio().length }} {{ canchasSinPrecio().length === 1 ? 'cancha sin precio' : 'canchas sin precio' }}:
+          el público no verá el precio de esos turnos.
+        </p>
+      }
     }
   </section>
 
@@ -214,20 +317,37 @@
   <!-- ===== CANCHAS ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Canchas</span><span class="ln"></span></div>
-    <p class="block-sub">Las canchas que el jugador puede reservar. Eliminar una no borra las reservas ya hechas.</p>
+    <p class="block-sub">Las canchas que el jugador puede reservar. Las inactivas no se ofrecen al público
+      (pero conservan sus reservas). Eliminar una no borra las reservas ya hechas.</p>
+
+    @if (canchasSinPrecio().length > 0) {
+      <p class="precio-aviso">
+        ⚠ {{ canchasSinPrecio().length }} {{ canchasSinPrecio().length === 1 ? 'cancha sin precio' : 'canchas sin precio' }}:
+        el público no verá el precio de esos turnos.
+      </p>
+    }
 
     @if (canchasOrdenadas().length > 0) {
       <div class="cancha-list">
         @for (c of canchasOrdenadas(); track c.id) {
-          <div class="cancha-item">
+          <div class="cancha-item" [class.inactive]="c.estado !== 'ACTIVO'">
             <span class="cancha-dot" [style.background]="c.color || '#2747ff'"></span>
             <div class="cancha-info">
-              <span class="cancha-name">{{ c.nombre }}</span>
+              <span class="cancha-name">
+                {{ c.nombre }}
+                @if (c.estado !== 'ACTIVO') { <span class="cancha-badge-off">Inactiva</span> }
+              </span>
               <span class="cancha-meta mono">
                 {{ c.techada ? 'Techada' : 'Descubierta' }} · {{ tipoParedLabel(c.tipoPared) }}
-                @if (precioModo() === 'POR_CANCHA' && c.precioHora != null) { · ${{ c.precioHora }}/h }
+                @if (precioModo() === 'POR_CANCHA') {
+                  @if (c.precioHora != null) { · ${{ c.precioHora }}/h } @else { · <span class="cancha-noprecio">sin precio</span> }
+                }
               </span>
             </div>
+            <button type="button" class="cancha-toggle" [class.off]="c.estado !== 'ACTIVO'"
+              [disabled]="canchaTogglingId() === c.id" (click)="toggleCanchaEstado(c)">
+              {{ c.estado === 'ACTIVO' ? 'Desactivar' : 'Activar' }}
+            </button>
             <button type="button" class="cancha-edit" aria-label="Editar cancha" (click)="editCancha(c)">Editar</button>
             <button type="button" class="cancha-del" aria-label="Eliminar cancha" (click)="askDeleteCancha(c)">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>

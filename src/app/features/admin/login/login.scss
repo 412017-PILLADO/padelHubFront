@@ -38,8 +38,16 @@
 }
 .brand-panel > * { position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; gap: 12px; }
-.brand-mark { width: 34px; height: 34px; color: #fff; }
+/* Grip con el secundario del tenant si está definido (dos-tonos sobre el gradiente), si no, blanco. */
+.brand-mark { width: 34px; height: 34px; color: #fff; --paddle-grip: var(--court-2, currentColor); }
 .brand-mark svg { width: 100%; height: 100%; }
+/* Logo del club: chip blanco para que cualquier logo (claro u oscuro) se lea sobre el gradiente. */
+.brand-logo {
+  display: flex; align-items: center;
+  background: #fff; border-radius: 8px;
+  padding: 6px 10px;
+}
+.brand-logo img { height: 30px; width: auto; max-width: 128px; object-fit: contain; display: block; }
 .logo-type .name { font-size: 1.4rem; line-height: 1; }
 .logo-type .name .hub { color: rgba(255, 255, 255, 0.7); }
 .logo-type .sub { color: rgba(255, 255, 255, 0.8); margin-top: 4px; }

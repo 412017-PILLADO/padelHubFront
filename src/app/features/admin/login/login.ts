@@ -14,6 +14,8 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import { AuthService } from '../../../core/auth/auth.service';
+import { BookingService } from '../../../core/api/booking.service';
+import { BrandingService } from '../../../core/branding/branding.service';
 
 @Component({
   selector: 'app-admin-login',
@@ -28,11 +30,27 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly messages = inject(MessageService);
+  private readonly booking = inject(BookingService);
+  private readonly branding = inject(BrandingService);
 
   readonly email = signal('');
   readonly password = signal('');
   readonly loading = signal(false);
   readonly isDev = isDevMode();
+
+  /** Logo del club (marca del tenant) para el panel de marca del login. */
+  readonly logoSrc = this.branding.logoSrc;
+
+  constructor() {
+    // Pre-login no hay JWT → tomamos la marca de la config pública (resuelta por subdominio).
+    this.booking.config().subscribe({
+      next: (cfg) =>
+        this.branding.apply(cfg.tenant.colorPrimario, cfg.tenant.colorSecundario, cfg.tenant.logoUrl),
+      error: () => {
+        /* Sin marca del tenant el login sigue con el color base. */
+      },
+    });
+  }
 
   submit(): void {
     const email = this.email().trim();

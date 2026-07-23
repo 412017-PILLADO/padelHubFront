@@ -1,20 +1,428 @@
 <p-toast position="top-center"></p-toast>
 
-<!-- Cancha vista desde arriba (líneas de saque + red), reusada por cada card del paso "Elegí cancha" -->
+<!-- ===== Defs compartidos (una sola vez, reusados por símbolo) ===== -->
 <svg width="0" height="0" style="position: absolute" aria-hidden="true">
   <defs>
+    <!-- Cancha vista desde arriba (líneas de saque + red), reusada por cada card del paso "Elegí cancha" -->
     <symbol id="court" viewBox="0 0 75 100">
       <line x1="7" y1="18" x2="68" y2="18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.85" fill="none" />
       <line x1="7" y1="82" x2="68" y2="82" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.85" fill="none" />
       <line x1="37.5" y1="18" x2="37.5" y2="82" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.7" fill="none" />
       <line x1="5" y1="50" x2="70" y2="50" stroke="currentColor" stroke-width="1.8" stroke-opacity="0.62" stroke-dasharray="3 2.6" fill="none" />
     </symbol>
+    <!-- Paleta de pádel (cabeza arriba-derecha): cuerpo = currentColor, grip = color secundario del
+         tenant. Reusada por las plantillas B y C vía <use>. La plantilla A la lleva inline. -->
+    <symbol id="paddle" viewBox="0 0 40 40">
+      <g transform="rotate(35 20 20)">
+        <mask id="paddleMask">
+          <rect width="40" height="40" fill="#000" />
+          <path d="M20 2.2 C26.6 2.2 30.5 7.2 30.5 13.4 C30.5 19 27.2 23.2 23.8 24.6 L23.2 24.9 L24 30.4 C24.3 32.6 22.6 33.6 20 33.6 C17.4 33.6 15.7 32.6 16 30.4 L16.8 24.9 L16.2 24.6 C12.8 23.2 9.5 19 9.5 13.4 C9.5 7.2 13.4 2.2 20 2.2 Z" fill="#fff" />
+          <rect x="16.6" y="30.2" width="6.8" height="8.8" rx="2.4" fill="#fff" />
+          <g fill="#000">
+            <circle cx="15.2" cy="10" r="1.45" /><circle cx="20" cy="9.3" r="1.45" /><circle cx="24.8" cy="10" r="1.45" />
+            <circle cx="15.2" cy="15" r="1.45" /><circle cx="20" cy="14.3" r="1.45" /><circle cx="24.8" cy="15" r="1.45" />
+            <circle cx="17.4" cy="19.6" r="1.45" /><circle cx="22.6" cy="19.6" r="1.45" />
+          </g>
+        </mask>
+        <rect width="40" height="40" fill="currentColor" mask="url(#paddleMask)" />
+        <path d="M16.6 33.6 h6.8 v3 a2.4 2.4 0 0 1 -2.4 2.4 h-2 a2.4 2.4 0 0 1 -2.4 -2.4 Z" fill="var(--paddle-grip, currentColor)" />
+      </g>
+    </symbol>
   </defs>
 </svg>
 
-<!-- ===== FLUJO DE RESERVA + ÉXITO =====
-     El afiche izquierdo (.poster-brand) queda SIEMPRE fijo; en la columna derecha (.booking-flow)
-     se muestran los pasos o, al reservar, la pantalla de éxito (no toma toda la pantalla). -->
+<!-- ===================================================================
+     FLUJO DE RESERVA (los pasos + la pantalla de éxito). Es idéntico en las 3 plantillas:
+     cambia solo el marco (marca/héroe/info) alrededor. Por eso vive en un ng-template que cada
+     layout inserta con ngTemplateOutlet.
+     =================================================================== -->
+<ng-template #bookingFlow>
+  <main class="booking-flow" [class.is-success]="success()">
+    @if (!success()) {
+    <div class="flow-head">
+      <strong class="display">Reservá tu cancha.</strong>
+      <span class="hdash"></span>
+      <span class="mono">{{ tenantNombre() }}</span>
+    </div>
+
+    <!-- selectores compactos: duración + día -->
+    <div class="flow-top" [class.no-dur]="!showDuracion()">
+      <!-- 01 · DURACIÓN (solo si el club permite elegir) -->
+      @if (showDuracion()) {
+        <section class="step" [class.done]="true">
+          <div class="step-head">
+            <span class="step-num mono">{{ stepNums().dur }}</span>
+            <span class="step-title">¿Cuánto vas a jugar?</span>
+          </div>
+          <div class="chips dur-chips">
+            @for (d of duraciones(); track d) {
+              <button type="button" class="chip"
+                [attr.aria-pressed]="duracion() === d" (click)="pickDuracion(d)">
+                <span class="c-label mono">{{ d }}'</span>
+                <span class="c-date">min</span>
+              </button>
+            }
+          </div>
+        </section>
+      }
+
+      <!-- DÍA -->
+      <section class="step step-day" [class.done]="dayDone()">
+        <div class="step-head">
+          <span class="step-num mono">{{ stepNums().dia }}</span>
+          <span class="step-title">¿Para cuándo?</span>
+        </div>
+        <div class="chips days">
+          @for (chip of chips(); track chip.label) {
+            <button type="button" class="chip"
+              [attr.aria-pressed]="isChipSelected(chip.date)" (click)="selectDay(chip.date)">
+              <span class="c-label">{{ chip.label }}</span>
+              <span class="c-date mono">{{ chipDate(chip.date) }}</span>
+            </button>
+          }
+          <button type="button" class="chip"
+            [attr.aria-pressed]="calOpen() || customDay() !== null" (click)="toggleCalendar()">
+            <span class="c-label">Otra</span>
+            <span class="c-date mono">{{ customDay() !== null ? chipDate(customDay()!) : 'Fecha' }}</span>
+          </button>
+        </div>
+
+        @if (calOpen()) {
+          <div class="cal open">
+            <p-datepicker [inline]="true" [ngModel]="pickerValue()" [minDate]="minDate"
+              [firstDayOfWeek]="1" (onSelect)="onPickerSelect($event)"></p-datepicker>
+          </div>
+        }
+      </section>
+    </div>
+
+    <!-- región flexible: horario + cancha + datos -->
+    <div class="flow-body">
+      <!-- 03 · HORARIO -->
+      <section class="step step-times" [class.done]="timeDone()">
+        <div class="step-head">
+          <span class="step-num mono">{{ stepNums().hora }}</span>
+          <span class="step-title">¿A qué hora?</span>
+          @if (precioResumen(); as precio) {
+            <span class="step-price mono">{{ precio.texto }}</span>
+          }
+        </div>
+
+        @if (loadingSlots()) {
+          <p class="step-hint">Buscando turnos…</p>
+        } @else if (showTimes()) {
+          <div class="times">
+            @for (slot of slots(); track slot.hora) {
+              <button type="button" class="slot mono"
+                [disabled]="!slot.disponible"
+                [attr.aria-pressed]="selectedTime() === slot.hora"
+                [attr.aria-label]="slot.disponible ? slot.hora : slot.hora + ' ocupado'"
+                (click)="selectTime(slot)">
+                {{ slot.hora }}
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="step-hint">{{ timeHint() }}</p>
+        }
+      </section>
+
+      <!-- 04 · CANCHA (se oculta si el club usa autoasignación) -->
+      @if (showCancha()) {
+      <section class="step" [class.done]="canchaDone()">
+        <div class="step-head">
+          <span class="step-num mono">{{ stepNums().cancha }}</span>
+          <span class="step-title">Elegí cancha</span>
+        </div>
+        @if (timeDone()) {
+          <div class="courts">
+            <button type="button" class="ccard any"
+              [class.is-selected]="isCanchaSelected(ANY)"
+              [attr.aria-pressed]="isCanchaSelected(ANY)" (click)="selectCancha(ANY)">
+              <span class="cc-in">
+                <span class="any-ic" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
+                </span>
+                <span class="cc-name">Cualquiera disponible</span>
+                <span class="any-sub">Te asignamos una libre</span>
+              </span>
+            </button>
+            @for (c of canchasDelSlot(); track c.id) {
+              <button type="button" class="ccard"
+                [class.mat-glass]="c.tipoPared === 'CRISTAL' || !c.tipoPared"
+                [class.mat-concrete]="c.tipoPared === 'MURO'"
+                [class.mat-mixed]="c.tipoPared === 'MIXTA'"
+                [class.is-selected]="isCanchaSelected(c.id)"
+                [style.--dot]="c.color || 'var(--court)'"
+                [attr.aria-pressed]="isCanchaSelected(c.id)" (click)="selectCancha(c.id)">
+                <svg class="court-svg" viewBox="0 0 75 100" aria-hidden="true"><use href="#court" /></svg>
+                @if (c.techada) { <span class="glow"></span> } @else { <span class="sky"></span> }
+                <span class="cc-in">
+                  <span class="cc-top">
+                    <span class="cc-dot" aria-hidden="true"></span>
+                    <span class="cc-name">{{ c.nombre }}</span>
+                  </span>
+                  <span class="cc-bot">
+                    <span class="cc-chips">
+                      <span class="cc-chip">
+                        @if (c.tipoPared === 'MURO') {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M4 10h16M4 15h16M10 4v6M15 10v5M9 15v5" /></svg>
+                        } @else if (c.tipoPared === 'MIXTA') {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="1.2" /><path d="M4 12h16" /><path d="M12 3.5v17" stroke-dasharray="2 2" /></svg>
+                        } @else {
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5" /><path d="M4 9h16M12 3v18" /></svg>
+                        }
+                        {{ materialLabel(c) }}
+                      </span>
+                      @if (c.techada) {
+                        <span class="cc-chip lit">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 2a6 6 0 0 0-4 10.5c.8.8 1 1.3 1 2.5h6c0-1.2.2-1.7 1-2.5A6 6 0 0 0 12 2Z" /></svg>Iluminada
+                        </span>
+                      } @else {
+                        <span class="cc-chip">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19" /></svg>Aire libre
+                        </span>
+                      }
+                    </span>
+                    @if (mostrarPrecios() && precioTurno(c); as precio) {
+                      <span class="cc-price"><span class="amount mono">${{ precio }}</span></span>
+                    }
+                  </span>
+                </span>
+              </button>
+            }
+          </div>
+        } @else {
+          <p class="step-hint">Elegí el horario para ver las canchas.</p>
+        }
+      </section>
+      }
+
+      <!-- 05 · DATOS -->
+      <section class="step" [class.done]="formValid()">
+        <div class="step-head">
+          <span class="step-num mono">{{ stepNums().datos }}</span>
+          <span class="step-title">¿Quién reserva?</span>
+        </div>
+        @if (formOpen()) {
+          <div class="form open">
+            <div class="field">
+              <label for="fName">Nombre</label>
+              <input id="fName" type="text" pInputText autocomplete="name"
+                placeholder="Tu nombre" inputmode="text"
+                [attr.aria-invalid]="nombreTouched() && !nombreValid()"
+                [attr.aria-describedby]="nombreTouched() && !nombreValid() ? 'fName-hint' : null"
+                [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" (blur)="nombreTouched.set(true)" />
+              @if (nombreTouched() && !nombreValid()) {
+                <span class="field-hint" id="fName-hint">Ingresá tu nombre (mínimo 2 letras).</span>
+              }
+            </div>
+            @if (requiereTelefono()) {
+              <div class="field">
+                <label for="fPhone">WhatsApp</label>
+                <input id="fPhone" type="tel" pInputText autocomplete="tel"
+                  placeholder="351 555 5555" inputmode="tel"
+                  [attr.aria-invalid]="whatsappTouched() && !whatsappValid()"
+                  [attr.aria-describedby]="whatsappTouched() && !whatsappValid() ? 'fPhone-hint' : null"
+                  [ngModel]="whatsapp()" (ngModelChange)="whatsapp.set($event)" (blur)="whatsappTouched.set(true)" />
+                @if (whatsappTouched() && !whatsappValid()) {
+                  <span class="field-hint" id="fPhone-hint">Ingresá un WhatsApp válido (mínimo 6 dígitos).</span>
+                }
+              </div>
+            }
+            <!-- honeypot anti-bots -->
+            <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
+              aria-hidden="true" [ngModel]="empresa()" (ngModelChange)="empresa.set($event)" />
+
+            @if (recap(); as r) {
+              <div class="recap-mini">
+                <div class="recap-mini-row"><span class="k">Día</span><span class="v">{{ r.dia }}</span></div>
+                <div class="recap-mini-row"><span class="k">Hora</span><span class="v mono">{{ r.hora }}</span></div>
+                <div class="recap-mini-row"><span class="k">Duración</span><span class="v mono">{{ r.duracion }} min</span></div>
+                <div class="recap-mini-row"><span class="k">Cancha</span><span class="v">{{ r.cancha }}</span></div>
+                @if (r.precio; as precio) {
+                  <div class="recap-mini-row">
+                    <span class="k">Precio</span>
+                    <span class="v mono">{{ precio.texto }}</span>
+                  </div>
+                }
+              </div>
+            }
+
+            <button type="button" class="confirm"
+              [disabled]="!canConfirm() || enviando()" (click)="confirm()">
+              {{ enviando() ? 'Confirmando…' : 'Confirmar turno' }}
+            </button>
+            @if (confirmBlockedReason(); as motivo) {
+              <p class="confirm-hint" role="status">{{ motivo }}</p>
+            }
+          </div>
+        } @else {
+          <p class="step-hint">Elegí la cancha para dejar tus datos.</p>
+        }
+      </section>
+    </div>
+    } @else if (successData(); as data) {
+    <div class="success open">
+      <div class="check-ring">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="big display">{{ data.pendiente ? 'Casi listo' : '¡Listo!' }}</div>
+      <div class="closing">
+        {{ data.pendiente ? 'Reservá tu turno con la seña, ' + data.primerNombre + '.' : 'Te esperamos, ' + data.primerNombre + '.' }}
+      </div>
+      <div class="recap">
+        <div class="recap-row"><span class="k">Cancha</span><span class="v">{{ data.cancha }}</span></div>
+        <div class="recap-row"><span class="k">Día</span><span class="v">{{ data.dia }}</span></div>
+        <div class="recap-row"><span class="k">Hora</span><span class="v mono">{{ data.hora }}</span></div>
+        <div class="recap-row"><span class="k">Duración</span><span class="v mono">{{ data.duracion }} min</span></div>
+      </div>
+
+      @if (data.pendiente) {
+        <div class="sena-box">
+          <div class="sena-title">Falta la seña para confirmar</div>
+          <p class="sena-text">
+            @if (data.senaMonto) {
+              Transferí la seña de <strong>${{ data.senaMonto }}</strong> y mandanos el comprobante por WhatsApp.
+            } @else {
+              Transferí la seña y mandanos el comprobante por WhatsApp.
+            }
+            Tenés <strong>15 minutos</strong>: pasado ese tiempo el turno se libera.
+          </p>
+          @if (data.senaAlias) {
+            <div class="sena-alias-row">
+              <div class="sa-info">
+                <span class="sa-label">Transferí a este alias</span>
+                <span class="sa-value mono">{{ data.senaAlias }}</span>
+              </div>
+              <button type="button" class="sa-copy" (click)="copyAlias()"
+                [attr.aria-label]="'Copiar alias ' + data.senaAlias">
+                {{ aliasCopiado() ? '¡Copiado!' : 'Copiar' }}
+              </button>
+            </div>
+          }
+          @if (whatsappSenaUrl(); as waSena) {
+            <a class="sena-wa" [href]="waSena" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
+          }
+        </div>
+      }
+
+      <button type="button" class="ghost-btn" (click)="backHome()">Reservar otro turno</button>
+    </div>
+    }
+  </main>
+</ng-template>
+
+<!-- Info del club (horarios + dónde + contacto) reusada como tarjetas por las plantillas B y C -->
+<ng-template #infoCards>
+  @if (horarios().length) {
+    <article class="ic-card">
+      <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="ic-t">Horarios</span></div>
+      <ul class="ic-hours">
+        @for (row of horarios(); track row.dias) {
+          <li><span class="d" [class.closed]="row.cerrado">{{ row.dias }}</span><span class="h mono" [class.closed]="row.cerrado">{{ row.rango }}</span></li>
+        }
+      </ul>
+    </article>
+  }
+  @if (direccion()) {
+    <article class="ic-card">
+      <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="ic-t">Dónde estamos</span></div>
+      <p class="ic-addr">{{ direccion() }}</p>
+      @if (mapaUrl()) {
+        <button type="button" class="ic-link" (click)="openMaps()">Ver en Google Maps</button>
+      }
+    </article>
+  }
+  @if (whatsappUrl() || instagramHandle()) {
+    <article class="ic-card">
+      <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.2Z"/></svg></span><span class="ic-t">Contacto</span></div>
+      <div class="ic-links">
+        @if (whatsappUrl()) { <a class="ic-link" [href]="whatsappUrl()" target="_blank" rel="noopener">WhatsApp directo</a> }
+        @if (instagramHandle(); as ig) { <a class="ic-link" [href]="instagramUrl()" target="_blank" rel="noopener">&#64;{{ ig }}</a> }
+      </div>
+    </article>
+  }
+</ng-template>
+
+<!-- Marca reutilizable (logo del club o paleta por defecto) para B y C. -->
+<ng-template #brandMark>
+  @if (logoSrc(); as logo) {
+    <span class="tpl-logo"><img [src]="logo" [alt]="tenantNombre()" /></span>
+  } @else {
+    <span class="tpl-mark" aria-hidden="true"><svg viewBox="0 0 40 40"><use href="#paddle" /></svg></span>
+  }
+</ng-template>
+
+@switch (plantilla()) {
+
+  <!-- ===================== PLANTILLA B · Hero centrado ===================== -->
+  @case ('B') {
+    <div class="tpl-b">
+      <header class="b-nav">
+        <div class="b-brandline">
+          <ng-container [ngTemplateOutlet]="brandMark"></ng-container>
+          @if (!logoSrc()) { <span class="b-brandname display">{{ tenantNombre() }}</span> }
+        </div>
+      </header>
+
+      <section class="b-hero">
+        <div class="b-hero-mark"><ng-container [ngTemplateOutlet]="brandMark"></ng-container></div>
+        <h1 class="b-title display">{{ tenantNombre() }}</h1>
+        <p class="b-lede">Reservá tu cancha en 30 segundos. Sin llamados, sin esperas.</p>
+        <div class="b-cta">
+          <a class="b-btn primary" href="#reservar">Reservar turno</a>
+          @if (horarios().length) { <a class="b-btn ghost" href="#b-info">Ver horarios</a> }
+        </div>
+      </section>
+
+      <section id="reservar" class="b-book">
+        <ng-container [ngTemplateOutlet]="bookingFlow"></ng-container>
+      </section>
+
+      <section id="b-info" class="b-info">
+        <ng-container [ngTemplateOutlet]="infoCards"></ng-container>
+      </section>
+
+      <footer class="b-foot">
+        <span class="mono">© 2026 {{ tenantNombre() }}</span>
+        <a class="mono" routerLink="/admin">Panel del club</a>
+      </footer>
+    </div>
+  }
+
+  <!-- ===================== PLANTILLA C · Compacta tipo app ===================== -->
+  @case ('C') {
+    <div class="tpl-c">
+      <aside class="c-rail">
+        <div class="c-brandline">
+          <ng-container [ngTemplateOutlet]="brandMark"></ng-container>
+          @if (!logoSrc()) { <span class="c-brandname display">{{ tenantNombre() }}</span> }
+        </div>
+        <nav class="c-nav">
+          <a class="c-navitem is-active" href="#reservar"><span class="c-dot"></span>Reservar</a>
+          @if (horarios().length) { <a class="c-navitem" href="#c-info"><span class="c-dot"></span>Horarios</a> }
+          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" href="#c-info"><span class="c-dot"></span>El club</a> }
+        </nav>
+      </aside>
+
+      <main class="c-main">
+        <section id="reservar" class="c-book">
+          <ng-container [ngTemplateOutlet]="bookingFlow"></ng-container>
+        </section>
+        <section id="c-info" class="c-info">
+          <ng-container [ngTemplateOutlet]="infoCards"></ng-container>
+        </section>
+        <footer class="c-foot">
+          <span class="mono">© 2026 {{ tenantNombre() }}</span>
+          <a class="mono" routerLink="/admin">Panel del club</a>
+        </footer>
+      </main>
+    </div>
+  }
+
+  <!-- ===================== PLANTILLA A · Poster (default) ===================== -->
+  @default {
   <div class="poster">
     <!-- columna afiche: marca + héroe + info -->
     <aside class="poster-brand">
@@ -22,11 +430,28 @@
 
       <header class="pb-head">
         <div class="brand">
-          <span class="brand-mark" aria-hidden="true">
-            <svg viewBox="-6 -3 44 46" fill="none">
-              <path transform="rotate(-28 16 20.3)" fill="currentColor" fill-rule="evenodd" d="M16 2.5C22.9 2.5 28 7.4 28 14C28 19.9 24.2 23.3 19.6 24.3C18.9 24.5 18.5 25.1 18.5 25.9L19 34.3C19.1 36.6 17.7 38.2 16 38.2C14.3 38.2 12.9 36.6 13 34.3L13.5 25.9C13.5 25.1 13.1 24.5 12.4 24.3C7.8 23.3 4 19.9 4 14C4 7.4 9.1 2.5 16 2.5ZM10.9 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 9a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM10.9 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 13.4a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM10.9 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM14.7 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0ZM18.5 17.8a1.3 1.3 0 1 0 2.6 0a1.3 1.3 0 1 0-2.6 0Z"/>
-            </svg>
-          </span>
+          @if (logoSrc(); as logo) {
+            <span class="brand-logo"><img [src]="logo" [alt]="tenantNombre()" /></span>
+          } @else {
+            <span class="brand-mark" aria-hidden="true">
+              <svg viewBox="0 0 40 40" fill="none">
+                <g transform="rotate(35 20 20)">
+                  <mask id="paddleLanding">
+                    <rect width="40" height="40" fill="#000" />
+                    <path d="M20 2.2 C26.6 2.2 30.5 7.2 30.5 13.4 C30.5 19 27.2 23.2 23.8 24.6 L23.2 24.9 L24 30.4 C24.3 32.6 22.6 33.6 20 33.6 C17.4 33.6 15.7 32.6 16 30.4 L16.8 24.9 L16.2 24.6 C12.8 23.2 9.5 19 9.5 13.4 C9.5 7.2 13.4 2.2 20 2.2 Z" fill="#fff" />
+                    <rect x="16.6" y="30.2" width="6.8" height="8.8" rx="2.4" fill="#fff" />
+                    <g fill="#000">
+                      <circle cx="15.2" cy="10" r="1.45" /><circle cx="20" cy="9.3" r="1.45" /><circle cx="24.8" cy="10" r="1.45" />
+                      <circle cx="15.2" cy="15" r="1.45" /><circle cx="20" cy="14.3" r="1.45" /><circle cx="24.8" cy="15" r="1.45" />
+                      <circle cx="17.4" cy="19.6" r="1.45" /><circle cx="22.6" cy="19.6" r="1.45" />
+                    </g>
+                  </mask>
+                  <rect width="40" height="40" fill="currentColor" mask="url(#paddleLanding)" />
+                  <path d="M16.6 33.6 h6.8 v3 a2.4 2.4 0 0 1 -2.4 2.4 h-2 a2.4 2.4 0 0 1 -2.4 -2.4 Z" fill="var(--paddle-grip, currentColor)" />
+                </g>
+              </svg>
+            </span>
+          }
           <div class="logo-type">
             <h1 class="name display">{{ tenantNombre() }}</h1>
             <div class="rule"></div>
@@ -103,246 +528,7 @@
     </aside>
 
     <!-- columna reserva: los pasos -->
-    <main class="booking-flow" [class.is-success]="success()">
-      @if (!success()) {
-      <div class="flow-head">
-        <strong class="display">Reservá tu cancha.</strong>
-        <span class="hdash"></span>
-        <span class="mono">{{ tenantNombre() }}</span>
-      </div>
-
-      <!-- selectores compactos: duración + día -->
-      <div class="flow-top" [class.no-dur]="!showDuracion()">
-        <!-- 01 · DURACIÓN (solo si el club permite elegir) -->
-        @if (showDuracion()) {
-          <section class="step" [class.done]="true">
-            <div class="step-head">
-              <span class="step-num mono">{{ stepNums().dur }}</span>
-              <span class="step-title">¿Cuánto vas a jugar?</span>
-            </div>
-            <div class="chips dur-chips">
-              @for (d of duraciones(); track d) {
-                <button type="button" class="chip"
-                  [attr.aria-pressed]="duracion() === d" (click)="pickDuracion(d)">
-                  <span class="c-label mono">{{ d }}'</span>
-                  <span class="c-date">min</span>
-                </button>
-              }
-            </div>
-          </section>
-        }
-
-        <!-- DÍA -->
-        <section class="step step-day" [class.done]="dayDone()">
-          <div class="step-head">
-            <span class="step-num mono">{{ stepNums().dia }}</span>
-            <span class="step-title">¿Para cuándo?</span>
-          </div>
-          <div class="chips days">
-            @for (chip of chips(); track chip.label) {
-              <button type="button" class="chip"
-                [attr.aria-pressed]="isChipSelected(chip.date)" (click)="selectDay(chip.date)">
-                <span class="c-label">{{ chip.label }}</span>
-                <span class="c-date mono">{{ chipDate(chip.date) }}</span>
-              </button>
-            }
-            <button type="button" class="chip"
-              [attr.aria-pressed]="calOpen() || customDay() !== null" (click)="toggleCalendar()">
-              <span class="c-label">Otra</span>
-              <span class="c-date mono">{{ customDay() !== null ? chipDate(customDay()!) : 'Fecha' }}</span>
-            </button>
-          </div>
-
-          @if (calOpen()) {
-            <div class="cal open">
-              <p-datepicker [inline]="true" [ngModel]="pickerValue()" [minDate]="minDate"
-                [firstDayOfWeek]="1" (onSelect)="onPickerSelect($event)"></p-datepicker>
-            </div>
-          }
-        </section>
-      </div>
-
-      <!-- región flexible: horario + cancha + datos -->
-      <div class="flow-body">
-        <!-- 03 · HORARIO -->
-        <section class="step step-times" [class.done]="timeDone()">
-          <div class="step-head">
-            <span class="step-num mono">{{ stepNums().hora }}</span>
-            <span class="step-title">¿A qué hora?</span>
-          </div>
-
-          @if (loadingSlots()) {
-            <p class="step-hint">Buscando turnos…</p>
-          } @else if (showTimes()) {
-            <div class="times">
-              @for (slot of slots(); track slot.hora) {
-                <button type="button" class="slot mono"
-                  [disabled]="!slot.disponible"
-                  [attr.aria-pressed]="selectedTime() === slot.hora"
-                  [attr.aria-label]="slot.disponible ? slot.hora : slot.hora + ' ocupado'"
-                  (click)="selectTime(slot)">
-                  {{ slot.hora }}
-                </button>
-              }
-            </div>
-          } @else {
-            <p class="step-hint">{{ timeHint() }}</p>
-          }
-        </section>
-
-        <!-- 04 · CANCHA (se oculta si el club usa autoasignación) -->
-        @if (showCancha()) {
-        <section class="step" [class.done]="canchaDone()">
-          <div class="step-head">
-            <span class="step-num mono">{{ stepNums().cancha }}</span>
-            <span class="step-title">Elegí cancha</span>
-          </div>
-          @if (timeDone()) {
-            <div class="courts">
-              <button type="button" class="ccard any"
-                [class.is-selected]="isCanchaSelected(ANY)"
-                [attr.aria-pressed]="isCanchaSelected(ANY)" (click)="selectCancha(ANY)">
-                <span class="cc-in">
-                  <span class="any-ic" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5" /><path d="M4 20L21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
-                  </span>
-                  <span class="cc-name">Cualquiera disponible</span>
-                  <span class="any-sub">Te asignamos una libre</span>
-                </span>
-              </button>
-              @for (c of canchasDelSlot(); track c.id) {
-                <button type="button" class="ccard"
-                  [class.mat-glass]="c.tipoPared === 'CRISTAL' || !c.tipoPared"
-                  [class.mat-concrete]="c.tipoPared === 'MURO'"
-                  [class.mat-mixed]="c.tipoPared === 'MIXTA'"
-                  [class.is-selected]="isCanchaSelected(c.id)"
-                  [style.--dot]="c.color || 'var(--court)'"
-                  [attr.aria-pressed]="isCanchaSelected(c.id)" (click)="selectCancha(c.id)">
-                  <svg class="court-svg" viewBox="0 0 75 100" aria-hidden="true"><use href="#court" /></svg>
-                  @if (c.techada) { <span class="glow"></span> } @else { <span class="sky"></span> }
-                  <span class="cc-in">
-                    <span class="cc-top">
-                      <span class="cc-dot" aria-hidden="true"></span>
-                      <span class="cc-name">{{ c.nombre }}</span>
-                    </span>
-                    <span class="cc-bot">
-                      <span class="cc-chips">
-                        <span class="cc-chip">
-                          @if (c.tipoPared === 'MURO') {
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M4 10h16M4 15h16M10 4v6M15 10v5M9 15v5" /></svg>
-                          } @else if (c.tipoPared === 'MIXTA') {
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3.5" width="16" height="17" rx="1.2" /><path d="M4 12h16" /><path d="M12 3.5v17" stroke-dasharray="2 2" /></svg>
-                          } @else {
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1.5" /><path d="M4 9h16M12 3v18" /></svg>
-                          }
-                          {{ materialLabel(c) }}
-                        </span>
-                        @if (c.techada) {
-                          <span class="cc-chip lit">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 2a6 6 0 0 0-4 10.5c.8.8 1 1.3 1 2.5h6c0-1.2.2-1.7 1-2.5A6 6 0 0 0 12 2Z" /></svg>Iluminada
-                          </span>
-                        } @else {
-                          <span class="cc-chip">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.4 1.4M17.6 17.6L19 19M19 5l-1.4 1.4M6.4 17.6L5 19" /></svg>Aire libre
-                          </span>
-                        }
-                      </span>
-                      @if (mostrarPrecios() && precioTurno(c); as precio) {
-                        <span class="cc-price"><span class="amount mono">${{ precio }}</span></span>
-                      }
-                    </span>
-                  </span>
-                </button>
-              }
-            </div>
-          } @else {
-            <p class="step-hint">Elegí el horario para ver las canchas.</p>
-          }
-        </section>
-        }
-
-        <!-- 05 · DATOS -->
-        <section class="step" [class.done]="formValid()">
-          <div class="step-head">
-            <span class="step-num mono">{{ stepNums().datos }}</span>
-            <span class="step-title">¿Quién reserva?</span>
-          </div>
-          @if (formOpen()) {
-            <div class="form open">
-              <div class="field">
-                <label for="fName">Nombre</label>
-                <input id="fName" type="text" pInputText autocomplete="name"
-                  placeholder="Tu nombre" inputmode="text"
-                  [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" />
-              </div>
-              @if (requiereTelefono()) {
-                <div class="field">
-                  <label for="fPhone">WhatsApp</label>
-                  <input id="fPhone" type="tel" pInputText autocomplete="tel"
-                    placeholder="351 555 5555" inputmode="tel"
-                    [ngModel]="whatsapp()" (ngModelChange)="whatsapp.set($event)" />
-                </div>
-              }
-              <!-- honeypot anti-bots -->
-              <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
-                aria-hidden="true" [ngModel]="empresa()" (ngModelChange)="empresa.set($event)" />
-              <button type="button" class="confirm"
-                [disabled]="!canConfirm() || enviando()" (click)="confirm()">
-                {{ enviando() ? 'Confirmando…' : 'Confirmar turno' }}
-              </button>
-            </div>
-          } @else {
-            <p class="step-hint">Elegí la cancha para dejar tus datos.</p>
-          }
-        </section>
-      </div>
-      } @else if (successData(); as data) {
-      <div class="success open">
-        <div class="check-ring">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-        </div>
-        <div class="big display">{{ data.pendiente ? 'Casi listo' : '¡Listo!' }}</div>
-        <div class="closing">
-          {{ data.pendiente ? 'Reservá tu turno con la seña, ' + data.primerNombre + '.' : 'Te esperamos, ' + data.primerNombre + '.' }}
-        </div>
-        <div class="recap">
-          <div class="recap-row"><span class="k">Cancha</span><span class="v">{{ data.cancha }}</span></div>
-          <div class="recap-row"><span class="k">Día</span><span class="v">{{ data.dia }}</span></div>
-          <div class="recap-row"><span class="k">Hora</span><span class="v mono">{{ data.hora }}</span></div>
-          <div class="recap-row"><span class="k">Duración</span><span class="v mono">{{ data.duracion }} min</span></div>
-        </div>
-
-        @if (data.pendiente) {
-          <div class="sena-box">
-            <div class="sena-title">Falta la seña para confirmar</div>
-            <p class="sena-text">
-              @if (data.senaMonto) {
-                Transferí la seña de <strong>${{ data.senaMonto }}</strong> y mandanos el comprobante por WhatsApp.
-              } @else {
-                Transferí la seña y mandanos el comprobante por WhatsApp.
-              }
-              Tenés <strong>15 minutos</strong>: pasado ese tiempo el turno se libera.
-            </p>
-            @if (data.senaAlias) {
-              <div class="sena-alias-row">
-                <div class="sa-info">
-                  <span class="sa-label">Transferí a este alias</span>
-                  <span class="sa-value mono">{{ data.senaAlias }}</span>
-                </div>
-                <button type="button" class="sa-copy" (click)="copyAlias()"
-                  [attr.aria-label]="'Copiar alias ' + data.senaAlias">
-                  {{ aliasCopiado() ? '¡Copiado!' : 'Copiar' }}
-                </button>
-              </div>
-            }
-            @if (whatsappSenaUrl(); as waSena) {
-              <a class="sena-wa" [href]="waSena" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
-            }
-          </div>
-        }
-
-        <button type="button" class="ghost-btn" (click)="backHome()">Reservar otro turno</button>
-      </div>
-      }
-    </main>
+    <ng-container [ngTemplateOutlet]="bookingFlow"></ng-container>
   </div>
+  }
+}
