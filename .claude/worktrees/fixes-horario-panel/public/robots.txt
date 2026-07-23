@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://padel-hub.com.ar/sitemap.xml
