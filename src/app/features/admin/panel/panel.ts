@@ -15,7 +15,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
-import { Pendiente, Turno, TurnosService } from '../../../core/api/turnos.service';
+import { Pendiente, SlotLibre, Turno, TurnosService } from '../../../core/api/turnos.service';
 import { AgendaConfig, AgendaConfigService } from '../../../core/api/agenda-config.service';
 import { WhatsappArPipe } from '../../../shared/whatsapp-ar.pipe';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
@@ -204,7 +204,7 @@ export class PanelComponent {
     const cols = [...cfg.canchas]
       .filter((c) => c.estado === 'ACTIVO')
       .sort((a, b) => a.orden - b.orden)
-      .map((c) => ({ id: c.id, nombre: c.nombre, color: c.color || '#2747ff' }));
+      .map((c) => ({ id: c.id, nombre: c.nombre, color: c.color || '#0a8a99' }));
 
     const q = norm(this.query().trim());
     const blocks: GridBlock[] = [];
@@ -371,6 +371,123 @@ export class PanelComponent {
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  }
+
+  // ── Reserva manual (el dueño carga un turno a mano; p. ej. una seña transferida tarde) ──
+  readonly mOpen = signal(false);
+  readonly mFecha = signal('');
+  readonly mDuracion = signal<number | null>(null);
+  readonly mSlots = signal<SlotLibre[]>([]);
+  readonly mLoadingSlots = signal(false);
+  readonly mHora = signal<string | null>(null);
+  readonly mCanchaId = signal<number | null>(null);
+  readonly mNombre = signal('');
+  readonly mTel = signal('');
+  readonly mSaving = signal(false);
+
+  readonly mDuraciones = computed<number[]>(() => this.agenda()?.duraciones ?? [60, 90, 120]);
+  readonly mSlotsLibres = computed(() => this.mSlots().filter((s) => s.disponible));
+  readonly mCanchasDelSlot = computed(() => {
+    const hora = this.mHora();
+    return this.mSlotsLibres().find((s) => s.hora === hora)?.canchasLibres ?? [];
+  });
+  readonly mValid = computed(
+    () => this.mFecha() !== '' && this.mHora() !== null && this.mNombre().trim().length >= 2,
+  );
+
+  openManual(): void {
+    this.mFecha.set(this.apiFecha(this.selectedDay() < this.today ? this.today : this.selectedDay()));
+    this.mDuracion.set(this.agenda()?.duracionDefault ?? this.mDuraciones()[0]);
+    this.mHora.set(null);
+    this.mCanchaId.set(null);
+    this.mNombre.set('');
+    this.mTel.set('');
+    this.mOpen.set(true);
+    this.mLoadSlots();
+  }
+
+  closeManual(): void {
+    this.mOpen.set(false);
+  }
+
+  mSetFecha(fecha: string): void {
+    this.mFecha.set(fecha);
+    this.mLoadSlots();
+  }
+
+  mSetDuracion(d: number): void {
+    this.mDuracion.set(d);
+    this.mLoadSlots();
+  }
+
+  mSetHora(hora: string): void {
+    this.mHora.set(hora);
+    this.mCanchaId.set(null); // las canchas libres cambian con el slot
+  }
+
+  private mLoadSlots(): void {
+    const fecha = this.mFecha();
+    const dur = this.mDuracion();
+    this.mHora.set(null);
+    this.mCanchaId.set(null);
+    if (!fecha || !dur) {
+      this.mSlots.set([]);
+      return;
+    }
+    this.mLoadingSlots.set(true);
+    this.turnos.disponibilidad(fecha, dur).subscribe({
+      next: (slots) => {
+        this.mSlots.set(slots);
+        this.mLoadingSlots.set(false);
+      },
+      error: () => {
+        this.mSlots.set([]);
+        this.mLoadingSlots.set(false);
+        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos cargar los horarios.' });
+      },
+    });
+  }
+
+  mGuardar(): void {
+    if (!this.mValid() || this.mSaving()) return;
+    this.mSaving.set(true);
+    this.turnos
+      .crearManual({
+        canchaId: this.mCanchaId(),
+        fecha: this.mFecha(),
+        hora: this.mHora()!,
+        duracion: this.mDuracion() ?? 90,
+        clienteNombre: this.mNombre().trim(),
+        clienteWhatsapp: this.mTel().trim() || null,
+      })
+      .subscribe({
+        next: (r) => {
+          this.mSaving.set(false);
+          this.mOpen.set(false);
+          this.messages.add({
+            severity: 'success',
+            summary: 'Reserva creada',
+            detail: `${this.mNombre().trim()} · ${r.canchaNombre}`,
+          });
+          // Saltar al día de la reserva para que se vea recién creada.
+          const [y, m, d] = this.mFecha().split('-').map(Number);
+          const day = startOfDay(new Date(y, m - 1, d));
+          this.calOpen.set(false);
+          this.selectedDay.set(day);
+          this.calValue.set(day);
+          this.load(day);
+          this.loadPendientes();
+        },
+        error: (err) => {
+          this.mSaving.set(false);
+          this.messages.add({
+            severity: 'warn',
+            summary: 'No se pudo crear',
+            detail: err?.error?.error ?? 'Revisá el horario elegido: puede haberse ocupado.',
+          });
+          this.mLoadSlots(); // refresca por si el slot se ocupó mientras tanto
+        },
+      });
   }
 
   private load(day: Date): void {

@@ -9,7 +9,69 @@
     <span class="hdash"></span>
     <span class="mono">{{ fechaLabel() }}</span>
   </div>
+  <button type="button" class="manual-add" (click)="openManual()">+ Reserva manual</button>
 </header>
+
+@if (mOpen()) {
+  <div class="manual-overlay" (click)="closeManual()">
+    <div class="manual-card" role="dialog" aria-label="Reserva manual" (click)="$event.stopPropagation()">
+      <div class="block-h">
+        <span class="t eyebrow">Reserva manual</span><span class="ln"></span>
+        <button type="button" class="m-x" aria-label="Cerrar" (click)="closeManual()">✕</button>
+      </div>
+      <p class="m-hint">El turno se crea confirmado, sin pasar por la seña (por ejemplo, una seña que
+        llegó fuera de término o una reserva tomada por teléfono).</p>
+
+      <div class="m-grid">
+        <label class="cf">
+          <span class="cf-label eyebrow">Fecha</span>
+          <input id="mFecha" class="m-input" type="date" [ngModel]="mFecha()" (ngModelChange)="mSetFecha($event)" />
+        </label>
+        <label class="cf">
+          <span class="cf-label eyebrow">Duración</span>
+          <select id="mDuracion" class="m-input" [ngModel]="mDuracion()" (ngModelChange)="mSetDuracion(+$event)">
+            @for (d of mDuraciones(); track d) { <option [ngValue]="d">{{ d }} min</option> }
+          </select>
+        </label>
+        <label class="cf">
+          <span class="cf-label eyebrow">Horario</span>
+          <select id="mHora" class="m-input" [ngModel]="mHora()" (ngModelChange)="mSetHora($event)"
+            [disabled]="mLoadingSlots() || mSlotsLibres().length === 0">
+            <option [ngValue]="null" disabled>
+              {{ mLoadingSlots() ? 'Buscando…' : (mSlotsLibres().length ? 'Elegí un horario' : 'Sin horarios libres') }}
+            </option>
+            @for (s of mSlotsLibres(); track s.hora) { <option [ngValue]="s.hora">{{ s.hora }}</option> }
+          </select>
+        </label>
+        <label class="cf">
+          <span class="cf-label eyebrow">Cancha</span>
+          <select id="mCancha" class="m-input" [ngModel]="mCanchaId()" (ngModelChange)="mCanchaId.set($event)"
+            [disabled]="mHora() === null">
+            <option [ngValue]="null">Cualquiera disponible</option>
+            @for (c of mCanchasDelSlot(); track c.id) { <option [ngValue]="c.id">{{ c.nombre }}</option> }
+          </select>
+        </label>
+        <label class="cf m-wide">
+          <span class="cf-label eyebrow">Nombre del cliente</span>
+          <input id="mNombre" class="m-input" type="text" placeholder="Nombre y apellido"
+            [ngModel]="mNombre()" (ngModelChange)="mNombre.set($event)" />
+        </label>
+        <label class="cf m-wide">
+          <span class="cf-label eyebrow">WhatsApp (opcional)</span>
+          <input id="mTel" class="m-input" type="tel" placeholder="3511234567"
+            [ngModel]="mTel()" (ngModelChange)="mTel.set($event)" />
+        </label>
+      </div>
+
+      <div class="m-actions">
+        <button type="button" class="m-cancel" (click)="closeManual()">Volver</button>
+        <button type="button" class="m-save" [disabled]="!mValid() || mSaving()" (click)="mGuardar()">
+          {{ mSaving() ? 'Creando…' : 'Crear reserva' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
 
 @if (tienePendientes()) {
   <div class="pending-wrap">

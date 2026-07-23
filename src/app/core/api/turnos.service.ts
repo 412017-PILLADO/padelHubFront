@@ -61,4 +61,43 @@ export class TurnosService {
   rechazarSena(id: number): Observable<TurnoCancelado> {
     return this.http.post<TurnoCancelado>(`/api/v1/turnos/${id}/rechazar-sena`, {});
   }
+
+  /** Disponibilidad autenticada para el form de reserva manual (el panel corre sin subdominio,
+   *  así que no puede usar `/public/disponibilidad`: el tenant sale del JWT). */
+  disponibilidad(fecha: string, duracion: number): Observable<SlotLibre[]> {
+    const params = new HttpParams().set('fecha', fecha).set('duracion', duracion);
+    return this.http.get<SlotLibre[]>('/api/v1/turnos/disponibilidad', { params });
+  }
+
+  /** Reserva manual del dueño: nace CONFIRMADA (sin seña ni límites anti-abuso). */
+  crearManual(body: CrearReservaManual): Observable<ReservaManualCreada> {
+    return this.http.post<ReservaManualCreada>('/api/v1/turnos', body);
+  }
+}
+
+/** Un slot de la grilla con sus canchas libres, como lo devuelve la disponibilidad del panel. */
+export interface SlotLibre {
+  hora: string;
+  disponible: boolean;
+  canchasLibres: { id: number; nombre: string }[];
+}
+
+export interface CrearReservaManual {
+  /** null = "cualquiera disponible" (el back asigna la menos cargada). */
+  canchaId: number | null;
+  fecha: string;
+  hora: string;
+  duracion: number;
+  clienteNombre: string;
+  clienteWhatsapp: string | null;
+}
+
+export interface ReservaManualCreada {
+  id: number;
+  canchaId: number;
+  canchaNombre: string;
+  inicio: string;
+  fin: string;
+  duracionMinutos: number;
+  estado: string;
 }
