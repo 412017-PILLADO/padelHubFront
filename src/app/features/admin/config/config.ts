@@ -194,6 +194,7 @@ export class ConfigComponent {
   readonly requiereSena = signal(false);
   readonly senaMonto = signal<number | null>(null);
   readonly senaAlias = signal<string | null>(null);
+  readonly politicaCancelacion = signal<string | null>(null);
 
   // ── Mercado Pago ──
   readonly mpEstado = signal<MpEstado | null>(null);
@@ -557,6 +558,7 @@ export class ConfigComponent {
     this.requiereSena.set(cfg.requiereSena ?? false);
     this.senaMonto.set(cfg.senaMonto ?? null);
     this.senaAlias.set(cfg.senaAlias ?? null);
+    this.politicaCancelacion.set(cfg.politicaCancelacion ?? null);
     this.autoasignacion.set(cfg.autoasignacion ?? false);
     this.bloqueos.set(cfg.bloqueos ?? []);
     this.canchas.set(cfg.canchas ?? []);
@@ -695,6 +697,10 @@ export class ConfigComponent {
   }
   onSenaAliasInput(value: string): void {
     this.senaAlias.set(value.trim() === '' ? null : value);
+    this.markDirty();
+  }
+  onPoliticaCancelacionInput(value: string): void {
+    this.politicaCancelacion.set(value.trim() === '' ? null : value);
     this.markDirty();
   }
 
@@ -1035,6 +1041,10 @@ export class ConfigComponent {
             senaMonto: this.senaMonto(),
             senaAlias: this.senaAlias(),
           });
+        }),
+        concatMap(() => {
+          seccion = 'Política de cancelación';
+          return this.api.putPoliticaCancelacion(this.politicaCancelacion());
         }),
         concatMap(() => {
           seccion = 'Elección de cancha';

@@ -299,6 +299,9 @@
           @if (whatsappSenaUrl(); as waSena) {
             <a class="sena-wa" [href]="waSena" target="_blank" rel="noopener">Enviar comprobante por WhatsApp</a>
           }
+          @if (config()?.politicaCancelacion) {
+            <button type="button" class="politica-link sena-politica" (click)="abrirPolitica()">Política de cancelación</button>
+          }
         </div>
       }
 
@@ -383,6 +386,9 @@
         <span class="mono">© 2026 {{ tenantNombre() }}</span>
         <span class="foot-links">
           <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+          @if (config()?.politicaCancelacion) {
+            <button type="button" class="politica-link" (click)="abrirPolitica()">Política de cancelación</button>
+          }
           <a class="mono" routerLink="/admin">Panel del club</a>
         </span>
       </footer>
@@ -415,6 +421,9 @@
           <span class="mono">© 2026 {{ tenantNombre() }}</span>
           <span class="foot-links">
             <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+            @if (config()?.politicaCancelacion) {
+              <button type="button" class="politica-link" (click)="abrirPolitica()">Política de cancelación</button>
+            }
             <a class="mono" routerLink="/admin">Panel del club</a>
           </span>
         </footer>
@@ -509,6 +518,9 @@
         <span class="cr mono">© 2026 {{ tenantNombre() }}</span>
         <span class="foot-links">
           <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+          @if (config()?.politicaCancelacion) {
+            <button type="button" class="politica-link" (click)="abrirPolitica()">Política de cancelación</button>
+          }
           <a class="panel-link mono" routerLink="/admin">Panel del club</a>
         </span>
       </footer>
@@ -551,6 +563,20 @@
                 [disabled]="arrepBusy() || !arrepNombre().trim() || !arrepWhatsapp().trim()"
                 (click)="enviarArrepentimiento()">{{ arrepBusy() ? 'Enviando…' : 'Enviar solicitud' }}</button>
       }
+    </div>
+  </div>
+}
+
+<!-- ===================================================================
+     Política de cancelación: texto libre del club (link en el pie de cada plantilla y en el
+     bloque de seña del éxito); mismo overlay/modal que el botón de arrepentimiento.
+     =================================================================== -->
+@if (showPolitica()) {
+  <div class="arrep-overlay" (click)="cerrarPolitica()">
+    <div class="arrep-modal" role="dialog" aria-label="Política de cancelación" (click)="$event.stopPropagation()">
+      <h3>Política de cancelación</h3>
+      <p class="politica-texto">{{ config()?.politicaCancelacion }}</p>
+      <button type="button" class="arrep-cerrar" (click)="cerrarPolitica()">Cerrar</button>
     </div>
   </div>
 }

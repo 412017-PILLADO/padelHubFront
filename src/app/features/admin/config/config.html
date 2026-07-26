@@ -316,6 +316,14 @@
       </div>
       <p class="block-sub sena-alias-hint">Se lo mostramos al cliente en la pantalla de éxito con un botón para copiarlo.</p>
     }
+
+    <div class="paso-row politica-cancelacion-row">
+      <label class="paso-label" for="politicaCancelacion">Política de cancelación</label>
+      <textarea id="politicaCancelacion" class="paso-input politica-cancelacion-input" rows="4"
+        placeholder="Ej: la seña se devuelve si cancelás hasta 24 hs antes del turno."
+        [ngModel]="politicaCancelacion()" (ngModelChange)="onPoliticaCancelacionInput($event)"></textarea>
+      <p class="block-sub">La mostramos en la landing con un link, y en la pantalla de éxito con seña. Si la dejás vacía, no aparece.</p>
+    </div>
   </section>
 
   <!-- ===== MERCADO PAGO ===== -->

@@ -91,6 +91,8 @@ export interface PublicConfig {
   autoasignacion: boolean;
   /** true si el club tiene Mercado Pago conectado (la seña se puede pagar online). */
   pagoOnline: boolean;
+  /** Texto libre de política de cancelación/devolución; null/vacío = el club no cargó una (sin link en la landing). */
+  politicaCancelacion: string | null;
   /** Franjas horarias con precio especial (pisan el precio general/por cancha en ese rango, todos los días). */
   precioFranjas: PrecioFranjaPublic[];
   canchas: CanchaConfig[];

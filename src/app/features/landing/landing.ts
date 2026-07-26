@@ -219,6 +219,9 @@ export class Landing {
   /** Honeypot anti-bot: mismo patrón que `empresa` del form de reserva (input oculto por CSS). */
   readonly arrepEmpresa = signal('');
 
+  // ── Política de cancelación (texto libre del club) ─────────────────
+  readonly showPolitica = signal(false);
+
   readonly success = signal(false);
   readonly successData = signal<{
     cancha: string;
@@ -716,6 +719,15 @@ export class Landing {
           });
         },
       });
+  }
+
+  // ── Política de cancelación ─────────────────────────────────────────
+  abrirPolitica(): void {
+    this.showPolitica.set(true);
+  }
+
+  cerrarPolitica(): void {
+    this.showPolitica.set(false);
   }
 
   openMaps(): void {
