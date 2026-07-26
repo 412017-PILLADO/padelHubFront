@@ -133,6 +133,9 @@ export class PanelComponent {
   readonly loading = signal(false);
   readonly loaded = signal(false);
 
+  /** Estado del pago de seña por reserva (solo las que tienen pago registrado). */
+  readonly pagoEstados = signal<Record<number, string>>({});
+
   // ── Pendientes de seña (todas las fechas; se validan acá) ──
   readonly pendientes = signal<Pendiente[]>([]);
   readonly tienePendientes = computed(() => this.pendientes().length > 0);
@@ -500,6 +503,7 @@ export class PanelComponent {
         this.list.set(turnos);
         this.loading.set(false);
         this.loaded.set(true);
+        this.loadPagoEstados(turnos);
       },
       error: () => {
         this.list.set([]);
@@ -509,6 +513,50 @@ export class PanelComponent {
           severity: 'error',
           summary: 'Error',
           detail: 'No pudimos cargar los turnos. Probá de nuevo.',
+        });
+      },
+    });
+  }
+
+  /** Estado de pago de seña por reserva, para el panel (chip + botón Devolver). */
+  private loadPagoEstados(turnos: Turno[]): void {
+    const ids = turnos.map((t) => t.id);
+    if (ids.length === 0) {
+      this.pagoEstados.set({});
+      return;
+    }
+    this.turnos.getSenaPagoEstados(ids).subscribe({
+      next: (m) => this.pagoEstados.set(m),
+      error: () => this.pagoEstados.set({}),
+    });
+  }
+
+  senaPagoDe(id: number): string | null {
+    return this.pagoEstados()[id] ?? null;
+  }
+
+  askDevolverSena(t: Turno): void {
+    this.confirm.confirm({
+      header: 'Devolver seña',
+      message: `¿Devolver la seña de ${t.clienteNombre}? Se reembolsa el pago a su Mercado Pago.`,
+      acceptLabel: 'Devolver seña',
+      rejectLabel: 'Volver',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.doDevolverSena(t),
+    });
+  }
+
+  private doDevolverSena(t: Turno): void {
+    this.turnos.devolverSena(t.id).subscribe({
+      next: () => {
+        this.pagoEstados.update((m) => ({ ...m, [t.id]: 'DEVUELTO' }));
+        this.messages.add({ severity: 'success', summary: 'Listo', detail: 'Seña devuelta' });
+      },
+      error: (err) => {
+        this.messages.add({
+          severity: 'error',
+          summary: 'No se pudo devolver',
+          detail: err?.error?.error ?? 'No pudimos devolver la seña. Probá de nuevo.',
         });
       },
     });
