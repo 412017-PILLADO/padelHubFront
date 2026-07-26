@@ -1,0 +1,21 @@
+.arrep-overlay {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgb(0 0 0 / 45%);
+  display: grid; place-items: center; padding: 16px;
+}
+.arrep-modal {
+  width: min(92vw, 440px); max-height: 92svh; overflow-y: auto;
+  background: var(--surface, #fff); border-radius: var(--r-lg, 14px);
+  padding: 22px;
+  h3 { margin: 0 0 6px; }
+}
+.arrep-cerrar {
+  width: 100%; border: 0; border-radius: var(--r); cursor: pointer;
+  background: var(--court); color: var(--ink-on-accent, #fff);
+  font: 700 0.92rem var(--body); padding: 11px 16px; margin-top: 4px;
+  transition: background 0.15s ease;
+  &:hover:not(:disabled) { background: var(--court-deep); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+/* El texto de la política es libre: puede tener saltos de línea que hay que respetar. */
+.politica-texto { white-space: pre-line; color: var(--ink-dim); font-size: 0.9rem; margin: 0 0 14px; }

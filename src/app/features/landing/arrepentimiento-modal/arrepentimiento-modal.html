@@ -1,0 +1,28 @@
+<div class="arrep-overlay" (click)="cerrar.emit()">
+  <div class="arrep-modal" role="dialog" aria-label="Botón de arrepentimiento" (click)="$event.stopPropagation()">
+    @if (codigo(); as c) {
+      <h3>Solicitud registrada</h3>
+      <p>Tu código de arrepentimiento es:</p>
+      <div class="arrep-codigo">{{ c }}</div>
+      <p class="arrep-nota">Guardalo. El club se va a contactar por WhatsApp para coordinar
+        la cancelación y, si corresponde, la devolución de la seña.</p>
+      <button type="button" class="arrep-cerrar" (click)="cerrar.emit()">Cerrar</button>
+    } @else {
+      <h3>Botón de arrepentimiento</h3>
+      <p class="arrep-nota">Si te arrepentiste de una reserva o seña, dejanos tus datos.
+        No hace falta estar registrado.</p>
+      <input class="arrep-in" placeholder="Nombre y apellido"
+             [ngModel]="nombre()" (ngModelChange)="nombre.set($event)" />
+      <input class="arrep-in" placeholder="WhatsApp"
+             [ngModel]="whatsapp()" (ngModelChange)="whatsapp.set($event)" />
+      <!-- honeypot anti-bots -->
+      <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
+        aria-hidden="true" [ngModel]="empresa()" (ngModelChange)="empresa.set($event)" />
+      <textarea class="arrep-in" rows="3" placeholder="Contanos qué reserva querés revocar (opcional)"
+             [ngModel]="detalle()" (ngModelChange)="detalle.set($event)"></textarea>
+      <button type="button" class="arrep-enviar"
+              [disabled]="busy() || !nombre().trim() || !whatsapp().trim()"
+              (click)="enviar()">{{ busy() ? 'Enviando…' : 'Enviar solicitud' }}</button>
+    }
+  </div>
+</div>

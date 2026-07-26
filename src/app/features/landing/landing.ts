@@ -27,6 +27,8 @@ import {
   Slot,
 } from '../../core/api/booking.service';
 import { inkOnAccent } from '../../core/branding/branding.service';
+import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-modal';
+import { PoliticaModal } from './politica-modal/politica-modal';
 
 const MES_ABBR = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
@@ -88,7 +90,16 @@ function sameDay(a: Date | null, b: Date | null): boolean {
   selector: 'app-landing',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, DatePickerModule, InputTextModule, ToastModule, NgTemplateOutlet],
+  imports: [
+    FormsModule,
+    RouterLink,
+    DatePickerModule,
+    InputTextModule,
+    ToastModule,
+    NgTemplateOutlet,
+    ArrepentimientoModal,
+    PoliticaModal,
+  ],
   providers: [MessageService],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
@@ -211,13 +222,6 @@ export class Landing {
 
   // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
   readonly showArrep = signal(false);
-  readonly arrepCodigo = signal<string | null>(null);
-  readonly arrepBusy = signal(false);
-  readonly arrepNombre = signal('');
-  readonly arrepWhatsapp = signal('');
-  readonly arrepDetalle = signal('');
-  /** Honeypot anti-bot: mismo patrón que `empresa` del form de reserva (input oculto por CSS). */
-  readonly arrepEmpresa = signal('');
 
   // ── Política de cancelación (texto libre del club) ─────────────────
   readonly showPolitica = signal(false);
@@ -683,51 +687,12 @@ export class Landing {
 
   // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
   abrirArrepentimiento(): void {
-    this.arrepCodigo.set(null);
-    this.arrepNombre.set('');
-    this.arrepWhatsapp.set('');
-    this.arrepDetalle.set('');
-    this.arrepEmpresa.set('');
     this.showArrep.set(true);
-  }
-
-  cerrarArrepentimiento(): void {
-    this.showArrep.set(false);
-  }
-
-  enviarArrepentimiento(): void {
-    if (this.arrepBusy() || !this.arrepNombre().trim() || !this.arrepWhatsapp().trim()) return;
-    this.arrepBusy.set(true);
-    this.booking
-      .crearArrepentimiento({
-        nombre: this.arrepNombre().trim(),
-        whatsapp: this.arrepWhatsapp().trim(),
-        detalle: this.arrepDetalle().trim() || undefined,
-        empresa: this.arrepEmpresa(), // honeypot
-      })
-      .subscribe({
-        next: ({ codigo }) => {
-          this.arrepBusy.set(false);
-          this.arrepCodigo.set(codigo);
-        },
-        error: () => {
-          this.arrepBusy.set(false);
-          this.messages.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'No pudimos registrar tu solicitud. Probá de nuevo.',
-          });
-        },
-      });
   }
 
   // ── Política de cancelación ─────────────────────────────────────────
   abrirPolitica(): void {
     this.showPolitica.set(true);
-  }
-
-  cerrarPolitica(): void {
-    this.showPolitica.set(false);
   }
 
   openMaps(): void {
