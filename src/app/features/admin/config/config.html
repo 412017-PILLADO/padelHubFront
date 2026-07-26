@@ -318,6 +318,31 @@
     }
   </section>
 
+  <!-- ===== MERCADO PAGO ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Mercado Pago</span><span class="ln"></span></div>
+    <p class="block-sub">Conectá la cuenta de Mercado Pago del club para cobrar las señas online:
+      el pago aprobado confirma la reserva solo, sin validarla a mano.</p>
+
+    @if (mpEstado(); as mp) {
+      @if (mp.conectado) {
+        <div class="mp-estado ok">
+          <span class="mp-dot"></span>
+          Conectado — cuenta MP #{{ mp.mpUserId }}
+        </div>
+        <button type="button" class="btn-ghost mp-disconnect" (click)="desconectarMp()">Desconectar</button>
+      } @else {
+        <div class="mp-estado">
+          <span class="mp-dot off"></span>
+          No conectado
+        </div>
+        <button type="button" class="btn-save mp-connect" [disabled]="mpBusy()" (click)="conectarMp()">
+          Conectar Mercado Pago
+        </button>
+      }
+    }
+  </section>
+
   <!-- ===== AUTOASIGNACIÓN ===== -->
   <section class="block">
     <div class="block-h"><span class="t eyebrow">Elección de cancha</span><span class="ln"></span></div>

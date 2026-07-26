@@ -42,6 +42,7 @@ import { AdminNavComponent } from '../admin-nav/admin-nav';
 import { BrandingService } from '../../../core/branding/branding.service';
 import { UnsavedChangesService } from '../unsaved-changes.service';
 import { environment } from '../../../../environments/environment';
+import { MpEstado, PagosService } from '../../../core/api/pagos.service';
 
 /** Tipos de cerramiento de la cancha (espeja el enum TipoPared del backend). */
 const TIPO_PARED_OPCIONES = [
@@ -124,6 +125,7 @@ function minToHhmm(m: number): string {
 })
 export class ConfigComponent {
   private readonly api = inject(AgendaConfigService);
+  private readonly pagosService = inject(PagosService);
   private readonly messages = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
   private readonly primeng = inject(PrimeNG);
@@ -192,6 +194,10 @@ export class ConfigComponent {
   readonly requiereSena = signal(false);
   readonly senaMonto = signal<number | null>(null);
   readonly senaAlias = signal<string | null>(null);
+
+  // ── Mercado Pago ──
+  readonly mpEstado = signal<MpEstado | null>(null);
+  readonly mpBusy = signal(false);
 
   // ── Autoasignación de canchas ──
   readonly autoasignacion = signal(false);
@@ -372,6 +378,7 @@ export class ConfigComponent {
     this.primeng.setTranslation(ES_TRANSLATION);
     this.loadConfig();
     this.loadMarca();
+    this.loadMpEstado();
 
     // Cambios sin guardar: si el usuario cierra/recarga la pestaña, avisar antes de perderlos.
     // Sólo en browser (SSR no tiene window) y se limpia al destruir el componente.
@@ -386,7 +393,21 @@ export class ConfigComponent {
         window.removeEventListener('beforeunload', onBeforeUnload);
         this.unsaved.setDirty(false);
       });
+
+      // Retorno del flujo OAuth: MP redirige acá con /admin/config?mp=conectado.
+      if (new URLSearchParams(location.search).get('mp') === 'conectado') {
+        this.messages.add({ severity: 'success', summary: 'Mercado Pago conectado', detail: 'La cuenta del club quedó vinculada.' });
+        history.replaceState(null, '', location.pathname);
+        this.loadMpEstado();
+      }
     }
+  }
+
+  private loadMpEstado(): void {
+    this.pagosService.getMpEstado().subscribe({
+      next: (e) => this.mpEstado.set(e),
+      error: () => this.mpEstado.set({ conectado: false, mpUserId: null, expiraEn: null }),
+    });
   }
 
   private loadMarca(): void {
@@ -679,6 +700,39 @@ export class ConfigComponent {
 
   // ── Autoasignación ──
   toggleAutoasignacion(): void { this.autoasignacion.update((v) => !v); this.markDirty(); }
+
+  // ── Mercado Pago ──
+  conectarMp(): void {
+    this.mpBusy.set(true);
+    const returnTo = location.origin + '/admin/config';
+    this.pagosService.conectarMp(returnTo).subscribe({
+      next: ({ url }) => (location.href = url),
+      error: (err: HttpErrorResponse) => {
+        this.mpBusy.set(false);
+        this.messages.add({
+          severity: 'error',
+          summary: 'Mercado Pago',
+          detail: err?.error?.error ?? 'No se pudo iniciar la conexión.',
+        });
+      },
+    });
+  }
+
+  desconectarMp(): void {
+    this.confirm.confirm({
+      header: 'Desconectar Mercado Pago',
+      message: '¿Desconectar Mercado Pago? Las señas dejarán de cobrarse online.',
+      acceptLabel: 'Desconectar',
+      rejectLabel: 'Volver',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.pagosService.desconectarMp().subscribe(() => {
+          this.mpEstado.set({ conectado: false, mpUserId: null, expiraEn: null });
+          this.messages.add({ severity: 'success', summary: 'Mercado Pago', detail: 'Cuenta desvinculada.' });
+        });
+      },
+    });
+  }
 
   // ── Canchas ──
   startNewCancha(): void {

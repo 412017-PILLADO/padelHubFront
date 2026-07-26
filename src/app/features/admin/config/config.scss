@@ -118,6 +118,24 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .sena-alias { width: 260px; max-width: 100%; }
 .sena-alias-hint { margin-top: 6px; }
 
+/* ===== Mercado Pago ===== */
+.mp-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 16px;
+  font-weight: 600;
+
+  .mp-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+
+    &.off { background: var(--ink-faint); }
+  }
+}
+
 /* — Contacto — */
 .contact-form { display: flex; flex-direction: column; gap: 16px; }
 .cf { display: flex; flex-direction: column; gap: 6px; }
