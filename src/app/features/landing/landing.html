@@ -542,6 +542,9 @@
                [ngModel]="arrepNombre()" (ngModelChange)="arrepNombre.set($event)" />
         <input class="arrep-in" placeholder="WhatsApp"
                [ngModel]="arrepWhatsapp()" (ngModelChange)="arrepWhatsapp.set($event)" />
+        <!-- honeypot anti-bots -->
+        <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
+          aria-hidden="true" [ngModel]="arrepEmpresa()" (ngModelChange)="arrepEmpresa.set($event)" />
         <textarea class="arrep-in" rows="3" placeholder="Contanos qué reserva querés revocar (opcional)"
                [ngModel]="arrepDetalle()" (ngModelChange)="arrepDetalle.set($event)"></textarea>
         <button type="button" class="arrep-enviar"

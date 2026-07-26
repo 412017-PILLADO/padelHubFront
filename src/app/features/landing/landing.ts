@@ -216,6 +216,8 @@ export class Landing {
   readonly arrepNombre = signal('');
   readonly arrepWhatsapp = signal('');
   readonly arrepDetalle = signal('');
+  /** Honeypot anti-bot: mismo patrón que `empresa` del form de reserva (input oculto por CSS). */
+  readonly arrepEmpresa = signal('');
 
   readonly success = signal(false);
   readonly successData = signal<{
@@ -682,6 +684,7 @@ export class Landing {
     this.arrepNombre.set('');
     this.arrepWhatsapp.set('');
     this.arrepDetalle.set('');
+    this.arrepEmpresa.set('');
     this.showArrep.set(true);
   }
 
@@ -697,7 +700,7 @@ export class Landing {
         nombre: this.arrepNombre().trim(),
         whatsapp: this.arrepWhatsapp().trim(),
         detalle: this.arrepDetalle().trim() || undefined,
-        empresa: '', // honeypot
+        empresa: this.arrepEmpresa(), // honeypot
       })
       .subscribe({
         next: ({ codigo }) => {
