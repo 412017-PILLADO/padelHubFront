@@ -10,6 +10,10 @@ test('config: carga datos y guarda un cambio', async ({ page }) => {
   await expect(page.getByText('Horario semanal')).toBeVisible();
   await expect(page.locator('.cancha-item', { hasText: 'Cancha 1' })).toBeVisible({ timeout: 10_000 });
 
+  // Card Mercado Pago: visible y sin conectar en el entorno de e2e
+  await expect(page.locator('.mp-estado')).toBeVisible();
+  await expect(page.locator('.mp-connect')).toBeVisible();
+
   // Cambiar la duración por defecto (marca dirty) y guardar. Se restaura al final para no
   // contaminar la config compartida (la grilla de disponibilidad se ancla al turno principal).
   const defChips = page.locator('.def-chips .dchip');
