@@ -732,9 +732,18 @@ export class ConfigComponent {
       rejectLabel: 'Volver',
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
-        this.pagosService.desconectarMp().subscribe(() => {
-          this.mpEstado.set({ conectado: false, mpUserId: null, expiraEn: null });
-          this.messages.add({ severity: 'success', summary: 'Mercado Pago', detail: 'Cuenta desvinculada.' });
+        this.pagosService.desconectarMp().subscribe({
+          next: () => {
+            this.mpEstado.set({ conectado: false, mpUserId: null, expiraEn: null });
+            this.messages.add({ severity: 'success', summary: 'Mercado Pago', detail: 'Cuenta desvinculada.' });
+          },
+          error: (err: HttpErrorResponse) => {
+            this.messages.add({
+              severity: 'error',
+              summary: 'Mercado Pago',
+              detail: err?.error?.error ?? 'No se pudo desconectar.',
+            });
+          },
         });
       },
     });

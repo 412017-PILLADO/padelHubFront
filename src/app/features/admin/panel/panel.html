@@ -257,9 +257,12 @@
             </div>
             <div class="t-actions">
               @if (senaPagoDe(t.id); as pe) {
-                <span class="pago-chip" [class.tarde]="pe === 'APROBADO_TARDE'" [class.devuelto]="pe === 'DEVUELTO'">
-                  {{ pe === 'APROBADO' ? 'Seña paga' : pe === 'APROBADO_TARDE' ? 'Pago tarde' : pe === 'DEVUELTO' ? 'Devuelta' : pe }}
-                </span>
+                @if (pe === 'APROBADO' || pe === 'APROBADO_TARDE' || pe === 'DEVUELTO' || pe === 'RECHAZADO') {
+                  <span class="pago-chip" [class.tarde]="pe === 'APROBADO_TARDE'" [class.devuelto]="pe === 'DEVUELTO'"
+                    [class.rechazado]="pe === 'RECHAZADO'">
+                    {{ pe === 'APROBADO' ? 'Seña paga' : pe === 'APROBADO_TARDE' ? 'Pago tarde' : pe === 'DEVUELTO' ? 'Devuelta' : 'Pago rechazado' }}
+                  </span>
+                }
                 @if (pe === 'APROBADO' || pe === 'APROBADO_TARDE') {
                   <button type="button" class="pago-devolver" [disabled]="devolviendo() === t.id"
                     (click)="askDevolverSena(t)">{{ devolviendo() === t.id ? 'Devolviendo…' : 'Devolver seña' }}</button>

@@ -208,6 +208,7 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 
   &.tarde { background: #fef3c7; color: #92400e; }
   &.devuelto { background: #e5e7eb; color: #374151; }
+  &.rechazado { background: #fee2e2; color: #991b1b; }
 }
 
 .pago-devolver {
