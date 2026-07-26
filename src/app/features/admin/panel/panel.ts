@@ -135,6 +135,8 @@ export class PanelComponent {
 
   /** Estado del pago de seña por reserva (solo las que tienen pago registrado). */
   readonly pagoEstados = signal<Record<number, string>>({});
+  /** reservaId con una devolución en vuelo (evita doble click → doble request). */
+  readonly devolviendo = signal<number | null>(null);
 
   // ── Pendientes de seña (todas las fechas; se validan acá) ──
   readonly pendientes = signal<Pendiente[]>([]);
@@ -536,6 +538,7 @@ export class PanelComponent {
   }
 
   askDevolverSena(t: Turno): void {
+    if (this.devolviendo() === t.id) return; // ya hay una devolución en vuelo para esta reserva
     this.confirm.confirm({
       header: 'Devolver seña',
       message: `¿Devolver la seña de ${t.clienteNombre}? Se reembolsa el pago a su Mercado Pago.`,
@@ -547,12 +550,15 @@ export class PanelComponent {
   }
 
   private doDevolverSena(t: Turno): void {
+    this.devolviendo.set(t.id);
     this.turnos.devolverSena(t.id).subscribe({
       next: () => {
+        this.devolviendo.set(null);
         this.pagoEstados.update((m) => ({ ...m, [t.id]: 'DEVUELTO' }));
         this.messages.add({ severity: 'success', summary: 'Listo', detail: 'Seña devuelta' });
       },
       error: (err) => {
+        this.devolviendo.set(null);
         this.messages.add({
           severity: 'error',
           summary: 'No se pudo devolver',

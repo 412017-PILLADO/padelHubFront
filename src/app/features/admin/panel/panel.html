@@ -231,7 +231,8 @@
                   {{ pe === 'APROBADO' ? 'Seña paga' : pe === 'APROBADO_TARDE' ? 'Pago tarde' : pe === 'DEVUELTO' ? 'Devuelta' : pe }}
                 </span>
                 @if (pe === 'APROBADO' || pe === 'APROBADO_TARDE') {
-                  <button type="button" class="pago-devolver" (click)="askDevolverSena(t)">Devolver seña</button>
+                  <button type="button" class="pago-devolver" [disabled]="devolviendo() === t.id"
+                    (click)="askDevolverSena(t)">{{ devolviendo() === t.id ? 'Devolviendo…' : 'Devolver seña' }}</button>
                 }
               }
               <a class="act wa" [href]="'https://wa.me/' + (t.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Avisar por WhatsApp">
