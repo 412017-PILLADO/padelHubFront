@@ -278,6 +278,12 @@
             }
             Tenés <strong>15 minutos</strong>: pasado ese tiempo el turno se libera.
           </p>
+          @if (senaInitPoint(); as link) {
+            <a class="sena-pay" [href]="link" rel="noopener">
+              Pagar seña con Mercado Pago
+            </a>
+            <div class="sena-alt">o transferí al alias:</div>
+          }
           @if (data.senaAlias) {
             <div class="sena-alias-row">
               <div class="sa-info">

@@ -131,6 +131,8 @@ export class Landing {
   readonly senaAlias = computed(() => this.config()?.senaAlias?.trim() || null);
   /** Feedback breve del botón "Copiar" del alias en la pantalla de éxito. */
   readonly aliasCopiado = signal(false);
+  /** Link de Checkout Pro para pagar la seña online (null = solo alias por transferencia). */
+  readonly senaInitPoint = signal<string | null>(null);
 
   // ── Info del complejo ─────────────────────────────────────────────
   readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
@@ -605,6 +607,14 @@ export class Landing {
           this.aliasCopiado.set(false);
           this.success.set(true);
           window.scrollTo(0, 0);
+
+          this.senaInitPoint.set(null);
+          if (res.estado === 'PENDIENTE' && this.config()?.pagoOnline) {
+            this.booking.crearLinkSena(res.id, location.origin).subscribe({
+              next: ({ initPoint }) => this.senaInitPoint.set(initPoint),
+              error: () => this.senaInitPoint.set(null), // degrada al alias por transferencia
+            });
+          }
         },
         error: (err: HttpErrorResponse) => {
           this.enviando.set(false);
@@ -648,6 +658,7 @@ export class Landing {
   backHome(): void {
     this.success.set(false);
     this.successData.set(null);
+    this.senaInitPoint.set(null);
     this.selectedTime.set(null);
     this.selectedCancha.set(null);
     this.nombre.set('');
