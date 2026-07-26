@@ -1,5 +1,6 @@
 import { Component, inject, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { MessageService } from 'primeng/api';
 import { BookingService } from '../../../core/api/booking.service';
 
 /** Modal del botón de arrepentimiento (Res. 424/2020). Autocontenido: form sin registro,
@@ -12,6 +13,9 @@ import { BookingService } from '../../../core/api/booking.service';
 })
 export class ArrepentimientoModal {
   private readonly booking = inject(BookingService);
+  /** Provisto por Landing (ver providers: [MessageService] en landing.ts) — comparte el mismo
+   *  <p-toast> del footer, no crea uno propio. */
+  private readonly messages = inject(MessageService);
 
   readonly cerrar = output<void>();
 
@@ -37,7 +41,14 @@ export class ArrepentimientoModal {
           this.busy.set(false);
           this.codigo.set(codigo);
         },
-        error: () => this.busy.set(false),
+        error: () => {
+          this.busy.set(false);
+          this.messages.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No pudimos registrar tu solicitud. Probá de nuevo.',
+          });
+        },
       });
   }
 }
