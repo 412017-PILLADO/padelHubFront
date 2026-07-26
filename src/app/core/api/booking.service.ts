@@ -123,4 +123,11 @@ export class BookingService {
       backUrl,
     });
   }
+
+  /** Alta pública de arrepentimiento (Res. 424/2020). Devuelve el código de revocación. */
+  crearArrepentimiento(body: {
+    nombre: string; whatsapp: string; detalle?: string; reservaFecha?: string; empresa: string;
+  }): Observable<{ codigo: string }> {
+    return this.http.post<{ codigo: string }>('/public/arrepentimiento', body);
+  }
 }

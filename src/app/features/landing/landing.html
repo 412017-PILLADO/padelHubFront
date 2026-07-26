@@ -381,7 +381,10 @@
 
       <footer class="b-foot">
         <span class="mono">© 2026 {{ tenantNombre() }}</span>
-        <a class="mono" routerLink="/admin">Panel del club</a>
+        <span class="foot-links">
+          <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+          <a class="mono" routerLink="/admin">Panel del club</a>
+        </span>
       </footer>
     </div>
   }
@@ -410,7 +413,10 @@
         </section>
         <footer class="c-foot">
           <span class="mono">© 2026 {{ tenantNombre() }}</span>
-          <a class="mono" routerLink="/admin">Panel del club</a>
+          <span class="foot-links">
+            <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+            <a class="mono" routerLink="/admin">Panel del club</a>
+          </span>
         </footer>
       </main>
     </div>
@@ -501,7 +507,10 @@
 
       <footer class="pb-foot">
         <span class="cr mono">© 2026 {{ tenantNombre() }}</span>
-        <a class="panel-link mono" routerLink="/admin">Panel del club</a>
+        <span class="foot-links">
+          <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+          <a class="panel-link mono" routerLink="/admin">Panel del club</a>
+        </span>
       </footer>
     </aside>
 
@@ -509,4 +518,36 @@
     <ng-container [ngTemplateOutlet]="bookingFlow"></ng-container>
   </div>
   }
+}
+
+<!-- ===================================================================
+     Botón de arrepentimiento (Res. 424/2020): el link vive en el pie de cada plantilla; el modal
+     es único y se comparte entre las 3.
+     =================================================================== -->
+@if (showArrep()) {
+  <div class="arrep-overlay" (click)="cerrarArrepentimiento()">
+    <div class="arrep-modal" role="dialog" aria-label="Botón de arrepentimiento" (click)="$event.stopPropagation()">
+      @if (arrepCodigo(); as codigo) {
+        <h3>Solicitud registrada</h3>
+        <p>Tu código de arrepentimiento es:</p>
+        <div class="arrep-codigo">{{ codigo }}</div>
+        <p class="arrep-nota">Guardalo. El club se va a contactar por WhatsApp para coordinar
+          la cancelación y, si corresponde, la devolución de la seña.</p>
+        <button type="button" class="arrep-cerrar" (click)="cerrarArrepentimiento()">Cerrar</button>
+      } @else {
+        <h3>Botón de arrepentimiento</h3>
+        <p class="arrep-nota">Si te arrepentiste de una reserva o seña, dejanos tus datos.
+          No hace falta estar registrado.</p>
+        <input class="arrep-in" placeholder="Nombre y apellido"
+               [ngModel]="arrepNombre()" (ngModelChange)="arrepNombre.set($event)" />
+        <input class="arrep-in" placeholder="WhatsApp"
+               [ngModel]="arrepWhatsapp()" (ngModelChange)="arrepWhatsapp.set($event)" />
+        <textarea class="arrep-in" rows="3" placeholder="Contanos qué reserva querés revocar (opcional)"
+               [ngModel]="arrepDetalle()" (ngModelChange)="arrepDetalle.set($event)"></textarea>
+        <button type="button" class="arrep-enviar"
+                [disabled]="arrepBusy() || !arrepNombre().trim() || !arrepWhatsapp().trim()"
+                (click)="enviarArrepentimiento()">{{ arrepBusy() ? 'Enviando…' : 'Enviar solicitud' }}</button>
+      }
+    </div>
+  </div>
 }

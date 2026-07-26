@@ -209,6 +209,14 @@ export class Landing {
   readonly empresa = signal('');
   readonly enviando = signal(false);
 
+  // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
+  readonly showArrep = signal(false);
+  readonly arrepCodigo = signal<string | null>(null);
+  readonly arrepBusy = signal(false);
+  readonly arrepNombre = signal('');
+  readonly arrepWhatsapp = signal('');
+  readonly arrepDetalle = signal('');
+
   readonly success = signal(false);
   readonly successData = signal<{
     cancha: string;
@@ -666,6 +674,45 @@ export class Landing {
     this.calOpen.set(false);
     this.selectDay(this.today);
     window.scrollTo(0, 0);
+  }
+
+  // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
+  abrirArrepentimiento(): void {
+    this.arrepCodigo.set(null);
+    this.arrepNombre.set('');
+    this.arrepWhatsapp.set('');
+    this.arrepDetalle.set('');
+    this.showArrep.set(true);
+  }
+
+  cerrarArrepentimiento(): void {
+    this.showArrep.set(false);
+  }
+
+  enviarArrepentimiento(): void {
+    if (this.arrepBusy() || !this.arrepNombre().trim() || !this.arrepWhatsapp().trim()) return;
+    this.arrepBusy.set(true);
+    this.booking
+      .crearArrepentimiento({
+        nombre: this.arrepNombre().trim(),
+        whatsapp: this.arrepWhatsapp().trim(),
+        detalle: this.arrepDetalle().trim() || undefined,
+        empresa: '', // honeypot
+      })
+      .subscribe({
+        next: ({ codigo }) => {
+          this.arrepBusy.set(false);
+          this.arrepCodigo.set(codigo);
+        },
+        error: () => {
+          this.arrepBusy.set(false);
+          this.messages.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No pudimos registrar tu solicitud. Probá de nuevo.',
+          });
+        },
+      });
   }
 
   openMaps(): void {

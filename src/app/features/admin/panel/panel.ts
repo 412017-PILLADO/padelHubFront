@@ -15,7 +15,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
-import { Pendiente, SlotLibre, Turno, TurnosService } from '../../../core/api/turnos.service';
+import { Arrepentimiento, Pendiente, SlotLibre, Turno, TurnosService } from '../../../core/api/turnos.service';
 import { AgendaConfig, AgendaConfigService } from '../../../core/api/agenda-config.service';
 import { WhatsappArPipe } from '../../../shared/whatsapp-ar.pipe';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
@@ -148,6 +148,13 @@ export class PanelComponent {
     return this.pendientes().filter((p) => norm(p.clienteNombre).includes(q));
   });
 
+  // ── Arrepentimientos (Res. 424/2020) no gestionados ──
+  readonly arrepentimientos = signal<Arrepentimiento[]>([]);
+  readonly arrepentimientosPendientes = computed(() =>
+    this.arrepentimientos().filter((a) => !a.gestionado)
+  );
+  readonly tieneArrepentimientos = computed(() => this.arrepentimientosPendientes().length > 0);
+
   readonly empty = computed(
     () => this.loaded() && !this.loading() && this.list().length === 0
   );
@@ -254,6 +261,7 @@ export class PanelComponent {
     this.load(this.today);
     this.loadPendientes();
     this.loadAgenda();
+    this.loadArrepentimientos();
     // Preferencia de vista guardada + detección de mobile (solo browser; no rompe SSR/hidratación).
     afterNextRender(() => {
       const v = localStorage.getItem(PanelComponent.VISTA_KEY);
@@ -336,6 +344,31 @@ export class PanelComponent {
           detail: 'No pudimos rechazar la reserva. Probá de nuevo.',
         });
         this.loadPendientes();
+      },
+    });
+  }
+
+  // ── Arrepentimientos (Res. 424/2020) ──
+  private loadArrepentimientos(): void {
+    this.turnos.getArrepentimientos().subscribe({
+      next: (as) => this.arrepentimientos.set(as),
+      error: () => this.arrepentimientos.set([]),
+    });
+  }
+
+  /** Marca gestionada una solicitud de arrepentimiento (reversible por DB, sin ConfirmDialog). */
+  gestionarArrepentimiento(a: Arrepentimiento): void {
+    this.turnos.gestionarArrepentimiento(a.id).subscribe({
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Gestionado', detail: a.nombre });
+        this.loadArrepentimientos();
+      },
+      error: () => {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No pudimos marcarlo como gestionado. Probá de nuevo.',
+        });
       },
     });
   }
