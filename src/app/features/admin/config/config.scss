@@ -1,3 +1,5 @@
+@use 'config-shared';
+
 :host { display: block; min-height: 100svh; background: var(--paper); padding-bottom: 96px; }
 
 .pagehead { max-width: 1120px; margin-inline: auto; padding: clamp(20px, 4vw, 32px) clamp(16px, 4vw, 24px) 8px; }
@@ -10,20 +12,12 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 
 /* Cada sección es una card modular (clara de leer en mobile, se separa sola).
    En desktop las cards se acomodan en 2 columnas (masonry) para aprovechar el ancho
-   en vez de quedar como una sola columna angosta estilo mobile. */
-.block {
-  break-inside: avoid;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  padding: 20px clamp(16px, 2.5vw, 22px);
-  margin-bottom: 20px;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-}
+   en vez de quedar como una sola columna angosta estilo mobile.
+   `.block`/`.block-h`/`.block-sub` viven en config-shared.scss (`@use`d arriba): las usan
+   tanto las secciones que quedan acá como las de los componentes de pestaña. */
 @media (min-width: 900px) {
   main { columns: 2; column-gap: 24px; }
 }
-.block-h { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
 
 /* — Pestañas — */
 .cfg-tabs {
@@ -44,24 +38,6 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .cfg-tab:hover { background: var(--surface); color: var(--ink); }
 .cfg-tab.on { background: var(--court); border-color: var(--court); color: #fff; }
 .cfg-tab:focus-visible { outline: 2px solid var(--court); outline-offset: 2px; }
-.block-h .t { color: var(--court-deep); }
-.block-h .ln { flex: 1; height: 1px; background: var(--line); }
-.block-sub { color: var(--ink-dim); font-size: 0.9rem; margin-bottom: 18px; }
-
-/* — Switch — */
-.switch {
-  position: relative; width: 46px; height: 26px; flex-shrink: 0;
-  border-radius: 99px; border: 1px solid var(--line-strong);
-  background: var(--paper); transition: background 0.15s ease, border-color 0.15s ease;
-}
-.switch::after {
-  content: ''; position: absolute; top: 2px; left: 2px;
-  width: 20px; height: 20px; border-radius: 50%;
-  background: var(--ink-faint); transition: transform 0.18s ease, background 0.18s ease;
-}
-.switch[aria-checked='true'] { background: var(--court-soft); border-color: var(--court); }
-.switch[aria-checked='true']::after { transform: translateX(20px); background: var(--court); }
-
 /* — Horario — */
 .week { display: flex; flex-direction: column; gap: 8px; }
 .day-row {
@@ -86,12 +62,7 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   border-radius: var(--r); padding: 8px 12px; margin: 0;
 }
 
-/* — Descanso — */
-.break-row { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
-.bl { display: flex; flex-direction: column; }
-.bt { font-weight: 700; }
-.bs { font-size: 0.85rem; color: var(--ink-dim); }
-.break-row .switch { margin-left: auto; }
+/* — Descanso — (`.break-row`/`.bl`/`.bt`/`.bs`/`.switch` viven en config-shared.scss) */
 .break-times { display: flex; align-items: center; gap: 8px; transition: opacity 0.15s ease; }
 .break-times.dim { opacity: 0.4; pointer-events: none; }
 
@@ -109,14 +80,7 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .default-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
 .dr-label { font-size: 0.85rem; color: var(--ink-dim); font-weight: 600; }
 .def-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.paso-row { display: flex; align-items: center; gap: 12px; }
-.paso-label { font-size: 0.85rem; color: var(--ink-dim); font-weight: 600; }
-.paso-input {
-  font: inherit; width: 90px; padding: 8px 12px; border-radius: var(--r);
-  border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
-}
-.paso-input.invalid { border-color: var(--clay); }
-.paso-msg.err { color: var(--clay); font-size: 0.82rem; }
+/* `.paso-row`/`.paso-label`/`.paso-input`/`.paso-msg` viven en config-shared.scss */
 .precio-aviso {
   margin-top: 12px; font-size: 0.82rem; font-weight: 600; color: var(--clay);
   background: color-mix(in srgb, var(--clay) 10%, #fff);
@@ -133,43 +97,9 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .franja-price-field { flex-direction: row; align-items: center; gap: 8px; margin-left: auto; }
 .franja-price-field .paso-input { width: 110px; }
 
-/* El alias es un texto largo: input más ancho, la fila envuelve en mobile. */
-.sena-alias-row { flex-wrap: wrap; margin-top: 10px; }
-.sena-alias { width: 260px; max-width: 100%; }
-.sena-alias-hint { margin-top: 6px; }
-
-/* Política de cancelación: textarea de varias líneas, label arriba (no en fila con el campo). */
-.politica-cancelacion-row { flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 14px; }
-.politica-cancelacion-input { width: 100%; max-width: 480px; resize: vertical; font: inherit; line-height: 1.4; }
-
-/* ===== Mercado Pago ===== */
-.mp-estado {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 10px 0 16px;
-  font-weight: 600;
-
-  .mp-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #22c55e;
-
-    &.off { background: var(--ink-faint); }
-  }
-}
-
-/* — Contacto — */
-.contact-form { display: flex; flex-direction: column; gap: 16px; }
-.cf { display: flex; flex-direction: column; gap: 6px; }
-.cf-label { font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); }
-.cf-input {
-  font: inherit; padding: 11px 14px; border-radius: var(--r);
-  border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
-}
-.cf-input:focus { outline: none; border-color: var(--court); }
-.cf-hint { font-size: 0.78rem; color: var(--ink-faint); }
+/* Seña, política de cancelación y Mercado Pago: ver tabs/tab-cobros/tab-cobros.scss.
+   `.cf`/`.cf-label`/`.cf-input`/`.cf-hint` (contacto acá, bloqueos y canchas abajo) viven en
+   config-shared.scss. */
 
 /* — Bloqueos — */
 .blk-form { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
@@ -245,7 +175,7 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 }
 /* container query no: dentro de una columna angosta el form se queda en 1 columna hasta que hay lugar */
 @media (min-width: 1120px) { .cancha-form { grid-template-columns: 1fr 1fr; } }
-.cf-inline { flex-direction: row; align-items: center; justify-content: space-between; }
+/* `.cf-inline` vive en config-shared.scss */
 .cancha-color {
   width: 48px; height: 36px; padding: 2px; border-radius: var(--r);
   border: 1px solid var(--line-strong); background: var(--surface);
@@ -293,59 +223,8 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .save-btn:hover:not(:disabled) { background: var(--court-deep); }
 .save-btn:disabled { background: var(--line-strong); color: var(--ink-faint); cursor: not-allowed; }
 
-/* ===== Marca (color + logo) ===== */
-.marca { display: flex; flex-direction: column; gap: 24px; }
-.marca-label { display: block; font-weight: 600; font-size: 0.85rem; color: var(--court-deep); margin-bottom: 10px; }
-.marca-opt { font-weight: 400; color: var(--ink-faint); }
-.plantilla-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.plantilla-sel {
-  height: 46px; min-width: 280px; max-width: 100%; padding: 0 14px;
-  border: 1px solid var(--line-strong); border-radius: var(--r);
-  background: var(--paper); color: var(--ink); font: inherit; font-size: 0.95rem; cursor: pointer;
-}
-.plantilla-sel:focus { outline: none; border-color: var(--court); }
-.plantilla-row .marca-opt { font-size: 0.82rem; flex: 1 1 240px; }
-.color-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.color-swatch {
-  width: 46px; height: 46px; padding: 0; border: 1px solid var(--line-strong);
-  border-radius: var(--r); background: none; cursor: pointer;
-}
-.color-hex {
-  height: 46px; width: 130px; padding: 0 14px; border: 1px solid var(--line-strong);
-  border-radius: var(--r); font-size: 0.95rem;
-}
-.color-hex:focus { outline: none; border-color: var(--court); }
-.btn-save {
-  height: 46px; padding: 0 22px; border: none; border-radius: var(--r);
-  background: var(--court); color: #fff; font-weight: 700; cursor: pointer;
-  transition: background 0.15s ease;
-}
-.btn-save:hover:not(:disabled) { background: var(--court-deep); }
-.btn-save:disabled { background: var(--line-strong); color: var(--ink-faint); cursor: not-allowed; }
-
-.logo-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-.logo-box {
-  width: 96px; height: 96px; flex: none; border: 1px solid var(--line-strong);
-  border-radius: var(--r); display: flex; align-items: center; justify-content: center;
-  overflow: hidden; background: var(--court-soft);
-}
-.logo-box.empty { background: repeating-conic-gradient(#f0f2f7 0 25%, #fff 0 50%) 50% / 18px 18px; }
-.logo-box img { max-width: 100%; max-height: 100%; object-fit: contain; }
-.logo-empty { color: var(--ink-faint); font-size: 0.8rem; }
-.logo-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.btn-file {
-  height: 40px; padding: 0 18px; display: inline-flex; align-items: center;
-  border: 1px solid var(--court); border-radius: var(--r); color: var(--court-deep);
-  font-weight: 700; font-size: 0.9rem; cursor: pointer; transition: background 0.15s ease;
-}
-.btn-file:hover { background: var(--court-soft); }
-.btn-file.busy { opacity: 0.6; pointer-events: none; }
-.btn-ghost {
-  height: 40px; padding: 0 16px; border: 1px solid var(--line-strong); border-radius: var(--r);
-  background: none; color: var(--ink-dim); font-weight: 600; font-size: 0.9rem; cursor: pointer;
-}
-.btn-ghost:hover:not(:disabled) { border-color: var(--clay); color: var(--clay); }
-.logo-hint { color: var(--ink-faint); font-size: 0.78rem; width: 100%; }
+/* Marca (color + logo): ver tabs/tab-club/tab-club.scss. `.btn-save`/`.btn-ghost` viven en
+   config-shared.scss (los usan tanto Marca/Contacto como Mercado Pago en tab-cobros). */
 
 /* ===== Reservas afectadas (horario recién guardado o bloqueo recién creado) ===== */
 .ra-block {

@@ -19,9 +19,10 @@ import { PrimeNG } from 'primeng/config';
 import { BloqueoItem } from '../../../core/api/agenda-config.service';
 import { CanchaConfig } from '../../../core/api/booking.service';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
-import { BrandingService } from '../../../core/branding/branding.service';
 import { UnsavedChangesService } from '../unsaved-changes.service';
 import { ConfigStateService, DOW_FULL } from './config-state.service';
+import { TabClubComponent } from './tabs/tab-club/tab-club';
+import { TabCobrosComponent } from './tabs/tab-cobros/tab-cobros';
 
 /** Tipos de cerramiento de la cancha (espeja el enum TipoPared del backend). */
 const TIPO_PARED_OPCIONES = [
@@ -100,6 +101,8 @@ function parseYmd(s: string): Date {
     SelectModule,
     ToastModule,
     ConfirmDialogModule,
+    TabClubComponent,
+    TabCobrosComponent,
   ],
   providers: [MessageService, ConfirmationService, ConfigStateService],
   templateUrl: './config.html',
@@ -109,7 +112,6 @@ export class ConfigComponent {
   private readonly messages = inject(MessageService);
   private readonly confirm = inject(ConfirmationService);
   private readonly primeng = inject(PrimeNG);
-  private readonly branding = inject(BrandingService);
   private readonly unsaved = inject(UnsavedChangesService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
@@ -127,11 +129,6 @@ export class ConfigComponent {
   readonly durOpciones = DURACION_OPCIONES;
   readonly tipoParedOpciones = TIPO_PARED_OPCIONES;
   readonly today = startOfDay(new Date());
-  readonly plantillas = [
-    { value: 'A', label: 'A · Poster', hint: 'Afiche a un lado + reserva' },
-    { value: 'B', label: 'B · Hero centrado', hint: 'Marca grande centrada, más comercial' },
-    { value: 'C', label: 'C · Compacta (app)', hint: 'Barra lateral + grilla, directo a reservar' },
-  ];
 
   // ── Pestañas ──
   readonly tabs = CONFIG_TABS;
@@ -139,14 +136,6 @@ export class ConfigComponent {
 
   // ── Alias de signals/computed del servicio (mismo nombre que antes, sin `st.` en el template) ──
   readonly reservasAfectadas = this.st.reservasAfectadas;
-  readonly marcaColor = this.st.marcaColor;
-  readonly marcaColorSec = this.st.marcaColorSec;
-  readonly marcaColorSecPicker = this.st.marcaColorSecPicker;
-  readonly marcaPlantilla = this.st.marcaPlantilla;
-  readonly marcaLogoUrl = this.st.marcaLogoUrl;
-  readonly savingMarca = this.st.savingMarca;
-  readonly uploadingLogo = this.st.uploadingLogo;
-  readonly logoPreview = this.st.logoPreview;
   readonly week = this.st.week;
   readonly breakOn = this.st.breakOn;
   readonly breakFrom = this.st.breakFrom;
@@ -158,12 +147,6 @@ export class ConfigComponent {
   readonly precioModo = this.st.precioModo;
   readonly precioHoraGeneral = this.st.precioHoraGeneral;
   readonly precioFranjas = this.st.precioFranjas;
-  readonly requiereSena = this.st.requiereSena;
-  readonly senaMonto = this.st.senaMonto;
-  readonly senaAlias = this.st.senaAlias;
-  readonly politicaCancelacion = this.st.politicaCancelacion;
-  readonly mpEstado = this.st.mpEstado;
-  readonly mpBusy = this.st.mpBusy;
   readonly autoasignacion = this.st.autoasignacion;
   readonly canchas = this.st.canchas;
   readonly editingCanchaId = this.st.editingCanchaId;
@@ -184,10 +167,6 @@ export class ConfigComponent {
   readonly bloqueoCanchaId = this.st.bloqueoCanchaId;
   readonly bloqueoMotivo = this.st.bloqueoMotivo;
   readonly canchaOpciones = this.st.canchaOpciones;
-  readonly direccion = this.st.direccion;
-  readonly whatsapp = this.st.whatsapp;
-  readonly mapaUrl = this.st.mapaUrl;
-  readonly instagram = this.st.instagram;
   readonly dirty = this.st.dirty;
   readonly saving = this.st.saving;
   readonly loaded = this.st.loaded;
@@ -196,8 +175,6 @@ export class ConfigComponent {
   readonly invalidPrecio = this.st.invalidPrecio;
   readonly precioFranjasError = this.st.precioFranjasError;
   readonly invalidPrecioFranjas = this.st.invalidPrecioFranjas;
-  readonly invalidSenaMonto = this.st.invalidSenaMonto;
-  readonly invalidSenaAlias = this.st.invalidSenaAlias;
   readonly invalidSena = this.st.invalidSena;
   readonly invalidHorario = this.st.invalidHorario;
   readonly invalidBreak = this.st.invalidBreak;
@@ -209,18 +186,12 @@ export class ConfigComponent {
   readonly disabledDays = this.st.disabledDays;
 
   // ── Handlers del servicio que sólo tocan estado: se delegan tal cual (mismo nombre público) ──
-  readonly setColorSec = this.st.setColorSec.bind(this.st);
-  readonly clearColorSec = this.st.clearColorSec.bind(this.st);
   readonly toggleDay = this.st.toggleDay.bind(this.st);
   readonly setFrom = this.st.setFrom.bind(this.st);
   readonly setTo = this.st.setTo.bind(this.st);
   readonly toggleBreak = this.st.toggleBreak.bind(this.st);
   readonly setBreakFrom = this.st.setBreakFrom.bind(this.st);
   readonly setBreakTo = this.st.setBreakTo.bind(this.st);
-  readonly setDireccion = this.st.setDireccion.bind(this.st);
-  readonly setWhatsapp = this.st.setWhatsapp.bind(this.st);
-  readonly setMapaUrl = this.st.setMapaUrl.bind(this.st);
-  readonly setInstagram = this.st.setInstagram.bind(this.st);
   readonly isDurActive = this.st.isDurActive.bind(this.st);
   readonly toggleDur = this.st.toggleDur.bind(this.st);
   readonly setDefault = this.st.setDefault.bind(this.st);
@@ -233,10 +204,6 @@ export class ConfigComponent {
   readonly setFranjaHasta = this.st.setFranjaHasta.bind(this.st);
   readonly setFranjaTipo = this.st.setFranjaTipo.bind(this.st);
   readonly onFranjaPctInput = this.st.onFranjaPctInput.bind(this.st);
-  readonly toggleSena = this.st.toggleSena.bind(this.st);
-  readonly onSenaMontoInput = this.st.onSenaMontoInput.bind(this.st);
-  readonly onSenaAliasInput = this.st.onSenaAliasInput.bind(this.st);
-  readonly onPoliticaCancelacionInput = this.st.onPoliticaCancelacionInput.bind(this.st);
   readonly toggleAutoasignacion = this.st.toggleAutoasignacion.bind(this.st);
   readonly startNewCancha = this.st.startNewCancha.bind(this.st);
   readonly editCancha = this.st.editCancha.bind(this.st);
@@ -305,115 +272,10 @@ export class ConfigComponent {
     });
   }
 
-  /** Guarda los colores (primario + secundario) del club. Aplican a acentos de la página y el panel. */
-  saveMarca(): void {
-    const hex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
-    const color = this.st.marcaColor().trim();
-    if (!hex.test(color)) {
-      this.messages.add({ severity: 'warn', summary: 'Color inválido', detail: 'Usá un hex como #0a8a99.' });
-      return;
-    }
-    const colorSec = this.st.marcaColorSec()?.trim() || null;
-    if (colorSec && !hex.test(colorSec)) {
-      this.messages.add({ severity: 'warn', summary: 'Secundario inválido', detail: 'Usá un hex como #0a8a99.' });
-      return;
-    }
-    this.st.saveMarca().subscribe({
-      next: (m) => {
-        // Aplicar en vivo: recolorea el panel (nav/acentos) sin recargar.
-        this.branding.apply(m.colorPrimario, m.colorSecundario, this.st.marcaLogoUrl());
-        this.messages.add({ severity: 'success', summary: 'Guardado', detail: 'Marca actualizada' });
-      },
-      error: () => {
-        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos guardar los colores.' });
-      },
-    });
-  }
-
-  /** Sube el logo elegido en el input file. Valida tipo/tamaño antes de mandar. */
-  onLogoChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = ''; // permite re-subir el mismo archivo
-    if (!file) return;
-    const okTipo = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'].includes(file.type);
-    if (!okTipo) {
-      this.messages.add({ severity: 'warn', summary: 'Formato no soportado', detail: 'Usá PNG, JPG, WEBP o SVG.' });
-      return;
-    }
-    if (file.size > 512 * 1024) {
-      this.messages.add({ severity: 'warn', summary: 'Muy pesado', detail: 'El logo debe pesar menos de 512 KB.' });
-      return;
-    }
-    this.st.uploadLogo(file).subscribe({
-      next: (m) => {
-        // Refleja el logo nuevo en la nav del panel al instante.
-        this.branding.apply(this.st.marcaColor(), this.st.marcaColorSec(), m.logoUrl);
-        this.messages.add({ severity: 'success', summary: 'Logo actualizado', detail: 'Ya se ve en tu página.' });
-      },
-      error: () => {
-        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos subir el logo.' });
-      },
-    });
-  }
-
-  /** Quita el logo del club (vuelve a mostrarse solo el nombre). */
-  removeLogo(): void {
-    this.st.removeLogo().subscribe({
-      next: (m) => {
-        // Vuelve a mostrar el ícono/nombre por defecto en la nav.
-        this.branding.apply(this.st.marcaColor(), this.st.marcaColorSec(), m.logoUrl);
-        this.messages.add({ severity: 'success', summary: 'Logo quitado', detail: 'Se muestra solo el nombre.' });
-      },
-      error: () => {
-        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos quitar el logo.' });
-      },
-    });
-  }
-
   // ── Horario ──
   /** Etiqueta de una hora en el select de cierre: aclara que "00:00" es medianoche (24:00). */
   timeLabel(t: string): string {
     return t === '00:00' ? '00:00 (medianoche)' : t;
-  }
-
-  // ── Mercado Pago ──
-  conectarMp(): void {
-    const returnTo = location.origin + '/admin/config';
-    this.st.conectarMp(returnTo).subscribe({
-      next: ({ url }) => (location.href = url),
-      error: (err: HttpErrorResponse) => {
-        this.messages.add({
-          severity: 'error',
-          summary: 'Mercado Pago',
-          detail: err?.error?.error ?? 'No se pudo iniciar la conexión.',
-        });
-      },
-    });
-  }
-
-  desconectarMp(): void {
-    this.confirm.confirm({
-      header: 'Desconectar Mercado Pago',
-      message: '¿Desconectar Mercado Pago? Las señas dejarán de cobrarse online.',
-      acceptLabel: 'Desconectar',
-      rejectLabel: 'Volver',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: () => {
-        this.st.desconectarMp().subscribe({
-          next: () => {
-            this.messages.add({ severity: 'success', summary: 'Mercado Pago', detail: 'Cuenta desvinculada.' });
-          },
-          error: (err: HttpErrorResponse) => {
-            this.messages.add({
-              severity: 'error',
-              summary: 'Mercado Pago',
-              detail: err?.error?.error ?? 'No se pudo desconectar.',
-            });
-          },
-        });
-      },
-    });
   }
 
   // ── Canchas ──

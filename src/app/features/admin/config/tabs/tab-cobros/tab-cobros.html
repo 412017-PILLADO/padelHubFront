@@ -1,0 +1,67 @@
+<!-- ===== SEÑA ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Seña</span><span class="ln"></span></div>
+  <p class="block-sub">Si pedís seña, la reserva del cliente queda <strong>pendiente</strong> hasta que
+    vos confirmes el pago (transferencia / comprobante por WhatsApp). Tiene 15 minutos para pagar;
+    si no, el turno se libera solo.</p>
+
+  <div class="break-row">
+    <div class="bl">
+      <span class="bt">Pedir seña para reservar</span>
+      <span class="bs mono">{{ requiereSena() ? 'Reservas quedan pendientes de validar' : 'Reservas se confirman al instante' }}</span>
+    </div>
+    <button type="button" class="switch sena-switch" role="switch" [attr.aria-checked]="requiereSena()"
+      aria-label="Pedir seña para reservar" (click)="toggleSena()"></button>
+  </div>
+
+  @if (requiereSena()) {
+    <div class="paso-row">
+      <label class="paso-label" for="senaMonto">Monto de la seña</label>
+      <input id="senaMonto" class="paso-input sena-monto" [class.invalid]="invalidSenaMonto()" type="number"
+        inputmode="numeric" min="0" step="100" placeholder="Ej: 5000"
+        [ngModel]="senaMonto()" (ngModelChange)="onSenaMontoInput($event)" />
+      @if (invalidSenaMonto()) { <span class="paso-msg err">Cargá un monto mayor a 0</span> }
+    </div>
+    <div class="paso-row sena-alias-row">
+      <label class="paso-label" for="senaAlias">Alias / CBU para transferir</label>
+      <input id="senaAlias" class="paso-input sena-alias" [class.invalid]="invalidSenaAlias()" type="text"
+        maxlength="100" placeholder="Ej: padel.hub.mp"
+        [ngModel]="senaAlias()" (ngModelChange)="onSenaAliasInput($event)" />
+      @if (invalidSenaAlias()) { <span class="paso-msg err">Cargá el alias donde recibís la seña</span> }
+    </div>
+    <p class="block-sub sena-alias-hint">Se lo mostramos al cliente en la pantalla de éxito con un botón para copiarlo.</p>
+  }
+
+  <div class="paso-row politica-cancelacion-row">
+    <label class="paso-label" for="politicaCancelacion">Política de cancelación</label>
+    <textarea id="politicaCancelacion" class="paso-input politica-cancelacion-input" rows="4"
+      placeholder="Ej: la seña se devuelve si cancelás hasta 24 hs antes del turno."
+      [ngModel]="politicaCancelacion()" (ngModelChange)="onPoliticaCancelacionInput($event)"></textarea>
+    <p class="block-sub">La mostramos en la landing con un link, y en la pantalla de éxito con seña. Si la dejás vacía, no aparece.</p>
+  </div>
+</section>
+
+<!-- ===== MERCADO PAGO ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Mercado Pago</span><span class="ln"></span></div>
+  <p class="block-sub">Conectá la cuenta de Mercado Pago del club para cobrar las señas online:
+    el pago aprobado confirma la reserva solo, sin validarla a mano.</p>
+
+  @if (mpEstado(); as mp) {
+    @if (mp.conectado) {
+      <div class="mp-estado ok">
+        <span class="mp-dot"></span>
+        Conectado — cuenta MP #{{ mp.mpUserId }}
+      </div>
+      <button type="button" class="btn-ghost mp-disconnect" (click)="desconectarMp()">Desconectar</button>
+    } @else {
+      <div class="mp-estado">
+        <span class="mp-dot off"></span>
+        No conectado
+      </div>
+      <button type="button" class="btn-save mp-connect" [disabled]="mpBusy()" (click)="conectarMp()">
+        Conectar Mercado Pago
+      </button>
+    }
+  }
+</section>

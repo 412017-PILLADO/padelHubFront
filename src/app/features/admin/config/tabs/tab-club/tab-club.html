@@ -1,0 +1,101 @@
+<!-- ===== MARCA (color + logo) ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Marca</span><span class="ln"></span></div>
+  <p class="block-sub">Los colores y el logo con los que se ve tu página de reserva. El primario pinta los
+    acentos (botones, chips, pasos); el secundario es un acento opcional (ej: el grip del ícono de paleta).
+    El logo aparece arriba a la izquierda; sin logo, se muestra solo el nombre.</p>
+
+  <div class="marca">
+    <div class="marca-field">
+      <label class="marca-label">Color primario</label>
+      <div class="color-row">
+        <input type="color" class="color-swatch" [ngModel]="marcaColor()"
+          (ngModelChange)="marcaColor.set($event)" aria-label="Elegí el color primario" />
+        <input type="text" class="color-hex mono" [ngModel]="marcaColor()"
+          (ngModelChange)="marcaColor.set($event)" placeholder="#0a8a99" spellcheck="false" />
+      </div>
+    </div>
+
+    <div class="marca-field">
+      <label class="marca-label">Color secundario <span class="marca-opt">(opcional)</span></label>
+      <div class="color-row">
+        <input type="color" class="color-swatch" [ngModel]="marcaColorSecPicker()"
+          (ngModelChange)="setColorSec($event)" aria-label="Elegí el color secundario" />
+        <input type="text" class="color-hex mono" [ngModel]="marcaColorSec() ?? ''"
+          (ngModelChange)="setColorSec($event)" placeholder="Sin definir · usa el primario" spellcheck="false" />
+        @if (marcaColorSec()) {
+          <button type="button" class="btn-ghost" (click)="clearColorSec()">Quitar</button>
+        }
+        <button type="button" class="btn-save" [disabled]="savingMarca()" (click)="saveMarca()">
+          {{ savingMarca() ? 'Guardando…' : 'Guardar marca' }}
+        </button>
+      </div>
+    </div>
+
+    <div class="marca-field">
+      <label class="marca-label">Plantilla de la landing</label>
+      <div class="plantilla-row">
+        <select class="plantilla-sel" [ngModel]="marcaPlantilla()" (ngModelChange)="marcaPlantilla.set($event)"
+          aria-label="Plantilla de la landing">
+          @for (p of plantillas; track p.value) { <option [value]="p.value">{{ p.label }} — {{ p.hint }}</option> }
+        </select>
+        <span class="marca-opt">Cambia el diseño de tu página pública. Se aplica al guardar la marca.</span>
+      </div>
+    </div>
+
+    <div class="marca-field">
+      <label class="marca-label">Logo del club</label>
+      <div class="logo-row">
+        <div class="logo-box" [class.empty]="!logoPreview()">
+          @if (logoPreview(); as src) {
+            <img [src]="src" alt="Logo del club" />
+          } @else {
+            <span class="logo-empty">Sin logo</span>
+          }
+        </div>
+        <div class="logo-actions">
+          <label class="btn-file" [class.busy]="uploadingLogo()">
+            {{ uploadingLogo() ? 'Subiendo…' : (logoPreview() ? 'Cambiar logo' : 'Subir logo') }}
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"
+              (change)="onLogoChange($event)" [disabled]="uploadingLogo()" hidden />
+          </label>
+          @if (logoPreview()) {
+            <button type="button" class="btn-ghost" [disabled]="uploadingLogo()" (click)="removeLogo()">Quitar</button>
+          }
+          <span class="logo-hint">PNG, JPG, WEBP o SVG · máx 512 KB<br />
+            Ideal: cuadrado, ~320×320 px, con fondo transparente (también sirve horizontal).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== CONTACTO ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Contacto y ubicación</span><span class="ln"></span></div>
+  <p class="block-sub">Lo que ve el jugador en la página de reserva. Dejá vacío lo que no quieras mostrar.</p>
+  <div class="contact-form">
+    <label class="cf">
+      <span class="cf-label">Dirección</span>
+      <input class="cf-input" type="text" maxlength="255" placeholder="Av. Colón 1234, Córdoba"
+        [ngModel]="direccion()" (ngModelChange)="setDireccion($event)" />
+    </label>
+    <label class="cf">
+      <span class="cf-label">WhatsApp</span>
+      <input class="cf-input" type="tel" maxlength="40" inputmode="tel" placeholder="5493510000000"
+        [ngModel]="whatsapp()" (ngModelChange)="setWhatsapp($event)" />
+      <span class="cf-hint">Con código de país, solo números. Ej: 5493510000000</span>
+    </label>
+    <label class="cf">
+      <span class="cf-label">Instagram</span>
+      <input class="cf-input" type="text" maxlength="100" placeholder="tuclub"
+        [ngModel]="instagram()" (ngModelChange)="setInstagram($event)" />
+      <span class="cf-hint">Solo el usuario, sin la @.</span>
+    </label>
+    <label class="cf">
+      <span class="cf-label">Link de Google Maps</span>
+      <input class="cf-input" type="url" maxlength="500" inputmode="url" placeholder="https://maps.app.goo.gl/…"
+        [ngModel]="mapaUrl()" (ngModelChange)="setMapaUrl($event)" />
+    </label>
+  </div>
+</section>
