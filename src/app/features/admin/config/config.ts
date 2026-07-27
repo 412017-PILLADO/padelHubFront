@@ -7,29 +7,20 @@ import {
   signal,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { SelectModule } from 'primeng/select';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
-import { CanchaConfig } from '../../../core/api/booking.service';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
 import { UnsavedChangesService } from '../unsaved-changes.service';
 import { ConfigStateService } from './config-state.service';
 import { TabClubComponent } from './tabs/tab-club/tab-club';
 import { TabAgendaComponent } from './tabs/tab-agenda/tab-agenda';
+import { TabCanchasComponent } from './tabs/tab-canchas/tab-canchas';
 import { TabPreciosComponent } from './tabs/tab-precios/tab-precios';
 import { TabCobrosComponent } from './tabs/tab-cobros/tab-cobros';
-
-/** Tipos de cerramiento de la cancha (espeja el enum TipoPared del backend). */
-const TIPO_PARED_OPCIONES = [
-  { label: 'Cristal', value: 'CRISTAL' },
-  { label: 'Muro', value: 'MURO' },
-  { label: 'Mixta', value: 'MIXTA' },
-];
 
 const ES_TRANSLATION = {
   firstDayOfWeek: 1,
@@ -64,13 +55,12 @@ export const CONFIG_TABS: ReadonlyArray<{ id: ConfigTab; label: string }> = [
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule,
     AdminNavComponent,
-    SelectModule,
     ToastModule,
     ConfirmDialogModule,
     TabClubComponent,
     TabAgendaComponent,
+    TabCanchasComponent,
     TabPreciosComponent,
     TabCobrosComponent,
   ],
@@ -80,20 +70,17 @@ export const CONFIG_TABS: ReadonlyArray<{ id: ConfigTab; label: string }> = [
 })
 export class ConfigComponent {
   private readonly messages = inject(MessageService);
-  private readonly confirm = inject(ConfirmationService);
   private readonly primeng = inject(PrimeNG);
   private readonly unsaved = inject(UnsavedChangesService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly destroyRef = inject(DestroyRef);
 
   /** Estado de la pantalla (signals de datos, validaciones, `save()`). Ver `config-state.service.ts`
-   *  para qué vive acá vs allá: acá quedan `tab`/`irATab`, todo lo que toca `location`/`history`,
-   *  los toasts y los ConfirmDialog; el resto es delegación fina al servicio. Se expone con el mismo
-   *  nombre público que tenía cada signal/handler (alias directo o `.bind(this.st)`) para no tener
-   *  que tocar los ~200 bindings de `config.html`: es un refactor de estado puro, cero cambios visuales. */
+   *  para qué vive acá vs allá: acá quedan `tab`/`irATab`, todo lo que toca `location`/`history` y el
+   *  toast de carga/guardado general; el resto (incluidos los toasts/ConfirmDialog propios de cada
+   *  pestaña) vive en el componente de esa pestaña. `MessageService`/`ConfirmationService` se proveen
+   *  acá (`providers` del componente) para que los hijos los compartan por DI. */
   protected readonly st = inject(ConfigStateService);
-
-  readonly tipoParedOpciones = TIPO_PARED_OPCIONES;
 
   // ── Pestañas ──
   readonly tabs = CONFIG_TABS;
@@ -101,32 +88,10 @@ export class ConfigComponent {
 
   // ── Alias de signals/computed del servicio (mismo nombre que antes, sin `st.` en el template) ──
   readonly reservasAfectadas = this.st.reservasAfectadas;
-  readonly pasoMinutos = this.st.pasoMinutos;
-  readonly duraciones = this.st.duraciones;
-  readonly precioModo = this.st.precioModo;
-  readonly autoasignacion = this.st.autoasignacion;
-  readonly canchas = this.st.canchas;
-  readonly editingCanchaId = this.st.editingCanchaId;
-  readonly canchaFormOpen = this.st.canchaFormOpen;
-  readonly cNombre = this.st.cNombre;
-  readonly cOrden = this.st.cOrden;
-  readonly cTechada = this.st.cTechada;
-  readonly cTipoPared = this.st.cTipoPared;
-  readonly cPrecio = this.st.cPrecio;
-  readonly cColor = this.st.cColor;
-  readonly canchaSaving = this.st.canchaSaving;
-  readonly canchaTogglingId = this.st.canchaTogglingId;
-  readonly canchasOrdenadas = this.st.canchasOrdenadas;
-  readonly canCanchaSave = this.st.canCanchaSave;
-  readonly canchasSinPrecio = this.st.canchasSinPrecio;
-  readonly bloqueos = this.st.bloqueos;
   readonly dirty = this.st.dirty;
-  readonly saving = this.st.saving;
-  readonly loaded = this.st.loaded;
   readonly invalidPaso = this.st.invalidPaso;
   readonly invalidDuraciones = this.st.invalidDuraciones;
   readonly invalidPrecio = this.st.invalidPrecio;
-  readonly invalidPrecioFranjas = this.st.invalidPrecioFranjas;
   readonly invalidSena = this.st.invalidSena;
   readonly invalidHorario = this.st.invalidHorario;
   readonly invalidBreak = this.st.invalidBreak;
@@ -134,10 +99,6 @@ export class ConfigComponent {
   readonly saveState = this.st.saveState;
 
   // ── Handlers del servicio que sólo tocan estado: se delegan tal cual (mismo nombre público) ──
-  readonly toggleAutoasignacion = this.st.toggleAutoasignacion.bind(this.st);
-  readonly startNewCancha = this.st.startNewCancha.bind(this.st);
-  readonly editCancha = this.st.editCancha.bind(this.st);
-  readonly cancelCanchaEdit = this.st.cancelCanchaEdit.bind(this.st);
   readonly dismissReservasAfectadas = this.st.dismissReservasAfectadas.bind(this.st);
 
   constructor() {
@@ -198,94 +159,6 @@ export class ConfigComponent {
         });
       },
     });
-  }
-
-  // ── Canchas ──
-  saveCancha(): void {
-    if (!this.st.canCanchaSave()) return;
-    const creando = this.st.editingCanchaId() == null;
-    this.st.saveCancha().subscribe({
-      next: (saved) => {
-        this.messages.add({
-          severity: 'success',
-          summary: creando ? 'Cancha creada' : 'Cancha actualizada',
-          detail: saved.nombre,
-        });
-      },
-      error: () => {
-        this.messages.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No pudimos guardar la cancha. Probá de nuevo.',
-        });
-      },
-    });
-  }
-
-  /** Activa/desactiva una cancha. Al desactivar, pide confirmación (deja de ofrecerse, no borra reservas). */
-  toggleCanchaEstado(c: CanchaConfig): void {
-    const activando = c.estado !== 'ACTIVO';
-    if (!activando) {
-      this.confirm.confirm({
-        header: 'Desactivar cancha',
-        message: `¿Desactivar "${c.nombre}"? Deja de ofrecerse al público para reservar; las reservas ya hechas se conservan.`,
-        acceptLabel: 'Desactivar',
-        rejectLabel: 'Volver',
-        acceptButtonStyleClass: 'p-button-danger',
-        accept: () => this.doToggleCanchaEstado(c, 'INACTIVO'),
-      });
-    } else {
-      this.doToggleCanchaEstado(c, 'ACTIVO');
-    }
-  }
-
-  private doToggleCanchaEstado(c: CanchaConfig, estado: string): void {
-    this.st.cambiarEstadoCancha(c, estado).subscribe({
-      next: () => {
-        this.messages.add({
-          severity: 'success',
-          summary: estado === 'ACTIVO' ? 'Activada' : 'Desactivada',
-          detail: c.nombre,
-        });
-      },
-      error: () => {
-        this.messages.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No pudimos cambiar el estado de la cancha. Probá de nuevo.',
-        });
-      },
-    });
-  }
-
-  askDeleteCancha(c: CanchaConfig): void {
-    this.confirm.confirm({
-      header: 'Eliminar cancha',
-      message: `¿Eliminar la cancha "${c.nombre}"? Las reservas ya hechas se conservan.`,
-      acceptLabel: 'Eliminar',
-      rejectLabel: 'Volver',
-      acceptButtonStyleClass: 'p-button-danger',
-      accept: () => this.doDeleteCancha(c),
-    });
-  }
-
-  private doDeleteCancha(c: CanchaConfig): void {
-    this.st.eliminarCancha(c).subscribe({
-      next: () => {
-        this.messages.add({ severity: 'success', summary: 'Eliminada', detail: c.nombre });
-      },
-      error: () => {
-        this.messages.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'No pudimos eliminar la cancha. Probá de nuevo.',
-        });
-      },
-    });
-  }
-
-  tipoParedLabel(value: string | null): string {
-    return this.tipoParedOpciones.find((o) => o.value === value)?.label ?? (value ?? '—');
   }
 
   // ── Guardar ──
