@@ -314,7 +314,7 @@
 <!-- Info del club (horarios + dónde + contacto) reusada como tarjetas por las plantillas B y C -->
 <ng-template #infoCards>
   @if (horarios().length) {
-    <article class="ic-card" id="ic-horarios">
+    <article class="ic-card" id="ic-horarios" tabindex="-1">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="ic-t">Horarios</span></div>
       <ul class="ic-hours">
         @for (row of horarios(); track row.dias) {
@@ -324,7 +324,7 @@
     </article>
   }
   @if (direccion()) {
-    <article class="ic-card" id="ic-donde">
+    <article class="ic-card" id="ic-donde" tabindex="-1">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="ic-t">Dónde estamos</span></div>
       <p class="ic-addr">{{ direccion() }}</p>
       @if (mapaUrl()) {
@@ -333,7 +333,7 @@
     </article>
   }
   @if (whatsappUrl() || instagramHandle()) {
-    <article class="ic-card" id="ic-contacto">
+    <article class="ic-card" id="ic-contacto" tabindex="-1">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.2Z"/></svg></span><span class="ic-t">Contacto</span></div>
       <div class="ic-links">
         @if (whatsappUrl()) {
@@ -562,6 +562,7 @@
   <div class="tpl-pill" role="group" aria-label="Preview de plantilla">
     @for (opt of ['A', 'B', 'C']; track opt) {
       <button type="button" class="tpl-opt" [class.on]="opt === activa"
+        [attr.aria-pressed]="opt === activa"
         (click)="setPreviewPlantilla(opt)">{{ opt }}</button>
     }
   </div>

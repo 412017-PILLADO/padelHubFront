@@ -154,4 +154,12 @@ export class MarketingLanding {
     this.tiltX.set(0);
     this.tiltY.set(0);
   }
+
+  /** Los anchors de solo-fragmento se resuelven contra <base href="/"> y se llevan puesto el
+   *  query string (rompe UTMs de campaña, por ejemplo). Scrolleamos a mano y dejamos la URL como
+   *  está. Mismo patrón que Landing.irA (ver landing.ts). */
+  irA(event: Event, id: string): void {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
