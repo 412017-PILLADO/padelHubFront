@@ -626,6 +626,9 @@
 .ic-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0;
   cursor: pointer; color: var(--court-deep); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
 .ic-link:hover { text-decoration: underline; }
+/* Icono de WhatsApp/Instagram delante del link (M-mobile-plantillas): oculto en desktop a propósito
+   (paridad visual exigida) — solo se muestra en mobile, ver media query más abajo. */
+.ic-link-svg { display: none; width: 18px; height: 18px; flex: none; }
 
 /* ===================================================================
    PLANTILLA B · Liquid Glass — paneles frosted translúcidos sobre una malla de luz teñida por el
@@ -691,6 +694,15 @@
 .b-foot a { color: var(--ink-dim); text-decoration: none; }
 .b-foot a:hover { color: var(--court-deep); }
 
+/* Mobile (M-mobile-plantillas, feedback owner): arranca directo en la reserva. El héroe (marca
+   grande + título + tagline + CTAs) es redundante con la card de reserva que está en la misma
+   pantalla — se oculta y queda: nav compacta arriba → "Reservá tu cancha" directo. Desktop intacto. */
+@media (max-width: 899px) {
+  .b-hero { display: none; }
+  .tpl-b .b-book { padding-left: clamp(10px, 4vw, 16px); padding-right: clamp(10px, 4vw, 16px); }
+  .tpl-b .booking-flow { padding-left: clamp(14px, 5vw, 20px); padding-right: clamp(14px, 5vw, 20px); }
+}
+
 /* ===================================================================
    PLANTILLA C · Minimalista — rail claro con hairlines, mucho blanco, mono; el color del tenant
    aparece solo como acento (marca + item activo). El acceso al panel va abajo, discreto.
@@ -729,11 +741,12 @@
   .c-rail { position: sticky; top: 0; height: 100svh; }
 }
 @media (max-width: 899px) {
-  .c-rail { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px 16px; gap: 10px 14px;
+  .c-rail { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px 16px;
     border-right: none; border-bottom: 1px solid var(--line); }
   .c-brandline { flex: 1 1 auto; }
-  .c-nav { flex-direction: row; flex-basis: 100%; gap: 6px; }
-  .c-navitem { padding: 7px 12px; }
+  /* Nav de pills (Reservar/Horarios/El club) oculta en mobile (M-mobile-plantillas, feedback owner):
+     son anchors de scroll dentro de la misma página corta, confunden más de lo que aportan acá. */
+  .c-nav { display: none; }
 }
 
 /* ===================================================================
@@ -769,6 +782,55 @@
 .sena-politica { display: block; margin-top: 10px; color: var(--ink-dim); }
 /* El texto de la política es libre: puede tener saltos de línea que hay que respetar (estilos del
    modal en sí: ver arrepentimiento-modal/ y politica-modal/, autocontenidos). */
+
+/* ===================================================================
+   MOBILE — pulido de las 3 plantillas (feedback owner, M-mobile-plantillas). Desktop sin cambios:
+   todo lo de acá vive detrás de max-width:899px.
+   =================================================================== */
+@media (max-width: 899px) {
+  /* Pie (© + links): hoy escalonado. Nuevo: los links en una fila centrada con wrap (con un punto
+     medio de separador entre ellos) y el © debajo, centrado, chico y apagado. Mismo criterio en
+     las 3 plantillas (pb-foot/b-foot/c-foot comparten .foot-links/.foot-copy). */
+  .pb-foot, .b-foot, .c-foot {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+  .foot-links {
+    order: 1;
+    justify-content: center;
+    width: 100%;
+  }
+  .foot-copy {
+    order: 2;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+  .foot-links > *:not(:first-child) {
+    position: relative;
+  }
+  .foot-links > *:not(:first-child)::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.45;
+  }
+
+  /* Canchas: siempre 2 columnas centradas (2x2 con 4 opciones), en vez del auto-fill que en 390px
+     deja las cards descentradas (A) o en fila larga con scroll (B/C, padding del contenedor más
+     angosto). 160px de tope: con 172px quedaba apretado en plantilla B (paneles anidados). */
+  .courts {
+    grid-template-columns: repeat(2, minmax(0, 160px));
+    justify-content: center;
+    gap: 10px;
+  }
+
+  /* Iconos de WhatsApp/Instagram en la card de Contacto (B/C): la card ya alinea en fila (ic-link
+     es inline-flex con gap), solo hay que mostrar el svg que en desktop queda oculto a propósito. */
+  .ic-link-svg {
+    display: inline-flex;
+  }
+}
 
 /* ===================================================================
    Preview de plantillas (herramienta de venta): pill flotante abajo-derecha, solo visible con
