@@ -73,6 +73,28 @@ export class TurnosService {
   crearManual(body: CrearReservaManual): Observable<ReservaManualCreada> {
     return this.http.post<ReservaManualCreada>('/api/v1/turnos', body);
   }
+
+  /** Estado del pago de seña por reserva: APROBADO | APROBADO_TARDE | DEVUELTO | RECHAZADO | PENDIENTE. */
+  getSenaPagoEstados(ids: number[]): Observable<Record<number, string>> {
+    return this.http.get<Record<number, string>>('/api/v1/pagos/mp/reservas/estados', {
+      params: { ids: ids.join(',') },
+    });
+  }
+
+  /** Reembolsa el pago de la seña (no cancela la reserva). */
+  devolverSena(reservaId: number): Observable<void> {
+    return this.http.post<void>(`/api/v1/pagos/mp/reservas/${reservaId}/devolver`, {});
+  }
+
+  /** Solicitudes de arrepentimiento (Res. 424/2020) pendientes primero. */
+  getArrepentimientos(): Observable<Arrepentimiento[]> {
+    return this.http.get<Arrepentimiento[]>('/api/v1/arrepentimientos');
+  }
+
+  /** Marca una solicitud de arrepentimiento como gestionada. */
+  gestionarArrepentimiento(id: number): Observable<void> {
+    return this.http.post<void>(`/api/v1/arrepentimientos/${id}/gestionar`, {});
+  }
 }
 
 /** Un slot de la grilla con sus canchas libres, como lo devuelve la disponibilidad del panel. */
@@ -100,4 +122,16 @@ export interface ReservaManualCreada {
   fin: string;
   duracionMinutos: number;
   estado: string;
+}
+
+/** Una solicitud de arrepentimiento (Res. 424/2020) tal como la ve el panel. */
+export interface Arrepentimiento {
+  id: number;
+  codigo: string;
+  nombre: string;
+  whatsapp: string;
+  detalle: string | null;
+  reservaFecha: string | null;
+  gestionado: boolean;
+  creado: string | null;
 }

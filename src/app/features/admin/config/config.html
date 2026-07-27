@@ -316,6 +316,39 @@
       </div>
       <p class="block-sub sena-alias-hint">Se lo mostramos al cliente en la pantalla de éxito con un botón para copiarlo.</p>
     }
+
+    <div class="paso-row politica-cancelacion-row">
+      <label class="paso-label" for="politicaCancelacion">Política de cancelación</label>
+      <textarea id="politicaCancelacion" class="paso-input politica-cancelacion-input" rows="4"
+        placeholder="Ej: la seña se devuelve si cancelás hasta 24 hs antes del turno."
+        [ngModel]="politicaCancelacion()" (ngModelChange)="onPoliticaCancelacionInput($event)"></textarea>
+      <p class="block-sub">La mostramos en la landing con un link, y en la pantalla de éxito con seña. Si la dejás vacía, no aparece.</p>
+    </div>
+  </section>
+
+  <!-- ===== MERCADO PAGO ===== -->
+  <section class="block">
+    <div class="block-h"><span class="t eyebrow">Mercado Pago</span><span class="ln"></span></div>
+    <p class="block-sub">Conectá la cuenta de Mercado Pago del club para cobrar las señas online:
+      el pago aprobado confirma la reserva solo, sin validarla a mano.</p>
+
+    @if (mpEstado(); as mp) {
+      @if (mp.conectado) {
+        <div class="mp-estado ok">
+          <span class="mp-dot"></span>
+          Conectado — cuenta MP #{{ mp.mpUserId }}
+        </div>
+        <button type="button" class="btn-ghost mp-disconnect" (click)="desconectarMp()">Desconectar</button>
+      } @else {
+        <div class="mp-estado">
+          <span class="mp-dot off"></span>
+          No conectado
+        </div>
+        <button type="button" class="btn-save mp-connect" [disabled]="mpBusy()" (click)="conectarMp()">
+          Conectar Mercado Pago
+        </button>
+      }
+    }
   </section>
 
   <!-- ===== AUTOASIGNACIÓN ===== -->

@@ -196,6 +196,31 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .act.cancel { color: var(--clay); }
 .act.cancel:hover { border-color: var(--clay); background: color-mix(in srgb, var(--clay) 8%, var(--surface)); transform: translateY(-1px); }
 
+/* Estado de pago de seña (chip) + botón de devolución, en las acciones de la fila. */
+.pago-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  white-space: nowrap;
+
+  &.tarde { background: #fef3c7; color: #92400e; }
+  &.devuelto { background: #e5e7eb; color: #374151; }
+  &.rechazado { background: #fee2e2; color: #991b1b; }
+}
+
+.pago-devolver {
+  font-size: 0.75rem;
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
 /* ===== Pendientes de seña (banner sobre la agenda) =====
    Vive fuera de <main>, así que se alinea con el mismo contenedor (max-width + padding)
    para que NO se estire a todo el ancho de la pantalla. */

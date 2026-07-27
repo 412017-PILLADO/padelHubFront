@@ -89,6 +89,10 @@ export interface PublicConfig {
   senaAlias: string | null;
   /** Si es true, el sistema asigna la cancha automáticamente y la landing oculta el paso de elegir. */
   autoasignacion: boolean;
+  /** true si el club tiene Mercado Pago conectado (la seña se puede pagar online). */
+  pagoOnline: boolean;
+  /** Texto libre de política de cancelación/devolución; null/vacío = el club no cargó una (sin link en la landing). */
+  politicaCancelacion: string | null;
   /** Franjas horarias con precio especial (pisan el precio general/por cancha en ese rango, todos los días). */
   precioFranjas: PrecioFranjaPublic[];
   canchas: CanchaConfig[];
@@ -112,5 +116,20 @@ export class BookingService {
 
   crearReserva(body: CrearReservaBody): Observable<ReservaCreada> {
     return this.http.post<ReservaCreada>('/public/reservas', body);
+  }
+
+  /** Pide el link de Checkout Pro para pagar la seña de una reserva PENDIENTE (idempotente). */
+  crearLinkSena(reservaId: number, backUrl: string): Observable<{ initPoint: string }> {
+    return this.http.post<{ initPoint: string }>('/public/pagos/mp/preferencia', {
+      reservaId,
+      backUrl,
+    });
+  }
+
+  /** Alta pública de arrepentimiento (Res. 424/2020). Devuelve el código de revocación. */
+  crearArrepentimiento(body: {
+    nombre: string; whatsapp: string; detalle?: string; reservaFecha?: string; empresa: string;
+  }): Observable<{ codigo: string }> {
+    return this.http.post<{ codigo: string }>('/public/arrepentimiento', body);
   }
 }

@@ -15,7 +15,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
-import { Pendiente, SlotLibre, Turno, TurnosService } from '../../../core/api/turnos.service';
+import { Arrepentimiento, Pendiente, SlotLibre, Turno, TurnosService } from '../../../core/api/turnos.service';
 import { AgendaConfig, AgendaConfigService } from '../../../core/api/agenda-config.service';
 import { WhatsappArPipe } from '../../../shared/whatsapp-ar.pipe';
 import { AdminNavComponent } from '../admin-nav/admin-nav';
@@ -133,6 +133,11 @@ export class PanelComponent {
   readonly loading = signal(false);
   readonly loaded = signal(false);
 
+  /** Estado del pago de seña por reserva (solo las que tienen pago registrado). */
+  readonly pagoEstados = signal<Record<number, string>>({});
+  /** reservaId con una devolución en vuelo (evita doble click → doble request). */
+  readonly devolviendo = signal<number | null>(null);
+
   // ── Pendientes de seña (todas las fechas; se validan acá) ──
   readonly pendientes = signal<Pendiente[]>([]);
   readonly tienePendientes = computed(() => this.pendientes().length > 0);
@@ -142,6 +147,13 @@ export class PanelComponent {
     if (!q) return this.pendientes();
     return this.pendientes().filter((p) => norm(p.clienteNombre).includes(q));
   });
+
+  // ── Arrepentimientos (Res. 424/2020) no gestionados ──
+  readonly arrepentimientos = signal<Arrepentimiento[]>([]);
+  readonly arrepentimientosPendientes = computed(() =>
+    this.arrepentimientos().filter((a) => !a.gestionado)
+  );
+  readonly tieneArrepentimientos = computed(() => this.arrepentimientosPendientes().length > 0);
 
   readonly empty = computed(
     () => this.loaded() && !this.loading() && this.list().length === 0
@@ -249,6 +261,7 @@ export class PanelComponent {
     this.load(this.today);
     this.loadPendientes();
     this.loadAgenda();
+    this.loadArrepentimientos();
     // Preferencia de vista guardada + detección de mobile (solo browser; no rompe SSR/hidratación).
     afterNextRender(() => {
       const v = localStorage.getItem(PanelComponent.VISTA_KEY);
@@ -331,6 +344,31 @@ export class PanelComponent {
           detail: 'No pudimos rechazar la reserva. Probá de nuevo.',
         });
         this.loadPendientes();
+      },
+    });
+  }
+
+  // ── Arrepentimientos (Res. 424/2020) ──
+  private loadArrepentimientos(): void {
+    this.turnos.getArrepentimientos().subscribe({
+      next: (as) => this.arrepentimientos.set(as),
+      error: () => this.arrepentimientos.set([]),
+    });
+  }
+
+  /** Marca gestionada una solicitud de arrepentimiento (reversible por DB, sin ConfirmDialog). */
+  gestionarArrepentimiento(a: Arrepentimiento): void {
+    this.turnos.gestionarArrepentimiento(a.id).subscribe({
+      next: () => {
+        this.messages.add({ severity: 'success', summary: 'Gestionado', detail: a.nombre });
+        this.loadArrepentimientos();
+      },
+      error: () => {
+        this.messages.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'No pudimos marcarlo como gestionado. Probá de nuevo.',
+        });
       },
     });
   }
@@ -500,6 +538,7 @@ export class PanelComponent {
         this.list.set(turnos);
         this.loading.set(false);
         this.loaded.set(true);
+        this.loadPagoEstados(turnos);
       },
       error: () => {
         this.list.set([]);
@@ -509,6 +548,54 @@ export class PanelComponent {
           severity: 'error',
           summary: 'Error',
           detail: 'No pudimos cargar los turnos. Probá de nuevo.',
+        });
+      },
+    });
+  }
+
+  /** Estado de pago de seña por reserva, para el panel (chip + botón Devolver). */
+  private loadPagoEstados(turnos: Turno[]): void {
+    const ids = turnos.map((t) => t.id);
+    if (ids.length === 0) {
+      this.pagoEstados.set({});
+      return;
+    }
+    this.turnos.getSenaPagoEstados(ids).subscribe({
+      next: (m) => this.pagoEstados.set(m),
+      error: () => this.pagoEstados.set({}),
+    });
+  }
+
+  senaPagoDe(id: number): string | null {
+    return this.pagoEstados()[id] ?? null;
+  }
+
+  askDevolverSena(t: Turno): void {
+    if (this.devolviendo() === t.id) return; // ya hay una devolución en vuelo para esta reserva
+    this.confirm.confirm({
+      header: 'Devolver seña',
+      message: `¿Devolver la seña de ${t.clienteNombre}? Se reembolsa el pago a su Mercado Pago.`,
+      acceptLabel: 'Devolver seña',
+      rejectLabel: 'Volver',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.doDevolverSena(t),
+    });
+  }
+
+  private doDevolverSena(t: Turno): void {
+    this.devolviendo.set(t.id);
+    this.turnos.devolverSena(t.id).subscribe({
+      next: () => {
+        this.devolviendo.set(null);
+        this.pagoEstados.update((m) => ({ ...m, [t.id]: 'DEVUELTO' }));
+        this.messages.add({ severity: 'success', summary: 'Listo', detail: 'Seña devuelta' });
+      },
+      error: (err) => {
+        this.devolviendo.set(null);
+        this.messages.add({
+          severity: 'error',
+          summary: 'No se pudo devolver',
+          detail: err?.error?.error ?? 'No pudimos devolver la seña. Probá de nuevo.',
         });
       },
     });

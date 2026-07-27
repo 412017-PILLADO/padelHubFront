@@ -131,6 +131,8 @@ export class Landing {
   readonly senaAlias = computed(() => this.config()?.senaAlias?.trim() || null);
   /** Feedback breve del botón "Copiar" del alias en la pantalla de éxito. */
   readonly aliasCopiado = signal(false);
+  /** Link de Checkout Pro para pagar la seña online (null = solo alias por transferencia). */
+  readonly senaInitPoint = signal<string | null>(null);
 
   // ── Info del complejo ─────────────────────────────────────────────
   readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
@@ -206,6 +208,19 @@ export class Landing {
   readonly whatsapp = signal('');
   readonly empresa = signal('');
   readonly enviando = signal(false);
+
+  // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
+  readonly showArrep = signal(false);
+  readonly arrepCodigo = signal<string | null>(null);
+  readonly arrepBusy = signal(false);
+  readonly arrepNombre = signal('');
+  readonly arrepWhatsapp = signal('');
+  readonly arrepDetalle = signal('');
+  /** Honeypot anti-bot: mismo patrón que `empresa` del form de reserva (input oculto por CSS). */
+  readonly arrepEmpresa = signal('');
+
+  // ── Política de cancelación (texto libre del club) ─────────────────
+  readonly showPolitica = signal(false);
 
   readonly success = signal(false);
   readonly successData = signal<{
@@ -605,6 +620,14 @@ export class Landing {
           this.aliasCopiado.set(false);
           this.success.set(true);
           window.scrollTo(0, 0);
+
+          this.senaInitPoint.set(null);
+          if (res.estado === 'PENDIENTE' && this.config()?.pagoOnline) {
+            this.booking.crearLinkSena(res.id, location.origin).subscribe({
+              next: ({ initPoint }) => this.senaInitPoint.set(initPoint),
+              error: () => this.senaInitPoint.set(null), // degrada al alias por transferencia
+            });
+          }
         },
         error: (err: HttpErrorResponse) => {
           this.enviando.set(false);
@@ -648,6 +671,7 @@ export class Landing {
   backHome(): void {
     this.success.set(false);
     this.successData.set(null);
+    this.senaInitPoint.set(null);
     this.selectedTime.set(null);
     this.selectedCancha.set(null);
     this.nombre.set('');
@@ -655,6 +679,55 @@ export class Landing {
     this.calOpen.set(false);
     this.selectDay(this.today);
     window.scrollTo(0, 0);
+  }
+
+  // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
+  abrirArrepentimiento(): void {
+    this.arrepCodigo.set(null);
+    this.arrepNombre.set('');
+    this.arrepWhatsapp.set('');
+    this.arrepDetalle.set('');
+    this.arrepEmpresa.set('');
+    this.showArrep.set(true);
+  }
+
+  cerrarArrepentimiento(): void {
+    this.showArrep.set(false);
+  }
+
+  enviarArrepentimiento(): void {
+    if (this.arrepBusy() || !this.arrepNombre().trim() || !this.arrepWhatsapp().trim()) return;
+    this.arrepBusy.set(true);
+    this.booking
+      .crearArrepentimiento({
+        nombre: this.arrepNombre().trim(),
+        whatsapp: this.arrepWhatsapp().trim(),
+        detalle: this.arrepDetalle().trim() || undefined,
+        empresa: this.arrepEmpresa(), // honeypot
+      })
+      .subscribe({
+        next: ({ codigo }) => {
+          this.arrepBusy.set(false);
+          this.arrepCodigo.set(codigo);
+        },
+        error: () => {
+          this.arrepBusy.set(false);
+          this.messages.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'No pudimos registrar tu solicitud. Probá de nuevo.',
+          });
+        },
+      });
+  }
+
+  // ── Política de cancelación ─────────────────────────────────────────
+  abrirPolitica(): void {
+    this.showPolitica.set(true);
+  }
+
+  cerrarPolitica(): void {
+    this.showPolitica.set(false);
   }
 
   openMaps(): void {

@@ -71,6 +71,8 @@ export interface AgendaConfig {
   requiereSena: boolean;
   senaMonto: number | null;
   senaAlias: string | null;
+  /** Texto libre del dueño (cancelación/devolución); null/vacío = sin política cargada. */
+  politicaCancelacion: string | null;
   autoasignacion: boolean;
   breakOn: boolean;
   breakFrom: string;
@@ -231,6 +233,11 @@ export class AgendaConfigService {
   /** Activa/desactiva el módulo de señas + el monto. */
   putSena(body: GuardarSenaRequest): Observable<AgendaConfig> {
     return this.http.put<AgendaConfig>('/api/v1/agenda/sena', body);
+  }
+
+  /** Actualiza la política de cancelación/devolución (texto libre; vacío la borra). */
+  putPoliticaCancelacion(texto: string | null): Observable<AgendaConfig> {
+    return this.http.put<AgendaConfig>('/api/v1/agenda/politica-cancelacion', { texto });
   }
 
   /** Activa/desactiva la autoasignación de canchas (oculta el paso de elegir cancha). */
