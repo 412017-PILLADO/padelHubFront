@@ -1,0 +1,33 @@
+@use '../../config-shared';
+
+/* `.dur-chips`/`.dchip` (segmented "Precio general/Por cancha"), `.tsel`/`.sep` (selects de franja),
+   `.precio-aviso` y `.blk-empty` viven en config-shared.scss: también los usan Agenda y/o Canchas. */
+
+/* — Precio por horario — */
+.franja-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+.franja-item {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 10px 14px;
+}
+.franja-times { display: flex; align-items: center; gap: 8px; }
+.franja-price-field { flex-direction: row; align-items: center; gap: 8px; margin-left: auto; }
+.franja-price-field .paso-input { width: 110px; }
+
+/* `.cancha-del`/`.cancha-add` (quitar/agregar franja) viven en config.scss del padre (Canchas usa las
+   mismas para agregar/eliminar cancha): `::ng-deep` no hace falta acá porque son clases normales, pero
+   como Angular scopea el CSS por componente hay que redeclararlas para que apliquen en este template. */
+.cancha-del {
+  display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: var(--r); border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--clay);
+}
+.cancha-del svg { width: 18px; height: 18px; }
+.cancha-del:hover { border-color: var(--clay); }
+.cancha-add {
+  padding: 11px 18px; border-radius: var(--r);
+  border: 1px dashed var(--line-strong); background: transparent;
+  color: var(--court-deep); font-weight: 700;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.cancha-add:hover { border-color: var(--court); background: var(--court-soft); }

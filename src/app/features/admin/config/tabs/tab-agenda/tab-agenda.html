@@ -1,0 +1,145 @@
+<!-- ===== HORARIO SEMANAL ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Horario semanal</span><span class="ln"></span></div>
+  <p class="block-sub">Activá los días que abrís y ajustá desde / hasta. Los días apagados no muestran turnos.</p>
+  <div class="week">
+    @for (d of week(); track d.diaSemana) {
+      <div class="day-row" [class.off]="!d.open">
+        <span class="dname">{{ dowLabels[d.diaSemana] }}</span>
+        <button type="button" class="switch" role="switch" [attr.aria-checked]="d.open"
+          [attr.aria-label]="dowFull[d.diaSemana] + (d.open ? ' abierto' : ' cerrado')"
+          (click)="toggleDay(d.diaSemana)"></button>
+        @if (d.open) {
+          <div class="day-edit">
+            <select class="tsel" [class.invalid]="d.to !== '00:00' && d.from >= d.to" [ngModel]="d.from" (ngModelChange)="setFrom(d.diaSemana, $event)">
+              @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+            </select>
+            <span class="sep">—</span>
+            <select class="tsel" [class.invalid]="d.to !== '00:00' && d.from >= d.to" [ngModel]="d.to" (ngModelChange)="setTo(d.diaSemana, $event)">
+              @for (t of times; track t) { <option [value]="t">{{ timeLabel(t) }}</option> }
+            </select>
+            @if (d.to !== '00:00' && d.from >= d.to) { <span class="day-err">El cierre debe ser después de la apertura</span> }
+          </div>
+        } @else {
+          <span class="closed-badge">Cerrado</span>
+        }
+      </div>
+    }
+  </div>
+  @if (horarioAvisos().length > 0) {
+    <div class="horario-avisos">
+      @for (a of horarioAvisos(); track a) { <p class="horario-aviso">ℹ {{ a }}</p> }
+    </div>
+  }
+</section>
+
+<!-- ===== DESCANSO ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Descanso</span><span class="ln"></span></div>
+  <p class="block-sub">Cortá la agenda en una franja. Se aplica a todos los días abiertos.</p>
+  <div class="break-row">
+    <div class="bl">
+      <span class="bt">Pausa</span>
+      <span class="bs mono">{{ breakStateLabel() }}</span>
+    </div>
+    <button type="button" class="switch" role="switch" [attr.aria-checked]="breakOn()"
+      aria-label="Activar descanso" (click)="toggleBreak()"></button>
+  </div>
+  <div class="break-times" [class.dim]="!breakOn()">
+    <select class="tsel" [class.invalid]="invalidBreak()" [ngModel]="breakFrom()" (ngModelChange)="setBreakFrom($event)">
+      @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+    </select>
+    <span class="sep">—</span>
+    <select class="tsel" [class.invalid]="invalidBreak()" [ngModel]="breakTo()" (ngModelChange)="setBreakTo($event)">
+      @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+    </select>
+  </div>
+  @if (invalidBreak()) { <span class="day-err">El inicio del descanso debe ser antes del fin</span> }
+</section>
+
+<!-- ===== TURNO Y DURACIONES ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Turno y duraciones</span><span class="ln"></span></div>
+  <p class="block-sub">El turno principal define la grilla de horarios (la mayoría juega 90'). Si permitís otras
+    duraciones, arrancan en los mismos horarios del turno principal.</p>
+
+  <div class="default-row">
+    <span class="dr-label">Turno principal</span>
+    <div class="def-chips">
+      @for (d of durOpciones; track d) {
+        <button type="button" class="dchip sm" [attr.aria-pressed]="duracionDefault() === d" (click)="setDefault(d)">
+          {{ d }}'
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="break-row">
+    <div class="bl">
+      <span class="bt">Permitir otras duraciones</span>
+      <span class="bs mono">{{ permitirOtras() ? 'El jugador elige duración' : 'Solo turno principal' }}</span>
+    </div>
+    <button type="button" class="switch" role="switch" [attr.aria-checked]="permitirOtras()"
+      aria-label="Permitir otras duraciones" (click)="togglePermitirOtras()"></button>
+  </div>
+
+  @if (permitirOtras()) {
+    <div class="default-row">
+      <span class="dr-label">Duraciones</span>
+      <div class="dur-chips">
+        @for (d of durOpciones; track d) {
+          <button type="button" class="dchip" [attr.aria-pressed]="isDurActive(d)" (click)="toggleDur(d)">
+            {{ d }}'
+          </button>
+        }
+      </div>
+    </div>
+  }
+</section>
+
+<!-- ===== BLOQUEAR DÍAS ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Bloquear días</span><span class="ln"></span></div>
+  <p class="block-sub">Elegí una cancha (o todo el complejo), un motivo opcional, y tocá la fecha en el calendario.</p>
+
+  <div class="blk-form">
+    <label class="blk-field">
+      <span class="cf-label">Cancha</span>
+      <p-select [options]="canchaOpciones()" [ngModel]="bloqueoCanchaId()"
+        (ngModelChange)="setBloqueoCancha($event)" optionLabel="label" optionValue="value"
+        placeholder="Todo el complejo" appendTo="body"></p-select>
+    </label>
+    <label class="blk-field">
+      <span class="cf-label">Motivo (opcional)</span>
+      <input class="cf-input" type="text" maxlength="120" placeholder="Mantenimiento, torneo…"
+        [ngModel]="bloqueoMotivo()" (ngModelChange)="setBloqueoMotivo($event)" />
+    </label>
+  </div>
+
+  <div class="cal">
+    <p-datepicker [inline]="true" [ngModel]="calValue()" (onSelect)="onPickerSelect($event)"
+      [minDate]="today" [disabledDays]="disabledDays()" dateFormat="dd/mm/yy"></p-datepicker>
+  </div>
+
+  @if (bloqueosOrdenados().length > 0) {
+    <div class="blk-list">
+      @for (b of bloqueosOrdenados(); track b.id) {
+        <div class="blk-item">
+          <div class="when">
+            <span class="dnum mono">{{ bloqDayNum(b) }}</span>
+            <span class="dmo">{{ bloqDow(b) }}</span>
+          </div>
+          <div class="reason">
+            {{ b.canchaNombre || 'Todo el complejo' }}
+            @if (b.motivo) { <span class="rmotivo">· {{ b.motivo }}</span> }
+          </div>
+          <button type="button" class="rm" aria-label="Quitar bloqueo" (click)="removeBloqueo(b)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="blk-empty">No hay días bloqueados próximos.</div>
+  }
+</section>

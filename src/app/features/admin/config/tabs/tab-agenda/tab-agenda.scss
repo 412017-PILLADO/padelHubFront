@@ -1,0 +1,54 @@
+@use '../../config-shared';
+
+/* — Horario — (`.tsel`/`.sep` viven en config-shared.scss, también los usa Precios) */
+.week { display: flex; flex-direction: column; gap: 8px; }
+.day-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 10px 14px;
+}
+.day-row.off { opacity: 0.65; }
+.dname { width: 38px; font-weight: 700; }
+.day-edit { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-left: auto; }
+.closed-badge { margin-left: auto; font-size: 0.8rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.05em; }
+.day-err { flex-basis: 100%; color: var(--clay); font-size: 0.78rem; margin-top: 4px; }
+.horario-avisos { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.horario-aviso {
+  font-size: 0.8rem; color: var(--court-deep); background: var(--court-soft);
+  border-radius: var(--r); padding: 8px 12px; margin: 0;
+}
+
+/* — Descanso — (`.break-row`/`.bl`/`.bt`/`.bs`/`.switch` viven en config-shared.scss) */
+.break-times { display: flex; align-items: center; gap: 8px; transition: opacity 0.15s ease; }
+.break-times.dim { opacity: 0.4; pointer-events: none; }
+
+/* — Duraciones — (`.dur-chips`/`.dchip` viven en config-shared.scss: también los usa Precios) */
+.default-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.dr-label { font-size: 0.85rem; color: var(--ink-dim); font-weight: 600; }
+.def-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* — Bloqueos — (`:host ::ng-deep .p-select` que ancha el select de cancha vive en config.scss del
+   padre: `::ng-deep` no scopea al hijo, así que sigue aplicando acá igual que antes.
+   `.blk-empty` vive en config-shared.scss: también lo usan Canchas y Precios.) */
+.blk-form { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+@media (min-width: 1120px) { .blk-form { grid-template-columns: 1fr 1.4fr; } }
+.blk-field { display: flex; flex-direction: column; gap: 6px; }
+.cal { margin-bottom: 18px; }
+.blk-list { display: flex; flex-direction: column; gap: 8px; }
+.blk-item {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: var(--r); padding: 10px 14px;
+}
+.when { display: flex; flex-direction: column; align-items: center; min-width: 56px; }
+.dnum { font-weight: 700; color: var(--court-deep); }
+.dmo { font-size: 0.72rem; color: var(--ink-faint); }
+.reason { flex: 1; font-size: 0.92rem; }
+.rmotivo { color: var(--ink-dim); }
+.rm {
+  display: grid; place-items: center; width: 36px; height: 36px;
+  border-radius: var(--r); border: 1px solid var(--line-strong);
+  background: var(--surface); color: var(--clay);
+}
+.rm svg { width: 18px; height: 18px; }
+.rm:hover { border-color: var(--clay); }
