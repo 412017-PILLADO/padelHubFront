@@ -454,6 +454,13 @@ export class Landing {
     return validTpl;
   }
 
+  /** Los anchors de solo-fragmento se resuelven contra <base href="/"> y se llevan puesto el
+   *  query string (rompe ?plantilla= de la preview). Scrolleamos a mano y dejamos la URL como está. */
+  irA(event: Event, id: string): void {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
    *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
   setPreviewPlantilla(tpl: string): void {

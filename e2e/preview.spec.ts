@@ -26,3 +26,15 @@ test('sin query params no hay selector y manda la plantilla del tenant', async (
   await expect(page.locator('[data-tpl]')).toBeVisible();
   await expect(page.locator('.tpl-pill')).toHaveCount(0);
 });
+
+test('los anchors internos no pierden el query param de preview', async ({ page }) => {
+  await page.goto('http://demo.localhost:4400/?plantilla=C');
+  await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C');
+  const nav = page.locator('.c-navitem').nth(1); // "Horarios"
+  if (await nav.count()) {
+    await nav.click();
+    await page.waitForTimeout(600);
+    expect(page.url()).toContain('plantilla=C');
+    await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C');
+  }
+});

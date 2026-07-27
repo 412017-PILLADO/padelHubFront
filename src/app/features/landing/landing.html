@@ -410,9 +410,9 @@
           @if (!logoSrc()) { <span class="c-brandname display">{{ tenantNombre() }}</span> }
         </div>
         <nav class="c-nav">
-          <a class="c-navitem is-active" href="#reservar"><span class="c-dot"></span>Reservar</a>
-          @if (horarios().length) { <a class="c-navitem" href="#ic-horarios"><span class="c-dot"></span>Horarios</a> }
-          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" href="#ic-donde"><span class="c-dot"></span>El club</a> }
+          <a class="c-navitem is-active" href="#reservar" (click)="irA($event, 'reservar')"><span class="c-dot"></span>Reservar</a>
+          @if (horarios().length) { <a class="c-navitem" href="#ic-horarios" (click)="irA($event, 'ic-horarios')"><span class="c-dot"></span>Horarios</a> }
+          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" href="#ic-donde" (click)="irA($event, 'ic-donde')"><span class="c-dot"></span>El club</a> }
         </nav>
       </aside>
 
