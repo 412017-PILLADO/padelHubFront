@@ -68,6 +68,17 @@ const ES_TRANSLATION = {
   clear: 'Limpiar',
 };
 
+export type ConfigTab = 'club' | 'agenda' | 'canchas' | 'precios' | 'cobros';
+
+/** Pestañas de configuración, en orden de recorrido del dueño. */
+export const CONFIG_TABS: ReadonlyArray<{ id: ConfigTab; label: string }> = [
+  { id: 'club', label: 'Tu club' },
+  { id: 'agenda', label: 'Agenda' },
+  { id: 'canchas', label: 'Canchas' },
+  { id: 'precios', label: 'Precios' },
+  { id: 'cobros', label: 'Cobros' },
+];
+
 const DOW = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const DOW_FULL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 const MES_ABBR = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
@@ -140,6 +151,10 @@ export class ConfigComponent {
   readonly durOpciones = DURACION_OPCIONES;
   readonly tipoParedOpciones = TIPO_PARED_OPCIONES;
   readonly today = startOfDay(new Date());
+
+  // ── Pestañas ──
+  readonly tabs = CONFIG_TABS;
+  readonly tab = signal<ConfigTab>('club');
 
   // ── Marca (color primario + secundario + logo del club) ──
   readonly marcaColor = signal('#0a8a99');
@@ -395,13 +410,29 @@ export class ConfigComponent {
         this.unsaved.setDirty(false);
       });
 
+      // Pestaña inicial desde la URL (?tab=...), si es una válida.
+      const t = new URLSearchParams(location.search).get('tab');
+      if (t && CONFIG_TABS.some((x) => x.id === t)) {
+        this.tab.set(t as ConfigTab);
+      }
+
       // Retorno del flujo OAuth: MP redirige acá con /admin/config?mp=conectado.
       if (new URLSearchParams(location.search).get('mp') === 'conectado') {
         this.messages.add({ severity: 'success', summary: 'Mercado Pago conectado', detail: 'La cuenta del club quedó vinculada.' });
         history.replaceState(null, '', location.pathname);
+        // La card de MP vive en "Cobros": posicionamos ahí para que el dueño vea el resultado.
+        this.tab.set('cobros');
         this.loadMpEstado();
       }
     }
+  }
+
+  irATab(t: ConfigTab): void {
+    this.tab.set(t);
+    if (!isPlatformBrowser(this.platformId)) return;
+    const url = new URL(location.href);
+    url.searchParams.set('tab', t);
+    history.replaceState(null, '', url);
   }
 
   private loadMpEstado(): void {

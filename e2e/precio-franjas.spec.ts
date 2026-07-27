@@ -42,6 +42,7 @@ test.describe('precio por horario', () => {
     // ---- Panel: franja 08:00-23:00 con -50% y guardar dentro del Guardar general.
     await loginAsOwner(page);
     await gotoAgenda(page);
+    await page.locator('.cfg-tab', { hasText: 'Precios' }).click();
 
     await page.getByRole('button', { name: '+ Agregar franja' }).click();
     const franja = page.locator('.franja-item').first();

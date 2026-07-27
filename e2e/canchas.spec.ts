@@ -5,6 +5,7 @@ import { loginAsOwner, gotoAgenda } from './helpers';
 test('alta, edición y baja de una cancha', async ({ page }) => {
   await loginAsOwner(page);
   await gotoAgenda(page);
+  await page.locator('.cfg-tab', { hasText: 'Canchas' }).click();
 
   const nombre = `Cancha E2E ${Date.now()}`;
   const renombrada = `${nombre} (editada)`;
