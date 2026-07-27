@@ -329,8 +329,12 @@
   /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio.
      justify-content:center (feedback owner post-desktop): el grid quedaba pegado a la izquierda
      dejando un hueco muerto a la derecha respecto de las líneas divisorias de las otras secciones;
-     centrado se ve prolijo en las 3 plantillas sin deformar la proporción de las cards. */
-  grid-template-columns: repeat(auto-fill, minmax(138px, 172px));
+     centrado se ve prolijo en las 3 plantillas sin deformar la proporción de las cards.
+     auto-fit (no auto-fill, feedback owner de seguimiento): con auto-fill, cuando el contenedor
+     entra una 5ª track (caso de C, 920px de ancho útil) esa track queda vacía pero sigue contando
+     para el centrado, corriendo las 4 cards reales hacia la izquierda. auto-fit colapsa las tracks
+     vacías a 0, así el centrado se calcula solo sobre las cards que existen. */
+  grid-template-columns: repeat(auto-fit, minmax(138px, 172px));
   justify-content: center;
   gap: 12px;
 }
