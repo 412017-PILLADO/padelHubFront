@@ -547,3 +547,16 @@
 @if (showPolitica() && config()?.politicaCancelacion) {
   <app-politica-modal [texto]="config()!.politicaCancelacion!" (cerrar)="showPolitica.set(false)" />
 }
+
+<!-- ===================================================================
+     Preview de plantillas (herramienta de venta): solo aparece si vino `?plantilla=` en la URL.
+     Deja probar las 3 plantillas en vivo sin persistir nada (ver landing.ts: previewPlantilla).
+     =================================================================== -->
+@if (previewPlantilla(); as activa) {
+  <div class="tpl-pill" role="group" aria-label="Preview de plantilla">
+    @for (opt of ['A', 'B', 'C']; track opt) {
+      <button type="button" class="tpl-opt" [class.on]="opt === activa"
+        (click)="setPreviewPlantilla(opt)">{{ opt }}</button>
+    }
+  </div>
+}

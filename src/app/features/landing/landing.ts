@@ -119,8 +119,19 @@ export class Landing {
   readonly tenantNombre = computed(() => this.config()?.complejo.nombre ?? 'Tu club');
   readonly tenantPrimerNombre = computed(() => this.tenantNombre().split(/\s+/)[0]);
 
-  /** Plantilla de landing elegida por el club: 'A' (poster), 'B' (hero), 'C' (app). Default 'A'. */
-  readonly plantilla = computed(() => (this.config()?.tenant.plantilla ?? 'A').toUpperCase());
+  // ── Preview de plantilla/color por query params (herramienta de venta, 100% efímero) ──
+  /** `?plantilla=A|B|C` (case-insensitive); cualquier otro valor → null. Se lee una sola vez al
+   *  iniciar (solo browser) y desde ahí en más se maneja con el selector flotante. */
+  readonly previewPlantilla = signal<string | null>(null);
+  /** `?color=%23RRGGBB` (hex `#RGB`/`#RRGGBB`, validado); cualquier otro valor → null. Nunca se
+   *  inyecta el valor crudo en CSS sin pasar por este regex. */
+  readonly previewColor = signal<string | null>(null);
+
+  /** Plantilla de landing elegida por el club: 'A' (poster), 'B' (hero), 'C' (app). Default 'A'.
+   *  El preview (`?plantilla=`) pisa la del tenant sin persistir nada. */
+  readonly plantilla = computed(() =>
+    (this.previewPlantilla() ?? this.config()?.tenant.plantilla ?? 'A').toUpperCase()
+  );
 
   /** Logo del club: si el tenant tiene uno, la URL absoluta lista para el <img>; si no, null. */
   readonly logoSrc = computed(() => {
@@ -398,7 +409,43 @@ export class Landing {
 
   constructor() {
     this.primeng.setTranslation(ES_TRANSLATION);
+    // Se lee ANTES del fetch de config: el fetch es async (HTTP), así que para cuando la
+    // respuesta llega y corre applyBranding()/plantilla() ya está seteado el preview y gana.
+    this.readPreviewParams();
     this.loadConfig();
+  }
+
+  /**
+   * Preview de venta: `?plantilla=A|B|C` y `?color=%23RRGGBB` pisan visualmente el tenant sin
+   * persistir nada. Solo en browser (en SSR no hay location) y solo se lee una vez al iniciar;
+   * después el selector flotante actualiza `previewPlantilla` + la URL directamente.
+   */
+  private readPreviewParams(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const params = new URLSearchParams(location.search);
+
+    const tpl = params.get('plantilla');
+    if (tpl && /^[ABC]$/i.test(tpl)) this.previewPlantilla.set(tpl.toUpperCase());
+
+    const color = params.get('color');
+    if (color) {
+      try {
+        const decoded = decodeURIComponent(color);
+        if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(decoded)) this.previewColor.set(decoded);
+      } catch {
+        // valor malformado (% suelto, etc.): ignoramos, previewColor queda null.
+      }
+    }
+  }
+
+  /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
+   *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
+  setPreviewPlantilla(tpl: string): void {
+    this.previewPlantilla.set(tpl);
+    if (!isPlatformBrowser(this.platformId)) return;
+    const url = new URL(location.href);
+    url.searchParams.set('plantilla', tpl);
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
   }
 
   private loadConfig(): void {
@@ -430,7 +477,8 @@ export class Landing {
   private applyBranding(cfg: PublicConfig): void {
     if (!isPlatformBrowser(this.platformId)) return;
     const root = document.documentElement.style;
-    const color = cfg.tenant.colorPrimario?.trim();
+    // El preview (`?color=`) pisa el color del tenant; ya viene validado por readPreviewParams().
+    const color = (this.previewColor() ?? cfg.tenant.colorPrimario)?.trim();
     if (color) {
       root.setProperty('--court', color);
       root.setProperty('--court-deep', `color-mix(in srgb, ${color} 82%, #000)`);
