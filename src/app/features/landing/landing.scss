@@ -849,11 +849,13 @@
     opacity: 0.45;
   }
 
-  /* Canchas: siempre 2 columnas centradas (2x2 con 4 opciones), en vez del auto-fill que en 390px
-     deja las cards descentradas (A) o en fila larga con scroll (B/C, padding del contenedor más
-     angosto). 160px de tope: con 172px quedaba apretado en plantilla B (paneles anidados). */
+  /* Canchas: 2 columnas centradas a 390px (2x2 con 4 opciones); mismo fix de auto-fit que en
+     desktop (línea 333) — con `repeat(2, …)` fijo, un club con 1 sola cancha dejaba la track vacía
+     descentrando la card real. auto-fit colapsa las tracks sin contenido a 0, así 1 cancha queda
+     centrada y 4 siguen en 2x2. 160px de tope: con 172px quedaba apretado en plantilla B (paneles
+     anidados). */
   .courts {
-    grid-template-columns: repeat(2, minmax(0, 160px));
+    grid-template-columns: repeat(auto-fit, minmax(0, 160px));
     justify-content: center;
     gap: 10px;
   }
@@ -867,7 +869,7 @@
   position: fixed;
   bottom: 16px;
   right: 16px;
-  z-index: 70;
+  z-index: 50;
   display: flex;
   gap: 4px;
   padding: 4px;

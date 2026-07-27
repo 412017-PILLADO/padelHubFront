@@ -174,6 +174,12 @@ export class Landing {
     return h ? `https://instagram.com/${h}` : null;
   });
 
+  /** El item "El club" de la nav de la plantilla C apunta a la card de dirección si existe
+   *  (`#ic-donde`, ver `infoCards`); si el club no cargó dirección pero sí tiene WhatsApp/IG,
+   *  esa card no se renderiza y hay que apuntar a `#ic-contacto` en su lugar (misma condición de
+   *  visibilidad del item: `direccion() || whatsappUrl() || instagramHandle()`). */
+  readonly clubAnchorId = computed(() => (this.direccion() ? 'ic-donde' : 'ic-contacto'));
+
   readonly horarios = computed<HoursRow[]>(() =>
     groupHorarios(this.config()?.horarios ?? [])
   );
