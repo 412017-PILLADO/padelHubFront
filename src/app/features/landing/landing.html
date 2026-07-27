@@ -314,7 +314,7 @@
 <!-- Info del club (horarios + dónde + contacto) reusada como tarjetas por las plantillas B y C -->
 <ng-template #infoCards>
   @if (horarios().length) {
-    <article class="ic-card">
+    <article class="ic-card" id="ic-horarios">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="ic-t">Horarios</span></div>
       <ul class="ic-hours">
         @for (row of horarios(); track row.dias) {
@@ -324,7 +324,7 @@
     </article>
   }
   @if (direccion()) {
-    <article class="ic-card">
+    <article class="ic-card" id="ic-donde">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="ic-t">Dónde estamos</span></div>
       <p class="ic-addr">{{ direccion() }}</p>
       @if (mapaUrl()) {
@@ -333,7 +333,7 @@
     </article>
   }
   @if (whatsappUrl() || instagramHandle()) {
-    <article class="ic-card">
+    <article class="ic-card" id="ic-contacto">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.2Z"/></svg></span><span class="ic-t">Contacto</span></div>
       <div class="ic-links">
         @if (whatsappUrl()) {
@@ -378,10 +378,6 @@
         <div class="b-hero-mark"><ng-container [ngTemplateOutlet]="brandMark"></ng-container></div>
         <h1 class="b-title display">{{ tenantNombre() }}</h1>
         <p class="b-lede">Reservá tu cancha en 30 segundos. Sin llamados, sin esperas.</p>
-        <div class="b-cta">
-          <a class="b-btn primary" href="#reservar">Reservar turno</a>
-          @if (horarios().length) { <a class="b-btn ghost" href="#b-info">Ver horarios</a> }
-        </div>
       </section>
 
       <section id="reservar" class="b-book">
@@ -415,8 +411,8 @@
         </div>
         <nav class="c-nav">
           <a class="c-navitem is-active" href="#reservar"><span class="c-dot"></span>Reservar</a>
-          @if (horarios().length) { <a class="c-navitem" href="#c-info"><span class="c-dot"></span>Horarios</a> }
-          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" href="#c-info"><span class="c-dot"></span>El club</a> }
+          @if (horarios().length) { <a class="c-navitem" href="#ic-horarios"><span class="c-dot"></span>Horarios</a> }
+          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" href="#ic-donde"><span class="c-dot"></span>El club</a> }
         </nav>
       </aside>
 
