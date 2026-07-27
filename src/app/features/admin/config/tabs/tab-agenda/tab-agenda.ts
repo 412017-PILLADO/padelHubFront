@@ -5,7 +5,7 @@ import { SelectModule } from 'primeng/select';
 import { ConfirmationService, MessageService } from 'primeng/api';
 
 import { BloqueoItem } from '../../../../../core/api/agenda-config.service';
-import { ConfigStateService, DOW_FULL } from '../../config-state.service';
+import { ConfigStateService, DOW_FULL, timeLabel, timeOptions } from '../../config-state.service';
 
 const DOW = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 const MES_ABBR = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP', 'OCT', 'NOV', 'DIC'];
@@ -13,15 +13,6 @@ const MES_ABBR = ['ENE', 'FEB', 'MAR', 'ABR', 'MAY', 'JUN', 'JUL', 'AGO', 'SEP',
 /** Opciones de duración ofrecidas como chips (se puede activar/desactivar). */
 const DURACION_OPCIONES = [30, 45, 60, 75, 90, 120];
 
-function timeOptions(): string[] {
-  const arr: string[] = [];
-  for (let m = 7 * 60; m <= 24 * 60; m += 30) {
-    const h = String(Math.floor(m / 60) % 24).padStart(2, '0');
-    const mm = String(m % 60).padStart(2, '0');
-    arr.push(`${h}:${mm}`);
-  }
-  return arr;
-}
 function startOfDay(d: Date): Date {
   const x = new Date(d);
   x.setHours(0, 0, 0, 0);
@@ -92,9 +83,7 @@ export class TabAgendaComponent {
   readonly setBloqueoMotivo = this.st.setBloqueoMotivo.bind(this.st);
 
   /** Etiqueta de una hora en el select de cierre: aclara que "00:00" es medianoche (24:00). */
-  timeLabel(t: string): string {
-    return t === '00:00' ? '00:00 (medianoche)' : t;
-  }
+  readonly timeLabel = timeLabel;
 
   // ── Bloqueos ──
   onPickerSelect(value: Date): void {

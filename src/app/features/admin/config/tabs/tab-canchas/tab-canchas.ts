@@ -39,7 +39,6 @@ export class TabCanchasComponent {
   // ── Alias de signals/computed del servicio (mismo nombre que antes, sin `st.` en el template) ──
   readonly precioModo = this.st.precioModo;
   readonly autoasignacion = this.st.autoasignacion;
-  readonly canchas = this.st.canchas;
   readonly editingCanchaId = this.st.editingCanchaId;
   readonly canchaFormOpen = this.st.canchaFormOpen;
   readonly cNombre = this.st.cNombre;
@@ -48,7 +47,6 @@ export class TabCanchasComponent {
   readonly cTipoPared = this.st.cTipoPared;
   readonly cPrecio = this.st.cPrecio;
   readonly cColor = this.st.cColor;
-  readonly canchaSaving = this.st.canchaSaving;
   readonly canchaTogglingId = this.st.canchaTogglingId;
   readonly canchasOrdenadas = this.st.canchasOrdenadas;
   readonly canCanchaSave = this.st.canCanchaSave;

@@ -132,7 +132,9 @@ export class ConfigComponent {
         this.messages.add({ severity: 'success', summary: 'Mercado Pago conectado', detail: 'La cuenta del club quedó vinculada.' });
         history.replaceState(null, '', location.pathname);
         // La card de MP vive en "Cobros": posicionamos ahí para que el dueño vea el resultado.
-        this.tab.set('cobros');
+        // `irATab` deja `?tab=cobros` en la URL (no sólo `this.tab.set`): así un F5 después del
+        // retorno de MP se queda en Cobros en vez de volver a "Tu club".
+        this.irATab('cobros');
         this.st.cargarMpEstado();
       }
     }

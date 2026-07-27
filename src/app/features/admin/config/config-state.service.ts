@@ -28,6 +28,23 @@ export interface FranjaEdit {
 
 export const DOW_FULL = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+/** Horas cada 30 min de 07:00 a 24:00 (inclusive): opciones de los selects de horario. Compartido
+ *  por Agenda (horario/descanso) y Precios (franjas de precio por horario). */
+export function timeOptions(): string[] {
+  const arr: string[] = [];
+  for (let m = 7 * 60; m <= 24 * 60; m += 30) {
+    const h = String(Math.floor(m / 60) % 24).padStart(2, '0');
+    const mm = String(m % 60).padStart(2, '0');
+    arr.push(`${h}:${mm}`);
+  }
+  return arr;
+}
+
+/** Etiqueta de una hora en un select de cierre: aclara que "00:00" es medianoche (24:00). */
+export function timeLabel(t: string): string {
+  return t === '00:00' ? '00:00 (medianoche)' : t;
+}
+
 function hhmmToMin(s: string): number {
   const [h, m] = s.split(':').map(Number);
   return (h || 0) * 60 + (m || 0);

@@ -1,17 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { ConfigStateService } from '../../config-state.service';
-
-function timeOptions(): string[] {
-  const arr: string[] = [];
-  for (let m = 7 * 60; m <= 24 * 60; m += 30) {
-    const h = String(Math.floor(m / 60) % 24).padStart(2, '0');
-    const mm = String(m % 60).padStart(2, '0');
-    arr.push(`${h}:${mm}`);
-  }
-  return arr;
-}
+import { ConfigStateService, timeLabel, timeOptions } from '../../config-state.service';
 
 /** Pestaña "Precios": precio general/por cancha y precio por horario (franjas de ajuste porcentual).
  *  Sin inputs/outputs: el estado se comparte con el resto de la pantalla vía `ConfigStateService`
@@ -49,7 +39,5 @@ export class TabPreciosComponent {
   readonly onFranjaPctInput = this.st.onFranjaPctInput.bind(this.st);
 
   /** Etiqueta de una hora en el select de cierre: aclara que "00:00" es medianoche (24:00). */
-  timeLabel(t: string): string {
-    return t === '00:00' ? '00:00 (medianoche)' : t;
-  }
+  readonly timeLabel = timeLabel;
 }
