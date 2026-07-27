@@ -5,6 +5,7 @@ import {
   inject,
   signal,
   PLATFORM_ID,
+  afterNextRender,
 } from '@angular/core';
 import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -410,22 +411,35 @@ export class Landing {
   constructor() {
     this.primeng.setTranslation(ES_TRANSLATION);
     // Se lee ANTES del fetch de config: el fetch es async (HTTP), así que para cuando la
-    // respuesta llega y corre applyBranding()/plantilla() ya está seteado el preview y gana.
-    this.readPreviewParams();
+    // respuesta llega y corre applyBranding() ya está seteado previewColor() y gana. El color se
+    // aplica imperativamente (setProperty en :root, fuera del árbol que hidrata Angular), así que
+    // no hay riesgo de mismatch aunque se lea/aplique ya en el constructor.
+    const previewTpl = this.readPreviewParams();
+    // previewPlantilla en cambio maneja el HTML que también sirve el server (host [attr.data-tpl]
+    // + el @switch de plantilla en el template, ruta '' con RenderMode.Server): si se pisara acá,
+    // síncrono, el primer render del cliente ya arrancaría distinto de lo que mandó el server y la
+    // hidratación tira NG0500 (mismatch) con re-render destructivo. Por eso el override se aplica
+    // recién DESPUÉS del primer render (afterNextRender) — el primer paint hidrata igual que el
+    // server, y el preview entra como un segundo paint prolijo, ya del lado cliente.
+    if (previewTpl) {
+      afterNextRender(() => this.previewPlantilla.set(previewTpl));
+    }
     this.loadConfig();
   }
 
   /**
    * Preview de venta: `?plantilla=A|B|C` y `?color=%23RRGGBB` pisan visualmente el tenant sin
-   * persistir nada. Solo en browser (en SSR no hay location) y solo se lee una vez al iniciar;
-   * después el selector flotante actualiza `previewPlantilla` + la URL directamente.
+   * persistir nada. Solo en browser (en SSR no hay location) y solo se lee una vez al iniciar.
+   * Aplica `previewColor` directo (ver constructor); devuelve la plantilla validada (o null) para
+   * que el constructor decida CUÁNDO aplicarla. Después de este arranque, el selector flotante
+   * actualiza `previewPlantilla` + la URL directamente (ya post-hidratación, sin este cuidado).
    */
-  private readPreviewParams(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+  private readPreviewParams(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
     const params = new URLSearchParams(location.search);
 
     const tpl = params.get('plantilla');
-    if (tpl && /^[ABC]$/i.test(tpl)) this.previewPlantilla.set(tpl.toUpperCase());
+    const validTpl = tpl && /^[ABC]$/i.test(tpl) ? tpl.toUpperCase() : null;
 
     const color = params.get('color');
     if (color) {
@@ -436,6 +450,8 @@ export class Landing {
         // valor malformado (% suelto, etc.): ignoramos, previewColor queda null.
       }
     }
+
+    return validTpl;
   }
 
   /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
