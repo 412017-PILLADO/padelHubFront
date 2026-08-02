@@ -17,6 +17,10 @@
   --court: #0a8a99;        /* teal petróleo — color primario (acento, del logo) */
   --court-deep: #076572;
   --court-soft: #e4f4f6;   /* teal lavado para fondos suaves */
+  /* Tinta legible SOBRE el color primario (botones/chips/afiche). El default sirve para el teal de
+     plataforma (marketing, panel dev); en un club la recalcula core/branding según su color y la
+     escribe inline en el <html> — también en SSR, así el primer paint ya sale bien. */
+  --ink-on-accent: #fff;
   --clay: #e0392b;         /* rojo — chispa puntual (la línea de la paleta) */
 
   /* — Tipografía — */

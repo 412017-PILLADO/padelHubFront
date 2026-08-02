@@ -7,7 +7,7 @@ import {
   PLATFORM_ID,
   afterNextRender,
 } from '@angular/core';
-import { isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { environment } from '../../../environments/environment';
 import { RouterLink } from '@angular/router';
@@ -27,7 +27,7 @@ import {
   PublicConfig,
   Slot,
 } from '../../core/api/booking.service';
-import { applyTenantColors } from '../../core/branding/branding.service';
+import { applyTenantColors } from '../../core/branding/tenant-colors';
 import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-modal';
 import { PoliticaModal } from './politica-modal/politica-modal';
 
@@ -111,6 +111,8 @@ export class Landing {
   private readonly messages = inject(MessageService);
   private readonly primeng = inject(PrimeNG);
   private readonly platformId = inject(PLATFORM_ID);
+  /** Inyectado (no el global): en SSR es el documento que se serializa, ver applyBranding(). */
+  private readonly doc = inject(DOCUMENT);
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
 
@@ -487,16 +489,20 @@ export class Landing {
 
   /**
    * Aplica la colorimetría del tenant al :root: el color primario y sus derivados (deep/soft, con
-   * color-mix). Así cada club sale con su propio color sin tocar los estilos. Solo en browser
-   * (en SSR no hay document). El logo se resuelve aparte vía logoSrc().
+   * color-mix). Así cada club sale con su propio color sin tocar los estilos. El logo se resuelve
+   * aparte vía logoSrc().
+   *
+   * Corre TAMBIÉN en el server (por eso `DOCUMENT` inyectado y no el global): el `style` del `<html>`
+   * se serializa en el HTML que se sirve, así el **primer paint ya sale con el color del club**. Con
+   * el guard de browser que había antes, el server mandaba el teal de plataforma y el color real
+   * entraba recién al hidratar (~1s de parpadeo medido).
    */
   private applyBranding(cfg: PublicConfig): void {
-    if (!isPlatformBrowser(this.platformId)) return;
     // El preview (`?color=`) pisa el color del tenant; ya viene validado por readPreviewParams().
     // Los derivados (deep/soft) y la tinta legible de cada color los resuelve el helper compartido
     // con BrandingService, que es la única fuente de verdad de los tokens de marca.
     const color = this.previewColor() ?? cfg.tenant.colorPrimario;
-    applyTenantColors(document.documentElement.style, color, cfg.tenant.colorSecundario);
+    applyTenantColors(this.doc.documentElement.style, color, cfg.tenant.colorSecundario);
   }
 
   /**

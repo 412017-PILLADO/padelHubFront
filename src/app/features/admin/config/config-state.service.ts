@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, concatMap, of, tap } from 'rxjs';
+import { Observable, concatMap, map, of, tap } from 'rxjs';
 
 import {
   AgendaConfig,
@@ -84,6 +84,11 @@ export class ConfigStateService {
    *  guardado general, así que sin este guard un `getMarca()` fallido dejaría el estado en sus
    *  defaults (#0a8a99 / plantilla A) y el primer Guardar le pisaría la marca real al club. */
   private readonly marcaLoaded = signal(false);
+  /** `true` si el GET de la marca falló: el guardado saltea esa sección y la UI tiene que avisarlo
+   *  (si no, el owner cambia un color, lee "Guardado" y no se guardó nada). */
+  readonly marcaError = signal(false);
+  /** La fuente no se edita desde el panel, pero se reenvía en cada PUT para no nulearla. */
+  private readonly marcaFuente = signal<string | null>(null);
   readonly uploadingLogo = signal(false);
   /** Cambia tras subir/quitar el logo para bustear la caché del <img> de preview. */
   private readonly logoBust = signal(0);
@@ -329,10 +334,14 @@ export class ConfigStateService {
         this.marcaColorSec.set(m.colorSecundario);
         if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
         this.marcaLogoUrl.set(m.logoUrl);
+        this.marcaFuente.set(m.fuente);
         this.marcaLoaded.set(true);
+        this.marcaError.set(false);
       },
       error: () => {
-        /* la marca es secundaria: si falla, el resto del panel sigue funcionando. */
+        // La marca es secundaria: el resto del panel sigue funcionando. Pero queda marcado como
+        // error para que el guardado avise que los colores/plantilla NO se van a guardar.
+        this.marcaError.set(true);
       },
     });
   }
@@ -797,24 +806,34 @@ export class ConfigStateService {
           return this.api.putAutoasignacion({ autoasignacion: this.autoasignacion() });
         }),
         concatMap(() => {
-          this.seccion = 'Marca';
-          // Si la marca no llegó a cargarse, no la mandamos: pisaría la real con los defaults.
-          if (!this.marcaLoaded()) return of(null);
-          return this.api.putMarca({
-            colorPrimario: this.marcaColor().trim(),
-            colorSecundario: this.marcaColorSec()?.trim() || null,
-            plantilla: this.marcaPlantilla(),
-          });
-        }),
-        concatMap((m: Marca | null) => {
-          // El back normaliza (ej. la plantilla): nos quedamos con lo que devolvió.
-          if (m) {
-            if (m.colorPrimario) this.marcaColor.set(m.colorPrimario);
-            this.marcaColorSec.set(m.colorSecundario);
-            if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
-          }
           this.seccion = 'Contacto';
           return this.api.putContacto(contacto);
+        }),
+        // La marca va ÚLTIMA a propósito: es la sección más chica y la única que puede fallar por un
+        // dato de otra pestaña (hex/plantilla). Si el back la rechaza, todo lo anterior ya se guardó.
+        concatMap((cfg) => {
+          this.seccion = 'Marca';
+          // Si la marca no llegó a cargarse, no la mandamos: pisaría la real con los defaults.
+          // `marcaError` deja que la UI lo diga en vez de festejar un guardado incompleto.
+          if (!this.marcaLoaded()) return of(cfg);
+          return this.api
+            .putMarca({
+              colorPrimario: this.marcaColor().trim(),
+              colorSecundario: this.marcaColorSec()?.trim() || null,
+              plantilla: this.marcaPlantilla(),
+              // Se reenvía tal cual vino: el back la interpreta como "poné este valor", así que
+              // omitirla la nuleaba en cada guardado.
+              fuente: this.marcaFuente(),
+            })
+            .pipe(
+              map((m) => {
+                // El back normaliza (ej. la plantilla): nos quedamos con lo que devolvió.
+                if (m.colorPrimario) this.marcaColor.set(m.colorPrimario);
+                this.marcaColorSec.set(m.colorSecundario);
+                if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
+                return cfg;
+              })
+            );
         }),
         tap({
           next: (cfg) => {
