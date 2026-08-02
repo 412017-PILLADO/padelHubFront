@@ -1,0 +1,7 @@
+<div class="arrep-overlay" (click)="cerrar.emit()">
+  <div class="arrep-modal" role="dialog" aria-label="Política de cancelación" (click)="$event.stopPropagation()">
+    <h3>Política de cancelación</h3>
+    <p class="politica-texto">{{ texto() }}</p>
+    <button type="button" class="arrep-cerrar" (click)="cerrar.emit()">Cerrar</button>
+  </div>
+</div>

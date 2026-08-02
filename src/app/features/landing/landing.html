@@ -534,49 +534,16 @@
 
 <!-- ===================================================================
      Botón de arrepentimiento (Res. 424/2020): el link vive en el pie de cada plantilla; el modal
-     es único y se comparte entre las 3.
+     es único y se comparte entre las 3. Componente autocontenido (ver arrepentimiento-modal/).
      =================================================================== -->
 @if (showArrep()) {
-  <div class="arrep-overlay" (click)="cerrarArrepentimiento()">
-    <div class="arrep-modal" role="dialog" aria-label="Botón de arrepentimiento" (click)="$event.stopPropagation()">
-      @if (arrepCodigo(); as codigo) {
-        <h3>Solicitud registrada</h3>
-        <p>Tu código de arrepentimiento es:</p>
-        <div class="arrep-codigo">{{ codigo }}</div>
-        <p class="arrep-nota">Guardalo. El club se va a contactar por WhatsApp para coordinar
-          la cancelación y, si corresponde, la devolución de la seña.</p>
-        <button type="button" class="arrep-cerrar" (click)="cerrarArrepentimiento()">Cerrar</button>
-      } @else {
-        <h3>Botón de arrepentimiento</h3>
-        <p class="arrep-nota">Si te arrepentiste de una reserva o seña, dejanos tus datos.
-          No hace falta estar registrado.</p>
-        <input class="arrep-in" placeholder="Nombre y apellido"
-               [ngModel]="arrepNombre()" (ngModelChange)="arrepNombre.set($event)" />
-        <input class="arrep-in" placeholder="WhatsApp"
-               [ngModel]="arrepWhatsapp()" (ngModelChange)="arrepWhatsapp.set($event)" />
-        <!-- honeypot anti-bots -->
-        <input class="hp" type="text" name="empresa" autocomplete="off" tabindex="-1"
-          aria-hidden="true" [ngModel]="arrepEmpresa()" (ngModelChange)="arrepEmpresa.set($event)" />
-        <textarea class="arrep-in" rows="3" placeholder="Contanos qué reserva querés revocar (opcional)"
-               [ngModel]="arrepDetalle()" (ngModelChange)="arrepDetalle.set($event)"></textarea>
-        <button type="button" class="arrep-enviar"
-                [disabled]="arrepBusy() || !arrepNombre().trim() || !arrepWhatsapp().trim()"
-                (click)="enviarArrepentimiento()">{{ arrepBusy() ? 'Enviando…' : 'Enviar solicitud' }}</button>
-      }
-    </div>
-  </div>
+  <app-arrepentimiento-modal (cerrar)="showArrep.set(false)" />
 }
 
 <!-- ===================================================================
      Política de cancelación: texto libre del club (link en el pie de cada plantilla y en el
-     bloque de seña del éxito); mismo overlay/modal que el botón de arrepentimiento.
+     bloque de seña del éxito). Componente autocontenido (ver politica-modal/).
      =================================================================== -->
-@if (showPolitica()) {
-  <div class="arrep-overlay" (click)="cerrarPolitica()">
-    <div class="arrep-modal" role="dialog" aria-label="Política de cancelación" (click)="$event.stopPropagation()">
-      <h3>Política de cancelación</h3>
-      <p class="politica-texto">{{ config()?.politicaCancelacion }}</p>
-      <button type="button" class="arrep-cerrar" (click)="cerrarPolitica()">Cerrar</button>
-    </div>
-  </div>
+@if (showPolitica() && config()?.politicaCancelacion) {
+  <app-politica-modal [texto]="config()!.politicaCancelacion!" (cerrar)="showPolitica.set(false)" />
 }
