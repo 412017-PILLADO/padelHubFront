@@ -163,6 +163,33 @@
 .pb-foot .panel-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-weight: 600; }
 .pb-foot .panel-link:hover { color: var(--ink-on-accent, #fff); text-decoration: underline; }
 
+/* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
+   mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada
+   contra el ancho angosto de la columna afiche (que partía el © en 2 líneas y apilaba los links).
+   Solo toca .pb-foot (A); B y C ya se ven bien en una línea, quedan como están. */
+@media (min-width: 900px) {
+  .pb-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .pb-foot .foot-links {
+    order: 1;
+  }
+  .pb-foot .cr {
+    order: 2;
+    font-size: 0.72rem;
+  }
+  .pb-foot .foot-links > *:not(:first-child) {
+    position: relative;
+  }
+  .pb-foot .foot-links > *:not(:first-child)::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.45;
+  }
+}
+
 /* ===================== FLUJO ===================== */
 .booking-flow {
   display: flex;
@@ -299,9 +326,16 @@
 /* — Canchas (cards = la cancha vista desde arriba, con la ficha adentro) — */
 .courts {
   display: grid;
-  /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio */
-  grid-template-columns: repeat(auto-fill, minmax(138px, 172px));
-  justify-content: start;
+  /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio.
+     justify-content:center (feedback owner post-desktop): el grid quedaba pegado a la izquierda
+     dejando un hueco muerto a la derecha respecto de las líneas divisorias de las otras secciones;
+     centrado se ve prolijo en las 3 plantillas sin deformar la proporción de las cards.
+     auto-fit (no auto-fill, feedback owner de seguimiento): con auto-fill, cuando el contenedor
+     entra una 5ª track (caso de C, 920px de ancho útil) esa track queda vacía pero sigue contando
+     para el centrado, corriendo las 4 cards reales hacia la izquierda. auto-fit colapsa las tracks
+     vacías a 0, así el centrado se calcula solo sobre las cards que existen. */
+  grid-template-columns: repeat(auto-fit, minmax(138px, 172px));
+  justify-content: center;
   gap: 12px;
 }
 .ccard {
@@ -611,7 +645,9 @@
 .tpl-logo { display: inline-flex; align-items: center; }
 .tpl-logo img { height: 40px; width: auto; max-width: 160px; object-fit: contain; display: block; }
 
-.ic-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; }
+/* scroll-margin-top: si se llega por anchor (nav de C, ids ic-horarios/ic-donde/ic-contacto) que el
+   header sticky de B (.b-nav) no tape la card al saltar. */
+.ic-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; scroll-margin-top: 76px; }
 .ic-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
 .ic-ic { width: 32px; height: 32px; border-radius: 9px; background: var(--court-soft); color: var(--court); display: grid; place-items: center; flex: none; }
 .ic-ic svg { width: 17px; height: 17px; }
@@ -626,6 +662,9 @@
 .ic-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0;
   cursor: pointer; color: var(--court-deep); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
 .ic-link:hover { text-decoration: underline; }
+/* Icono de WhatsApp/Instagram delante del link: visible en todos los breakpoints (feedback owner
+   post-desktop revierte el display:none de escritorio que se había puesto en M-mobile-plantillas). */
+.ic-link-svg { display: inline-flex; width: 18px; height: 18px; flex: none; }
 
 /* ===================================================================
    PLANTILLA B · Liquid Glass — paneles frosted translúcidos sobre una malla de luz teñida por el
@@ -662,20 +701,17 @@
 .b-brandline .tpl-logo img { height: 32px; }
 .b-brandname { font-size: 1.12rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.b-hero { text-align: center; padding: clamp(48px, 9vw, 96px) clamp(16px, 5vw, 40px) clamp(28px, 5vw, 52px); }
-.b-hero-mark { display: inline-flex; margin-bottom: 18px; }
-.b-hero-mark .tpl-mark, .b-hero-mark .tpl-logo { @extend %b-glass; border-radius: 22px; padding: 14px; }
-.b-hero-mark .tpl-mark { width: 58px; height: 58px; }
-.b-hero-mark .tpl-logo img { height: 54px; max-width: 220px; }
-.b-title { font-size: clamp(2.4rem, 7vw, 3.6rem); line-height: 1.0; color: var(--ink); letter-spacing: -0.03em; }
-.b-lede { margin: 14px auto 0; max-width: 42ch; color: var(--ink-dim); font-size: clamp(1rem, 2.5vw, 1.15rem); }
-.b-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 26px; }
-.b-btn { display: inline-flex; align-items: center; justify-content: center; height: 50px; padding: 0 28px;
-  border-radius: 14px; font-weight: 700; text-decoration: none; font-size: 1rem; transition: transform 0.15s ease; }
-.b-btn:hover { transform: translateY(-1px); }
-.b-btn.primary { background: var(--court); color: var(--ink-on-accent, #fff);
-  box-shadow: 0 14px 28px -10px color-mix(in srgb, var(--court) 75%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
-.b-btn.ghost { @extend %b-glass; color: var(--ink); }
+/* Héroe achicado (feedback owner post-desktop): "ya estamos en la pantalla de sacar turno", así
+   que los 2 CTA se eliminaron (ver .b-book más abajo) y el héroe deja de ser un muro — se conserva
+   como identidad de la plantilla pero compacto, para que la card de reserva se asome sobre el fold
+   a 1440×900. Mobile no cambia: .b-hero sigue oculto por completo debajo de 900px. */
+.b-hero { text-align: center; padding: clamp(20px, 2.6vw, 36px) clamp(16px, 5vw, 40px) clamp(14px, 2vw, 20px); }
+.b-hero-mark { display: inline-flex; margin-bottom: 10px; }
+.b-hero-mark .tpl-mark, .b-hero-mark .tpl-logo { @extend %b-glass; border-radius: 18px; padding: 10px; }
+.b-hero-mark .tpl-mark { width: 40px; height: 40px; }
+.b-hero-mark .tpl-logo img { height: 36px; max-width: 180px; }
+.b-title { font-size: clamp(1.6rem, 3.4vw, 2.1rem); line-height: 1.05; color: var(--ink); letter-spacing: -0.02em; }
+.b-lede { margin: 8px auto 0; max-width: 42ch; color: var(--ink-dim); font-size: clamp(0.88rem, 1.6vw, 0.98rem); }
 
 .b-book { width: 100%; max-width: 880px; margin: 0 auto;
   padding: clamp(8px, 3vw, 28px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px); scroll-margin-top: 76px; }
@@ -690,6 +726,15 @@
   display: flex; justify-content: space-between; gap: 12px; font-size: 0.78rem; color: var(--ink-faint); }
 .b-foot a { color: var(--ink-dim); text-decoration: none; }
 .b-foot a:hover { color: var(--court-deep); }
+
+/* Mobile (M-mobile-plantillas, feedback owner): arranca directo en la reserva. El héroe (marca
+   grande + título + tagline + CTAs) es redundante con la card de reserva que está en la misma
+   pantalla — se oculta y queda: nav compacta arriba → "Reservá tu cancha" directo. Desktop intacto. */
+@media (max-width: 899px) {
+  .b-hero { display: none; }
+  .tpl-b .b-book { padding-left: clamp(10px, 4vw, 16px); padding-right: clamp(10px, 4vw, 16px); }
+  .tpl-b .booking-flow { padding-left: clamp(14px, 5vw, 20px); padding-right: clamp(14px, 5vw, 20px); }
+}
 
 /* ===================================================================
    PLANTILLA C · Minimalista — rail claro con hairlines, mucho blanco, mono; el color del tenant
@@ -729,11 +774,12 @@
   .c-rail { position: sticky; top: 0; height: 100svh; }
 }
 @media (max-width: 899px) {
-  .c-rail { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px 16px; gap: 10px 14px;
+  .c-rail { flex-direction: row; flex-wrap: wrap; align-items: center; padding: 14px 16px;
     border-right: none; border-bottom: 1px solid var(--line); }
   .c-brandline { flex: 1 1 auto; }
-  .c-nav { flex-direction: row; flex-basis: 100%; gap: 6px; }
-  .c-navitem { padding: 7px 12px; }
+  /* Nav de pills (Reservar/Horarios/El club) oculta en mobile (M-mobile-plantillas, feedback owner):
+     son anchors de scroll dentro de la misma página corta, confunden más de lo que aportan acá. */
+  .c-nav { display: none; }
 }
 
 /* ===================================================================
@@ -771,6 +817,51 @@
    modal en sí: ver arrepentimiento-modal/ y politica-modal/, autocontenidos). */
 
 /* ===================================================================
+   MOBILE — pulido de las 3 plantillas (feedback owner, M-mobile-plantillas). Desktop sin cambios:
+   todo lo de acá vive detrás de max-width:899px.
+   =================================================================== */
+@media (max-width: 899px) {
+  /* Pie (© + links): hoy escalonado. Nuevo: los links en una fila centrada con wrap (con un punto
+     medio de separador entre ellos) y el © debajo, centrado, chico y apagado. Mismo criterio en
+     las 3 plantillas (pb-foot/b-foot/c-foot comparten .foot-links/.foot-copy). */
+  .pb-foot, .b-foot, .c-foot {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+  .foot-links {
+    order: 1;
+    justify-content: center;
+    width: 100%;
+  }
+  .foot-copy {
+    order: 2;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+  .foot-links > *:not(:first-child) {
+    position: relative;
+  }
+  .foot-links > *:not(:first-child)::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.45;
+  }
+
+  /* Canchas: 2 columnas centradas a 390px (2x2 con 4 opciones); mismo fix de auto-fit que en
+     desktop (línea 333) — con `repeat(2, …)` fijo, un club con 1 sola cancha dejaba la track vacía
+     descentrando la card real. auto-fit colapsa las tracks sin contenido a 0, así 1 cancha queda
+     centrada y 4 siguen en 2x2. 160px de tope: con 172px quedaba apretado en plantilla B (paneles
+     anidados). */
+  .courts {
+    grid-template-columns: repeat(auto-fit, minmax(0, 160px));
+    justify-content: center;
+    gap: 10px;
+  }
+}
+
+/* ===================================================================
    Preview de plantillas (herramienta de venta): pill flotante abajo-derecha, solo visible con
    `?plantilla=` en la URL (ver landing.ts: previewPlantilla). Discreta, no compite con el resto.
    =================================================================== */
@@ -778,7 +869,7 @@
   position: fixed;
   bottom: 16px;
   right: 16px;
-  z-index: 70;
+  z-index: 50;
   display: flex;
   gap: 4px;
   padding: 4px;

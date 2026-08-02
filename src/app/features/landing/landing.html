@@ -314,7 +314,7 @@
 <!-- Info del club (horarios + dónde + contacto) reusada como tarjetas por las plantillas B y C -->
 <ng-template #infoCards>
   @if (horarios().length) {
-    <article class="ic-card">
+    <article class="ic-card" id="ic-horarios">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="ic-t">Horarios</span></div>
       <ul class="ic-hours">
         @for (row of horarios(); track row.dias) {
@@ -324,7 +324,7 @@
     </article>
   }
   @if (direccion()) {
-    <article class="ic-card">
+    <article class="ic-card" id="ic-donde">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 12-9 12s-9-5-9-12a9 9 0 0 1 18 0Z"/><circle cx="12" cy="10" r="3"/></svg></span><span class="ic-t">Dónde estamos</span></div>
       <p class="ic-addr">{{ direccion() }}</p>
       @if (mapaUrl()) {
@@ -333,11 +333,21 @@
     </article>
   }
   @if (whatsappUrl() || instagramHandle()) {
-    <article class="ic-card">
+    <article class="ic-card" id="ic-contacto">
       <div class="ic-h"><span class="ic-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H5.2L4 17.2Z"/></svg></span><span class="ic-t">Contacto</span></div>
       <div class="ic-links">
-        @if (whatsappUrl()) { <a class="ic-link" [href]="whatsappUrl()" target="_blank" rel="noopener">WhatsApp directo</a> }
-        @if (instagramHandle(); as ig) { <a class="ic-link" [href]="instagramUrl()" target="_blank" rel="noopener">&#64;{{ ig }}</a> }
+        @if (whatsappUrl()) {
+          <a class="ic-link" [href]="whatsappUrl()" target="_blank" rel="noopener">
+            <svg class="ic-link-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" /></svg>
+            WhatsApp directo
+          </a>
+        }
+        @if (instagramHandle(); as ig) {
+          <a class="ic-link" [href]="instagramUrl()" target="_blank" rel="noopener">
+            <svg class="ic-link-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><line x1="17.5" y1="6.5" x2="17.5" y2="6.5" /></svg>
+            &#64;{{ ig }}
+          </a>
+        }
       </div>
     </article>
   }
@@ -368,10 +378,6 @@
         <div class="b-hero-mark"><ng-container [ngTemplateOutlet]="brandMark"></ng-container></div>
         <h1 class="b-title display">{{ tenantNombre() }}</h1>
         <p class="b-lede">Reservá tu cancha en 30 segundos. Sin llamados, sin esperas.</p>
-        <div class="b-cta">
-          <a class="b-btn primary" href="#reservar">Reservar turno</a>
-          @if (horarios().length) { <a class="b-btn ghost" href="#b-info">Ver horarios</a> }
-        </div>
       </section>
 
       <section id="reservar" class="b-book">
@@ -383,7 +389,7 @@
       </section>
 
       <footer class="b-foot">
-        <span class="mono">© 2026 {{ tenantNombre() }}</span>
+        <span class="mono foot-copy">© 2026 {{ tenantNombre() }}</span>
         <span class="foot-links">
           <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
           @if (config()?.politicaCancelacion) {
@@ -404,9 +410,9 @@
           @if (!logoSrc()) { <span class="c-brandname display">{{ tenantNombre() }}</span> }
         </div>
         <nav class="c-nav">
-          <a class="c-navitem is-active" href="#reservar"><span class="c-dot"></span>Reservar</a>
-          @if (horarios().length) { <a class="c-navitem" href="#c-info"><span class="c-dot"></span>Horarios</a> }
-          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" href="#c-info"><span class="c-dot"></span>El club</a> }
+          <a class="c-navitem is-active" href="#reservar" (click)="irA($event, 'reservar')"><span class="c-dot"></span>Reservar</a>
+          @if (horarios().length) { <a class="c-navitem" href="#ic-horarios" (click)="irA($event, 'ic-horarios')"><span class="c-dot"></span>Horarios</a> }
+          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" [attr.href]="'#' + clubAnchorId()" (click)="irA($event, clubAnchorId())"><span class="c-dot"></span>El club</a> }
         </nav>
       </aside>
 
@@ -418,7 +424,7 @@
           <ng-container [ngTemplateOutlet]="infoCards"></ng-container>
         </section>
         <footer class="c-foot">
-          <span class="mono">© 2026 {{ tenantNombre() }}</span>
+          <span class="mono foot-copy">© 2026 {{ tenantNombre() }}</span>
           <span class="foot-links">
             <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
             @if (config()?.politicaCancelacion) {
@@ -515,7 +521,7 @@
       </div>
 
       <footer class="pb-foot">
-        <span class="cr mono">© 2026 {{ tenantNombre() }}</span>
+        <span class="cr mono foot-copy">© 2026 {{ tenantNombre() }}</span>
         <span class="foot-links">
           <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
           @if (config()?.politicaCancelacion) {

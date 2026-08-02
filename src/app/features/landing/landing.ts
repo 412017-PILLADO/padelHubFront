@@ -174,6 +174,12 @@ export class Landing {
     return h ? `https://instagram.com/${h}` : null;
   });
 
+  /** El item "El club" de la nav de la plantilla C apunta a la card de dirección si existe
+   *  (`#ic-donde`, ver `infoCards`); si el club no cargó dirección pero sí tiene WhatsApp/IG,
+   *  esa card no se renderiza y hay que apuntar a `#ic-contacto` en su lugar (misma condición de
+   *  visibilidad del item: `direccion() || whatsappUrl() || instagramHandle()`). */
+  readonly clubAnchorId = computed(() => (this.direccion() ? 'ic-donde' : 'ic-contacto'));
+
   readonly horarios = computed<HoursRow[]>(() =>
     groupHorarios(this.config()?.horarios ?? [])
   );
@@ -452,6 +458,13 @@ export class Landing {
     }
 
     return validTpl;
+  }
+
+  /** Los anchors de solo-fragmento se resuelven contra <base href="/"> y se llevan puesto el
+   *  query string (rompe ?plantilla= de la preview). Scrolleamos a mano y dejamos la URL como está. */
+  irA(event: Event, id: string): void {
+    event.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
