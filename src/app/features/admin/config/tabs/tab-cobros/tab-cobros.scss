@@ -1,0 +1,28 @@
+@use '../../config-shared';
+
+/* El alias es un texto largo: input más ancho, la fila envuelve en mobile. */
+.sena-alias-row { flex-wrap: wrap; margin-top: 10px; }
+.sena-alias { width: 260px; max-width: 100%; }
+.sena-alias-hint { margin-top: 6px; }
+
+/* Política de cancelación: textarea de varias líneas, label arriba (no en fila con el campo). */
+.politica-cancelacion-row { flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 14px; }
+.politica-cancelacion-input { width: 100%; max-width: 480px; resize: vertical; font: inherit; line-height: 1.4; }
+
+/* ===== Mercado Pago ===== */
+.mp-estado {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 16px;
+  font-weight: 600;
+
+  .mp-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #22c55e;
+
+    &.off { background: var(--ink-faint); }
+  }
+}

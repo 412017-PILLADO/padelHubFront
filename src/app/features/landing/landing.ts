@@ -461,10 +461,15 @@ export class Landing {
   }
 
   /** Los anchors de solo-fragmento se resuelven contra <base href="/"> y se llevan puesto el
-   *  query string (rompe ?plantilla= de la preview). Scrolleamos a mano y dejamos la URL como está. */
+   *  query string (rompe ?plantilla= de la preview). Scrolleamos a mano y dejamos la URL como está.
+   *  Además movemos el foco al destino (`tabindex="-1"` en las cards, ver landing.html): el
+   *  comportamiento nativo de un fragment mueve el foco, y si no lo replicamos a mano el próximo
+   *  Tab de teclado/lector de pantalla sigue en el rail de nav en vez de continuar por la sección. */
   irA(event: Event, id: string): void {
     event.preventDefault();
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.getElementById(id);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el?.focus({ preventScroll: true });
   }
 
   /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param

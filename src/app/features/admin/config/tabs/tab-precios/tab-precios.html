@@ -1,0 +1,80 @@
+<!-- ===== PRECIOS ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Precios</span><span class="ln"></span></div>
+  <p class="block-sub">Un precio general por hora para todo el complejo, o un precio por cancha (para
+    diferenciar con luz / sin luz, cemento / cristal, techada / descubierta).</p>
+
+  <div class="dur-chips seg">
+    <button type="button" class="dchip" [attr.aria-pressed]="precioModo() === 'GENERAL'"
+      (click)="setPrecioModo('GENERAL')">Precio general</button>
+    <button type="button" class="dchip" [attr.aria-pressed]="precioModo() === 'POR_CANCHA'"
+      (click)="setPrecioModo('POR_CANCHA')">Por cancha</button>
+  </div>
+
+  @if (precioModo() === 'GENERAL') {
+    <div class="paso-row">
+      <label class="paso-label" for="precioGen">Precio / hora</label>
+      <input id="precioGen" class="paso-input" [class.invalid]="invalidPrecio()" type="number"
+        inputmode="numeric" min="0" step="100"
+        [ngModel]="precioHoraGeneral()" (ngModelChange)="onPrecioGeneralInput($event)" />
+      @if (invalidPrecio()) { <span class="paso-msg err">Cargá un precio</span> }
+    </div>
+  } @else {
+    <p class="block-sub mt">Cada cancha define su precio abajo, en la sección Canchas.</p>
+    @if (canchasSinPrecio().length > 0) {
+      <p class="precio-aviso">
+        ⚠ {{ canchasSinPrecio().length }} {{ canchasSinPrecio().length === 1 ? 'cancha sin precio' : 'canchas sin precio' }}:
+        el público no verá el precio de esos turnos.
+      </p>
+    }
+  }
+</section>
+
+<!-- ===== PRECIO POR HORARIO ===== -->
+<section class="block">
+  <div class="block-h"><span class="t eyebrow">Precio por horario</span><span class="ln"></span></div>
+  <p class="block-sub">Descuento o recargo porcentual que se aplica sobre el precio de cada cancha
+    (o el general) en esa franja: todas mantienen su precio relativo. El turno paga según su hora
+    de inicio.</p>
+
+  @if (precioFranjas().length > 0) {
+    <div class="franja-list">
+      @for (f of precioFranjas(); track f.tempId) {
+        <div class="franja-item">
+          <div class="franja-times">
+            <select class="tsel" [ngModel]="f.desde" (ngModelChange)="setFranjaDesde(f.tempId, $event)">
+              @for (t of times; track t) { <option [value]="t">{{ t }}</option> }
+            </select>
+            <span class="sep">—</span>
+            <select class="tsel" [ngModel]="f.hasta" (ngModelChange)="setFranjaHasta(f.tempId, $event)">
+              @for (t of times; track t) { <option [value]="t">{{ timeLabel(t) }}</option> }
+            </select>
+          </div>
+          <label class="cf franja-tipo-field">
+            <span class="cf-label">Ajuste</span>
+            <select class="tsel" [ngModel]="f.tipo" (ngModelChange)="setFranjaTipo(f.tempId, $event)">
+              <option value="DESCUENTO">Descuento</option>
+              <option value="RECARGO">Recargo</option>
+            </select>
+          </label>
+          <label class="cf franja-price-field">
+            <span class="cf-label">%</span>
+            <input class="paso-input" type="number" inputmode="numeric" min="1" max="300" step="5" placeholder="Ej: 20"
+              [ngModel]="f.pct" (ngModelChange)="onFranjaPctInput(f.tempId, $event)" />
+          </label>
+          <button type="button" class="cancha-del" aria-label="Quitar franja" (click)="removeFranja(f.tempId)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="blk-empty">No hay franjas de precio especial cargadas.</div>
+  }
+
+  @if (precioFranjasError(); as err) {
+    <p class="precio-aviso">⚠ {{ err }}</p>
+  }
+
+  <button type="button" class="cancha-add" (click)="addFranja()">+ Agregar franja</button>
+</section>

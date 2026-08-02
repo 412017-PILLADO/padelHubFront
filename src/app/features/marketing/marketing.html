@@ -1,20 +1,20 @@
 <!-- ===================== NAV ===================== -->
 <header class="nav">
   <div class="container nav-inner">
-    <a class="brand" href="#top" aria-label="Padel-HUB — inicio">
+    <a class="brand" href="#top" (click)="irA($event, 'top')" aria-label="Padel-HUB — inicio">
       <span class="brand-mark" aria-hidden="true"><img src="logo-padelhub.png" alt="" /></span>
       <span class="brand-type">Padel-<span class="brand-hub">HUB</span></span>
     </a>
 
     <nav class="nav-links" aria-label="Principal">
       @for (link of navLinks; track link.href) {
-        <a [href]="link.href">{{ link.label }}</a>
+        <a [href]="link.href" (click)="irA($event, link.href.substring(1))">{{ link.label }}</a>
       }
     </nav>
 
     <div class="nav-cta">
       <a class="btn btn-ghost btn-sm" routerLink="/admin/login">Ingresar</a>
-      <a class="btn btn-solid btn-sm" href="#contacto">Quiero la mía</a>
+      <a class="btn btn-solid btn-sm" href="#contacto" (click)="irA($event, 'contacto')">Quiero la mía</a>
     </div>
   </div>
 </header>
@@ -54,7 +54,7 @@
         </p>
 
         <div class="hero-actions">
-          <a class="btn btn-solid" href="#contacto">Quiero la mía</a>
+          <a class="btn btn-solid" href="#contacto" (click)="irA($event, 'contacto')">Quiero la mía</a>
           <a class="btn btn-ghost" routerLink="/admin/login">
             Panel
             <svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
@@ -70,7 +70,7 @@
     </div>
 
     <!-- Indicador de scroll: pelota de tenis que pica -->
-    <a class="hero-scroll" href="#producto" aria-label="Ver Producto">
+    <a class="hero-scroll" href="#producto" (click)="irA($event, 'producto')" aria-label="Ver Producto">
       <svg class="scroll-ball" viewBox="0 0 40 40" aria-hidden="true">
         <defs>
           <radialGradient id="tball" cx="34%" cy="28%" r="78%">
@@ -221,15 +221,15 @@
 <!-- ===================== FOOTER ===================== -->
 <footer class="footer">
   <div class="container footer-inner">
-    <a class="brand" href="#top" aria-label="Padel-HUB — inicio">
+    <a class="brand" href="#top" (click)="irA($event, 'top')" aria-label="Padel-HUB — inicio">
       <span class="brand-mark" aria-hidden="true"><img src="logo-padelhub.png" alt="" /></span>
       <span class="brand-type">Padel-<span class="brand-hub">HUB</span></span>
     </a>
 
     <nav class="footer-links" aria-label="Pie">
-      <a href="#producto">Producto</a>
-      <a href="#como-funciona">Cómo funciona</a>
-      <a href="#contacto">Contacto</a>
+      <a href="#producto" (click)="irA($event, 'producto')">Producto</a>
+      <a href="#como-funciona" (click)="irA($event, 'como-funciona')">Cómo funciona</a>
+      <a href="#contacto" (click)="irA($event, 'contacto')">Contacto</a>
       <a routerLink="/admin/login">Ingresar</a>
     </nav>
   </div>
