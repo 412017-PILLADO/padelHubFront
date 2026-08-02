@@ -769,3 +769,36 @@
 .sena-politica { display: block; margin-top: 10px; color: var(--ink-dim); }
 /* El texto de la política es libre: puede tener saltos de línea que hay que respetar (estilos del
    modal en sí: ver arrepentimiento-modal/ y politica-modal/, autocontenidos). */
+
+/* ===================================================================
+   Preview de plantillas (herramienta de venta): pill flotante abajo-derecha, solo visible con
+   `?plantilla=` en la URL (ver landing.ts: previewPlantilla). Discreta, no compite con el resto.
+   =================================================================== */
+.tpl-pill {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  z-index: 70;
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: #fff;
+  border-radius: 999px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+}
+.tpl-opt {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: #111;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.tpl-opt:hover { background: rgba(0, 0, 0, 0.06); }
+.tpl-opt.on { background: var(--court, #111); color: var(--ink-on-accent, #fff); }
