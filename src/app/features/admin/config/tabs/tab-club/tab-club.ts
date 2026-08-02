@@ -32,7 +32,6 @@ export class TabClubComponent {
   readonly marcaColorSec = this.st.marcaColorSec;
   readonly marcaColorSecPicker = this.st.marcaColorSecPicker;
   readonly marcaPlantilla = this.st.marcaPlantilla;
-  readonly savingMarca = this.st.savingMarca;
   readonly uploadingLogo = this.st.uploadingLogo;
   readonly logoPreview = this.st.logoPreview;
   readonly direccion = this.st.direccion;
@@ -41,37 +40,14 @@ export class TabClubComponent {
   readonly instagram = this.st.instagram;
 
   // ── Handlers del servicio que sólo tocan estado: se delegan tal cual ──
+  readonly setMarcaColor = this.st.setMarcaColor.bind(this.st);
   readonly setColorSec = this.st.setColorSec.bind(this.st);
   readonly clearColorSec = this.st.clearColorSec.bind(this.st);
+  readonly setMarcaPlantilla = this.st.setMarcaPlantilla.bind(this.st);
   readonly setDireccion = this.st.setDireccion.bind(this.st);
   readonly setWhatsapp = this.st.setWhatsapp.bind(this.st);
   readonly setMapaUrl = this.st.setMapaUrl.bind(this.st);
   readonly setInstagram = this.st.setInstagram.bind(this.st);
-
-  /** Guarda los colores (primario + secundario) del club. Aplican a acentos de la página y el panel. */
-  saveMarca(): void {
-    const hex = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
-    const color = this.st.marcaColor().trim();
-    if (!hex.test(color)) {
-      this.messages.add({ severity: 'warn', summary: 'Color inválido', detail: 'Usá un hex como #0a8a99.' });
-      return;
-    }
-    const colorSec = this.st.marcaColorSec()?.trim() || null;
-    if (colorSec && !hex.test(colorSec)) {
-      this.messages.add({ severity: 'warn', summary: 'Secundario inválido', detail: 'Usá un hex como #0a8a99.' });
-      return;
-    }
-    this.st.saveMarca().subscribe({
-      next: (m) => {
-        // Aplicar en vivo: recolorea el panel (nav/acentos) sin recargar.
-        this.branding.apply(m.colorPrimario, m.colorSecundario, this.st.marcaLogoUrl());
-        this.messages.add({ severity: 'success', summary: 'Guardado', detail: 'Marca actualizada' });
-      },
-      error: () => {
-        this.messages.add({ severity: 'error', summary: 'Error', detail: 'No pudimos guardar los colores.' });
-      },
-    });
-  }
 
   /** Sube el logo elegido en el input file. Valida tipo/tamaño antes de mandar. */
   onLogoChange(event: Event): void {

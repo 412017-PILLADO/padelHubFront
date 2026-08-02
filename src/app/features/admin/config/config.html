@@ -2,13 +2,31 @@
 <p-confirmdialog></p-confirmdialog>
 
 <app-admin-nav></app-admin-nav>
-<header class="pagehead">
-  <div class="greet">
-    <strong class="display">Tu agenda.</strong>
-    <span class="hdash"></span>
-    <span class="mono">Horarios, duraciones, contacto y bloqueos</span>
-  </div>
-</header>
+
+<!-- Encabezado pegado arriba: título + guardado + pestañas viajan juntos, así el estado y el
+     botón Guardar siguen a la vista en las pestañas largas (reemplaza a la barra fija de abajo). -->
+<div class="topbar">
+  <header class="pagehead">
+    <div class="greet">
+      <strong class="display">Tu agenda.</strong>
+      <span class="hdash"></span>
+      <div class="savebar">
+        <div class="save-meta">
+          <div class="st eyebrow">Estado</div>
+          <div class="sv" [class.dirty]="dirty() || invalidHorario() || invalidBreak() || invalidPaso() || invalidDuraciones() || invalidPrecio() || invalidSena() || invalidMarca()">{{ saveState() }}</div>
+        </div>
+        <button class="save-btn" [disabled]="!canSave()" (click)="save()">Guardar</button>
+      </div>
+    </div>
+
+    <nav class="cfg-tabs" role="tablist" aria-label="Secciones de configuración">
+      @for (t of tabs; track t.id) {
+        <button type="button" class="cfg-tab" [class.on]="tab() === t.id" role="tab"
+          [attr.aria-selected]="tab() === t.id" (click)="irATab(t.id)">{{ t.label }}</button>
+      }
+    </nav>
+  </header>
+</div>
 
 <main>
   @if (reservasAfectadas().length > 0) {
@@ -31,13 +49,6 @@
     </section>
   }
 
-  <nav class="cfg-tabs" role="tablist" aria-label="Secciones de configuración">
-    @for (t of tabs; track t.id) {
-      <button type="button" class="cfg-tab" [class.on]="tab() === t.id" role="tab"
-        [attr.aria-selected]="tab() === t.id" (click)="irATab(t.id)">{{ t.label }}</button>
-    }
-  </nav>
-
   @switch (tab()) {
     @case ('club') {
       <app-tab-club />
@@ -56,12 +67,3 @@
     }
   }
 </main>
-
-<!-- ===== BARRA GUARDAR ===== -->
-<div class="savebar">
-  <div class="save-meta">
-    <div class="st eyebrow">Estado</div>
-    <div class="sv" [class.dirty]="dirty() || invalidHorario() || invalidBreak() || invalidPaso() || invalidDuraciones() || invalidPrecio() || invalidSena()">{{ saveState() }}</div>
-  </div>
-  <button class="save-btn" [disabled]="!canSave()" (click)="save()">Guardar</button>
-</div>

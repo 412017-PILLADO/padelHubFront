@@ -61,7 +61,7 @@
 }
 .cancha-save {
   height: 42px; padding: 0 24px; border: none; border-radius: var(--r);
-  background: var(--court); color: #fff; font-weight: 700;
+  background: var(--court); color: var(--ink-on-accent, #fff); font-weight: 700;
   transition: background 0.15s ease;
 }
 .cancha-save:hover:not(:disabled) { background: var(--court-deep); }

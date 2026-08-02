@@ -367,15 +367,17 @@
   <!-- ===================== PLANTILLA B · Hero centrado ===================== -->
   @case ('B') {
     <div class="tpl-b">
+      <!-- La marca (logo + nombre) vive UNA sola vez, arriba en la nav: el héroe repetía el mismo
+           logo debajo (feedback del owner) y en mobile, con el héroe oculto, el nombre terminaba
+           colgado en el encabezado de la reserva. -->
       <header class="b-nav">
         <div class="b-brandline">
           <ng-container [ngTemplateOutlet]="brandMark"></ng-container>
-          @if (!logoSrc()) { <span class="b-brandname display">{{ tenantNombre() }}</span> }
+          <span class="b-brandname display">{{ tenantNombre() }}</span>
         </div>
       </header>
 
       <section class="b-hero">
-        <div class="b-hero-mark"><ng-container [ngTemplateOutlet]="brandMark"></ng-container></div>
         <h1 class="b-title display">{{ tenantNombre() }}</h1>
         <p class="b-lede">Reservá tu cancha en 30 segundos. Sin llamados, sin esperas.</p>
       </section>
@@ -405,35 +407,37 @@
   @case ('C') {
     <div class="tpl-c">
       <aside class="c-rail">
+        <!-- El nombre acompaña SIEMPRE al logo (pedido del owner): es la marca del club, y el rail
+             es el único lugar donde vive. Para que entre en 280px el nombre puede ir a dos líneas
+             y el logo se topea más chico — ver landing.scss. -->
         <div class="c-brandline">
           <ng-container [ngTemplateOutlet]="brandMark"></ng-container>
-          @if (!logoSrc()) { <span class="c-brandname display">{{ tenantNombre() }}</span> }
+          <span class="c-brandname display">{{ tenantNombre() }}</span>
         </div>
-        <nav class="c-nav">
-          <a class="c-navitem is-active" href="#reservar" (click)="irA($event, 'reservar')"><span class="c-dot"></span>Reservar</a>
-          @if (horarios().length) { <a class="c-navitem" href="#ic-horarios" (click)="irA($event, 'ic-horarios')"><span class="c-dot"></span>Horarios</a> }
-          @if (direccion() || whatsappUrl() || instagramHandle()) { <a class="c-navitem" [attr.href]="'#' + clubAnchorId()" (click)="irA($event, clubAnchorId())"><span class="c-dot"></span>El club</a> }
-        </nav>
+        <!-- La info del club vive en el rail: la columna principal queda entera para reservar
+             (lo que promete la plantilla). En mobile el rail se disuelve (display:contents) y la
+             info vuelve a caer debajo de la reserva — ver landing.scss. -->
+        <section id="c-info" class="c-info">
+          <ng-container [ngTemplateOutlet]="infoCards"></ng-container>
+        </section>
       </aside>
 
       <main class="c-main">
         <section id="reservar" class="c-book" tabindex="-1">
           <ng-container [ngTemplateOutlet]="bookingFlow"></ng-container>
         </section>
-        <section id="c-info" class="c-info">
-          <ng-container [ngTemplateOutlet]="infoCards"></ng-container>
-        </section>
-        <footer class="c-foot">
-          <span class="mono foot-copy">© 2026 {{ tenantNombre() }}</span>
-          <span class="foot-links">
-            <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
-            @if (config()?.politicaCancelacion) {
-              <button type="button" class="politica-link" (click)="abrirPolitica()">Política de cancelación</button>
-            }
-            <a class="mono" routerLink="/admin">Panel del club</a>
-          </span>
-        </footer>
       </main>
+
+      <footer class="c-foot">
+        <span class="mono foot-copy">© 2026 {{ tenantNombre() }}</span>
+        <span class="foot-links">
+          <button type="button" class="arrep-link" (click)="abrirArrepentimiento()">Botón de arrepentimiento</button>
+          @if (config()?.politicaCancelacion) {
+            <button type="button" class="politica-link" (click)="abrirPolitica()">Política de cancelación</button>
+          }
+          <a class="mono" routerLink="/admin">Panel del club</a>
+        </span>
+      </footer>
     </div>
   }
 

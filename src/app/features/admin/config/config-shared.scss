@@ -79,7 +79,7 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .dchip:hover { border-color: var(--court); }
-.dchip[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: #fff; }
+.dchip[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
 .dchip.sm { padding: 6px 12px; font-size: 0.88rem; }
 
 /* — Aviso inline (canchas sin precio en Canchas/Precios, solape de franjas en Precios) — */
@@ -111,7 +111,7 @@
 /* — Botones — */
 .btn-save {
   height: 46px; padding: 0 22px; border: none; border-radius: var(--r);
-  background: var(--court); color: #fff; font-weight: 700; cursor: pointer;
+  background: var(--court); color: var(--ink-on-accent, #fff); font-weight: 700; cursor: pointer;
   transition: background 0.15s ease;
 }
 .btn-save:hover:not(:disabled) { background: var(--court-deep); }

@@ -1,12 +1,20 @@
 @use 'config-shared';
 
-:host { display: block; min-height: 100svh; background: var(--paper); padding-bottom: 96px; }
+:host { display: block; min-height: 100svh; background: var(--paper); padding-bottom: 32px; }
 
-.pagehead { max-width: 1120px; margin-inline: auto; padding: clamp(20px, 4vw, 32px) clamp(16px, 4vw, 24px) 8px; }
+/* El encabezado entero (título + guardado + pestañas) queda pegado arriba: es lo que reemplaza a
+   la barra de guardar fija al pie. Va en un wrapper full-bleed para que el fondo tape el contenido
+   que pasa por debajo de punta a punta, con `.pagehead` adentro respetando el ancho del contenido. */
+.topbar {
+  position: sticky; top: 0; z-index: 6;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+}
+.pagehead { max-width: 1120px; margin-inline: auto; padding: clamp(14px, 3vw, 22px) clamp(16px, 4vw, 24px) 0; }
 .greet { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .greet strong { font-size: clamp(1.5rem, 3.5vw, 2.2rem); text-transform: uppercase; }
 .hdash { flex: 1; min-width: 20px; height: 2px; background: var(--line-strong); }
-.greet .mono { color: var(--ink-dim); font-size: 0.8rem; }
 
 main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24px); }
 
@@ -20,13 +28,12 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 }
 
 /* — Pestañas — */
+/* Viven dentro de `.topbar` (no de `main`), así que ya no necesitan ni `column-span` para escapar
+   del masonry ni sticky propio: se pegan arriba junto con el resto del encabezado. */
 .cfg-tabs {
-  column-span: all; break-inside: avoid;
   display: flex; align-items: center; gap: 6px;
   overflow-x: auto; scrollbar-width: none;
-  margin-bottom: 20px; padding-bottom: 2px;
-  position: sticky; top: 0; z-index: 5;
-  background: var(--paper);
+  padding: 4px 0 2px;
 }
 .cfg-tabs::-webkit-scrollbar { display: none; }
 .cfg-tab {
@@ -36,7 +43,7 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   white-space: nowrap; transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 .cfg-tab:hover { background: var(--surface); color: var(--ink); }
-.cfg-tab.on { background: var(--court); border-color: var(--court); color: #fff; }
+.cfg-tab.on { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
 .cfg-tab:focus-visible { outline: 2px solid var(--court); outline-offset: 2px; }
 
 /* Horario, Descanso, Turno/duraciones y Bloqueos: ver tabs/tab-agenda/tab-agenda.scss.
@@ -48,23 +55,21 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
    declaración alcanza para todo el árbol del host. */
 :host ::ng-deep .p-select { width: 100%; }
 
-/* — Barra guardar — */
-.savebar {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-  max-width: 1120px; margin-inline: auto;
-  padding: 12px clamp(16px, 4vw, 24px);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid var(--line);
+/* — Guardado (en el encabezado, a la derecha del título) — */
+.savebar { display: flex; align-items: center; gap: 14px; }
+.save-meta { display: flex; flex-direction: column; text-align: right; }
+/* En pantallas angostas el bloque cae a su propia línea debajo del título: ahí ocupa el ancho
+   completo (estado a la izquierda, botón a la derecha) en vez de quedar apretado contra el botón. */
+@media (max-width: 620px) {
+  .savebar { width: 100%; justify-content: space-between; }
+  .save-meta { text-align: left; }
 }
-.save-meta { display: flex; flex-direction: column; }
 .save-meta .st { color: var(--ink-faint); }
 .save-meta .sv { font-weight: 600; font-size: 0.9rem; }
 .save-meta .sv.dirty { color: var(--clay); }
 .save-btn {
-  height: 46px; padding: 0 28px; border: none; border-radius: var(--r);
-  background: var(--court); color: #fff; font-weight: 700;
+  height: 42px; padding: 0 24px; border: none; border-radius: var(--r);
+  background: var(--court); color: var(--ink-on-accent, #fff); font-weight: 700;
   transition: background 0.15s ease;
 }
 .save-btn:hover:not(:disabled) { background: var(--court-deep); }
@@ -75,7 +80,9 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 
 /* ===== Reservas afectadas (horario recién guardado o bloqueo recién creado) ===== */
 .ra-block {
-  break-inside: avoid;
+  /* Aviso global (no pertenece a ninguna pestaña): ocupa el ancho completo arriba de las cards.
+     Antes quedaba media columna porque las pestañas eran el `column-span: all` de este masonry. */
+  column-span: all; break-inside: avoid;
   border-color: color-mix(in srgb, var(--clay) 35%, var(--line));
   background: color-mix(in srgb, var(--clay) 6%, var(--surface));
 }

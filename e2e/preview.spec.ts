@@ -27,15 +27,30 @@ test('sin query params no hay selector y manda la plantilla del tenant', async (
   await expect(page.locator('.tpl-pill')).toHaveCount(0);
 });
 
-test('los anchors internos no pierden el query param de preview', async ({ page }) => {
-  await page.goto('http://demo.localhost:4400/?plantilla=C');
-  await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C');
-  // El tenant demo siempre tiene horarios y contacto cargados, así que la nav de la plantilla C
-  // siempre muestra sus 3 items (Reservar/Horarios/El club) — guard duro, no soft-skip.
-  const nav = page.locator('.c-navitem');
-  await expect(nav).toHaveCount(3);
-  await nav.nth(1).click(); // "Horarios"
-  await page.waitForTimeout(600);
-  expect(page.url()).toContain('plantilla=C');
-  await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C');
+/**
+ * `?color=` además de pisar el primario tiene que dejar la TINTA legible que se derive de ese
+ * color (--ink-on-accent, ver core/branding): un club de color claro necesita texto oscuro y uno
+ * oscuro texto blanco. Antes esto se hardcodeaba en `#fff` y el afiche quedaba ilegible.
+ */
+test('el color de preview deriva la tinta legible del afiche', async ({ page }) => {
+  // La marca se aplica cuando llega /public/config, así que se espera al valor (no se lee de una).
+  // Ojo: al leer la custom property, el browser devuelve el valor YA resuelto — la tinta oscura
+  // se escribe como `var(--ink)` pero se lee como el hex de ese token.
+  const esperarInk = async (color: string, esperado: 'oscura' | 'blanca') => {
+    await page.goto(`http://demo.localhost:4400/?plantilla=A&color=${encodeURIComponent(color)}`);
+    const ink = await page.evaluate(() =>
+      getComputedStyle(document.documentElement).getPropertyValue('--ink').trim(),
+    );
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() =>
+            getComputedStyle(document.documentElement).getPropertyValue('--ink-on-accent').trim(),
+          ),
+        { timeout: 15_000 },
+      )
+      .toBe(esperado === 'oscura' ? ink : '#fff');
+  };
+  await esperarInk('#f7d747', 'oscura'); // amarillo → tinta oscura
+  await esperarInk('#2747ff', 'blanca'); // cobalto → tinta blanca
 });

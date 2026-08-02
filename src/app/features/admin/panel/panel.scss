@@ -113,12 +113,15 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 .chip:hover { border-color: var(--court); }
-.chip[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: #fff; }
+.chip[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
 .chip.sm { padding: 7px 12px; font-size: 0.85rem; }
-/* El filtro por cancha usa el color secundario del tenant (acento sutil); cae al primario si no hay. */
+/* El filtro por cancha usa el color secundario del tenant (acento sutil); cae al primario si no hay.
+   La tinta tiene que seguir al MISMO color que pinta el fondo: con `#fff` fijo, un club con
+   secundario claro (blanco) dejaba el chip activo ilegible. */
 .cancha-filter .chip.sm[aria-pressed='true'] {
   background: var(--court-2, var(--court));
   border-color: var(--court-2, var(--court));
+  color: var(--ink-on-accent-2, var(--ink-on-accent, #fff));
 }
 
 /* Buscador por nombre */
@@ -237,7 +240,7 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 .pb-count {
   min-width: 24px; height: 24px; padding: 0 8px;
   display: inline-flex; align-items: center; justify-content: center;
-  background: var(--court); color: #fff; border-radius: 999px; font-weight: 700; font-size: 0.85rem;
+  background: var(--court); color: var(--ink-on-accent, #fff); border-radius: 999px; font-weight: 700; font-size: 0.85rem;
 }
 .pb-list { display: flex; flex-direction: column; gap: 8px; }
 .pb-row {
@@ -267,7 +270,7 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   font-weight: 700; font-size: 0.9rem; cursor: pointer;
   transition: filter 0.15s ease, border-color 0.15s ease;
 }
-.pb-ok { background: var(--court); border: 1px solid var(--court); color: #fff; }
+.pb-ok { background: var(--court); border: 1px solid var(--court); color: var(--ink-on-accent, #fff); }
 .pb-ok:hover { filter: brightness(1.08); }
 .pb-no { background: transparent; border: 1px solid var(--line-strong); color: var(--clay); }
 .pb-no:hover { border-color: var(--clay); }
@@ -280,7 +283,7 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   background: transparent; color: var(--ink-dim); font-weight: 600; font-size: 0.85rem; cursor: pointer;
   transition: background 0.15s ease, color 0.15s ease;
 }
-.vt[aria-pressed='true'] { background: var(--court); color: #fff; }
+.vt[aria-pressed='true'] { background: var(--court); color: var(--ink-on-accent, #fff); }
 /* En mobile solo se muestra la Lista (la grilla scrollea horizontal) → ocultamos el toggle. */
 @media (max-width: 760px) { .view-toggle { display: none; } }
 
@@ -302,6 +305,7 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 }
 .g-line { border-top: 1px solid var(--line); }
 .g-block {
+  position: relative; /* ancla del acceso a WhatsApp, arriba a la derecha del bloque */
   margin: 2px 3px; padding: 5px 8px; overflow: hidden;
   display: flex; flex-direction: column; justify-content: center; gap: 2px;
   background: var(--court-soft);
@@ -312,3 +316,15 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 }
 .gb-cli { font-weight: 700; font-size: 0.82rem; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .gb-time { font-size: 0.72rem; color: var(--ink-dim); }
+/* WhatsApp dentro del bloque de la grilla: chico y en la esquina para no comerle lugar al nombre
+   (los bloques de 60' son bajos). El nombre le reserva espacio a la derecha para no pasarle por debajo. */
+.g-block .gb-wa {
+  position: absolute; top: 3px; right: 3px;
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: var(--r);
+  color: #25d366; background: var(--surface); border: 1px solid var(--line);
+  transition: border-color 0.15s ease, transform 0.12s ease;
+}
+.g-block .gb-wa:hover { border-color: #25d366; transform: translateY(-1px); }
+.g-block .gb-wa svg { width: 13px; height: 13px; }
+.g-block:has(.gb-wa) .gb-cli { padding-right: 22px; }

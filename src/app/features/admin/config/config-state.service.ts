@@ -1,5 +1,5 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, concatMap, tap } from 'rxjs';
+import { Observable, concatMap, of, tap } from 'rxjs';
 
 import {
   AgendaConfig,
@@ -80,7 +80,10 @@ export class ConfigStateService {
   /** Plantilla de landing elegida por el club (A poster / B hero / C compacta). */
   readonly marcaPlantilla = signal('A');
   readonly marcaLogoUrl = signal<string | null>(null);
-  readonly savingMarca = signal(false);
+  /** `true` recién cuando la marca del club llegó del back. Los colores/plantilla los persiste el
+   *  guardado general, así que sin este guard un `getMarca()` fallido dejaría el estado en sus
+   *  defaults (#0a8a99 / plantilla A) y el primer Guardar le pisaría la marca real al club. */
+  private readonly marcaLoaded = signal(false);
   readonly uploadingLogo = signal(false);
   /** Cambia tras subir/quitar el logo para bustear la caché del <img> de preview. */
   private readonly logoBust = signal(0);
@@ -183,6 +186,16 @@ export class ConfigStateService {
   readonly saving = signal(false);
   readonly loaded = signal(false);
 
+  /* Los colores del club los valida el estado (no el componente): ahora los guarda el botón único
+     de la savebar, así que su validez tiene que poder deshabilitarlo como la de cualquier sección. */
+  private static readonly HEX = /^#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/;
+  readonly invalidMarcaColor = computed(() => !ConfigStateService.HEX.test(this.marcaColor().trim()));
+  readonly invalidMarcaColorSec = computed(() => {
+    const sec = this.marcaColorSec()?.trim();
+    return !!sec && !ConfigStateService.HEX.test(sec);
+  });
+  readonly invalidMarca = computed(() => this.invalidMarcaColor() || this.invalidMarcaColorSec());
+
   readonly invalidPaso = computed(() => {
     const n = this.pasoMinutos();
     return !(Number.isFinite(n) && n >= 5 && n <= 180);
@@ -250,9 +263,12 @@ export class ConfigStateService {
   readonly canSave = computed(
     () => this.dirty() && !this.invalidPaso() && !this.invalidDuraciones()
       && !this.invalidHorario() && !this.invalidBreak()
-      && !this.invalidPrecio() && !this.invalidPrecioFranjas() && !this.invalidSena() && !this.saving()
+      && !this.invalidPrecio() && !this.invalidPrecioFranjas() && !this.invalidSena()
+      && !this.invalidMarca() && !this.saving()
   );
   readonly saveState = computed(() => {
+    if (this.invalidMarcaColor()) return 'Revisá el color primario (hex, ej: #0a8a99)';
+    if (this.invalidMarcaColorSec()) return 'Revisá el color secundario (hex, ej: #0a8a99)';
     if (this.invalidHorario()) return 'Revisá el horario: la apertura debe ser antes del cierre';
     if (this.invalidBreak()) return 'Revisá el descanso: el inicio debe ser antes del fin';
     if (this.invalidPaso()) return 'Revisá el paso (5–180 min)';
@@ -313,6 +329,7 @@ export class ConfigStateService {
         this.marcaColorSec.set(m.colorSecundario);
         if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
         this.marcaLogoUrl.set(m.logoUrl);
+        this.marcaLoaded.set(true);
       },
       error: () => {
         /* la marca es secundaria: si falla, el resto del panel sigue funcionando. */
@@ -373,37 +390,28 @@ export class ConfigStateService {
   }
 
   // ── Marca ──
+  /** Fija el color primario desde el picker/hex. */
+  setMarcaColor(v: string): void {
+    this.marcaColor.set(v);
+    this.markDirty();
+  }
+
   /** Fija el color secundario (acento) desde el picker/hex. */
   setColorSec(v: string): void {
     this.marcaColorSec.set(v && v.trim() ? v.trim() : null);
+    this.markDirty();
   }
 
   /** Quita el color secundario: vuelve a usarse el primario para los acentos. */
   clearColorSec(): void {
     this.marcaColorSec.set(null);
+    this.markDirty();
   }
 
-  /** Guarda los colores (primario + secundario) + plantilla del club. El componente ya validó el
-   *  formato hex antes de llamar; acá sólo queda pegarle al back y actualizar el estado. */
-  saveMarca(): Observable<Marca> {
-    this.savingMarca.set(true);
-    return this.api
-      .putMarca({
-        colorPrimario: this.marcaColor().trim(),
-        colorSecundario: this.marcaColorSec()?.trim() || null,
-        plantilla: this.marcaPlantilla(),
-      })
-      .pipe(
-        tap({
-          next: (m) => {
-            this.savingMarca.set(false);
-            if (m.colorPrimario) this.marcaColor.set(m.colorPrimario);
-            this.marcaColorSec.set(m.colorSecundario);
-            if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
-          },
-          error: () => this.savingMarca.set(false),
-        })
-      );
+  /** Elige la plantilla (A/B/C) de la landing pública. */
+  setMarcaPlantilla(v: string): void {
+    this.marcaPlantilla.set(v);
+    this.markDirty();
   }
 
   /** Sube el logo (ya validado por el componente: tipo/tamaño). */
@@ -789,6 +797,22 @@ export class ConfigStateService {
           return this.api.putAutoasignacion({ autoasignacion: this.autoasignacion() });
         }),
         concatMap(() => {
+          this.seccion = 'Marca';
+          // Si la marca no llegó a cargarse, no la mandamos: pisaría la real con los defaults.
+          if (!this.marcaLoaded()) return of(null);
+          return this.api.putMarca({
+            colorPrimario: this.marcaColor().trim(),
+            colorSecundario: this.marcaColorSec()?.trim() || null,
+            plantilla: this.marcaPlantilla(),
+          });
+        }),
+        concatMap((m: Marca | null) => {
+          // El back normaliza (ej. la plantilla): nos quedamos con lo que devolvió.
+          if (m) {
+            if (m.colorPrimario) this.marcaColor.set(m.colorPrimario);
+            this.marcaColorSec.set(m.colorSecundario);
+            if (m.plantilla) this.marcaPlantilla.set(m.plantilla);
+          }
           this.seccion = 'Contacto';
           return this.api.putContacto(contacto);
         }),

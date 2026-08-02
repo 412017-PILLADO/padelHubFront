@@ -89,7 +89,7 @@
 }
 .btn-solid {
   background: var(--court);
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
   box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--court) 80%, transparent);
 }
 .btn-solid:hover {
@@ -685,7 +685,7 @@
 /* ===================== CONTACTO ===================== */
 .contacto {
   background: linear-gradient(135deg, var(--court), var(--court-deep));
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
 }
 .contacto-inner {
   max-width: 620px;

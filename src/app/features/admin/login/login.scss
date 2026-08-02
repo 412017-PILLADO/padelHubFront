@@ -25,7 +25,7 @@
   position: relative;
   overflow: hidden;
   background: linear-gradient(150deg, var(--court), var(--court-deep));
-  color: #fff;
+  color: var(--ink-on-accent, #fff);
   padding: clamp(28px, 5vw, 56px);
   display: flex; flex-direction: column; justify-content: space-between;
   min-height: 220px;
@@ -33,13 +33,13 @@
 .watermark {
   position: absolute; right: -0.08em; bottom: -0.2em;
   font-size: clamp(7rem, 18vw, 14rem); line-height: 0.8;
-  color: rgba(255, 255, 255, 0.08);
+  color: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
   pointer-events: none; user-select: none;
 }
 .brand-panel > * { position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; gap: 12px; }
 /* Grip con el secundario del tenant si está definido (dos-tonos sobre el gradiente), si no, blanco. */
-.brand-mark { width: 34px; height: 34px; color: #fff; --paddle-grip: var(--court-2, currentColor); }
+.brand-mark { width: 34px; height: 34px; color: var(--ink-on-accent, #fff); --paddle-grip: var(--court-2, currentColor); }
 .brand-mark svg { width: 100%; height: 100%; }
 /* Logo del club: chip blanco para que cualquier logo (claro u oscuro) se lea sobre el gradiente. */
 .brand-logo {
@@ -49,13 +49,13 @@
 }
 .brand-logo img { height: 30px; width: auto; max-width: 128px; object-fit: contain; display: block; }
 .logo-type .name { font-size: 1.4rem; line-height: 1; }
-.logo-type .name .hub { color: rgba(255, 255, 255, 0.7); }
-.logo-type .sub { color: rgba(255, 255, 255, 0.8); margin-top: 4px; }
+.logo-type .name .hub { color: color-mix(in srgb, var(--ink-on-accent, #fff) 70%, transparent); }
+.logo-type .sub { color: color-mix(in srgb, var(--ink-on-accent, #fff) 80%, transparent); margin-top: 4px; }
 .bp-title {
   font-size: clamp(1.8rem, 4vw, 2.8rem); line-height: 0.95;
-  margin-top: clamp(28px, 5vw, 48px); color: #fff;
+  margin-top: clamp(28px, 5vw, 48px); color: var(--ink-on-accent, #fff);
 }
-.bp-foot { font-size: 0.78rem; color: rgba(255, 255, 255, 0.7); }
+.bp-foot { font-size: 0.78rem; color: color-mix(in srgb, var(--ink-on-accent, #fff) 70%, transparent); }
 
 /* ===== Formulario ===== */
 .form-panel {
@@ -78,7 +78,7 @@
 .confirm {
   width: 100%; height: 52px;
   border: none; border-radius: var(--r);
-  background: var(--court); color: #fff;
+  background: var(--court); color: var(--ink-on-accent, #fff);
   font-weight: 700; font-size: 1rem;
   box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--court) 80%, transparent);
   transition: background 0.16s ease, transform 0.16s ease;
@@ -113,7 +113,7 @@
   /* "Volver" a la derecha, aclarado para leerse sobre la banda azul (no pisa el logo) */
   .back {
     top: 13px; right: 13px; left: auto;
-    color: #fff; background: rgba(255, 255, 255, 0.18);
+    color: var(--ink-on-accent, #fff); background: color-mix(in srgb, var(--ink-on-accent, #fff) 18%, transparent);
   }
-  .back:hover { color: #fff; background: rgba(255, 255, 255, 0.28); }
+  .back:hover { color: var(--ink-on-accent, #fff); background: color-mix(in srgb, var(--ink-on-accent, #fff) 28%, transparent); }
 }
