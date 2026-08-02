@@ -1,6 +1,7 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, TransferState, inject, makeStateKey } from '@angular/core';
+import { isPlatformServer } from '@angular/common';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, of, tap } from 'rxjs';
 
 /** Una cancha tal como llega en un slot de disponibilidad. */
 export interface CanchaLibre {
@@ -99,12 +100,37 @@ export interface PublicConfig {
   horarios: { diaSemana: number; horaInicio: string; horaFin: string }[];
 }
 
+/** Config del tenant resuelta en el server y transferida al cliente en el HTML (ver `config()`). */
+const CONFIG_KEY = makeStateKey<PublicConfig>('public-config');
+
 @Injectable({ providedIn: 'root' })
 export class BookingService {
   private readonly http = inject(HttpClient);
+  private readonly state = inject(TransferState);
+  private readonly platformId = inject(PLATFORM_ID);
 
+  /**
+   * Config pública del club. La ruta '' se renderiza por request (`RenderMode.Server`), así que el
+   * server ya la resuelve: la dejamos en el `TransferState` para que el cliente la reciba **dentro
+   * del HTML** y la devuelva de forma SÍNCRONA en el primer render.
+   *
+   * Sin esto el componente vuelve a nacer en el browser con `config = null` → la landing cae a la
+   * plantilla por defecto (A) hasta que termina un segundo fetch, y el club ve el layout cambiar
+   * solo (medido: ~600ms de plantilla equivocada). Además ahorra ese request duplicado.
+   *
+   * La clave se consume una sola vez (`remove`): un refetch posterior en la misma sesión (ej. tras
+   * un cambio de config) tiene que ir al back de verdad.
+   */
   config(): Observable<PublicConfig> {
-    return this.http.get<PublicConfig>('/public/config');
+    const transferida = this.state.get(CONFIG_KEY, null);
+    if (transferida) {
+      this.state.remove(CONFIG_KEY);
+      return of(transferida);
+    }
+    const req$ = this.http.get<PublicConfig>('/public/config');
+    return isPlatformServer(this.platformId)
+      ? req$.pipe(tap((cfg) => this.state.set(CONFIG_KEY, cfg)))
+      : req$;
   }
 
   disponibilidad(fecha: string, duracion: number): Observable<Slot[]> {

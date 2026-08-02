@@ -64,17 +64,22 @@ test('owner: cambia la plantilla de su landing desde la config', async ({ page }
   await expect(sel).toBeVisible({ timeout: 15_000 });
   // La marca ya no tiene botón propio: la persiste el Guardar único de la savebar (como el resto).
   const guardar = page.locator('.save-btn');
+  // Se guarda la plantilla REAL del club para restaurarla: forzar 'A' al final le cambiaba el
+  // diseño de la landing a quien hubiera elegido B o C (el test corre contra el tenant de demo,
+  // que es el que se usa para mostrar el producto).
+  const original = (await sel.inputValue()) || 'A';
+  // Si ya estaba en B, probamos con C: el test necesita un valor distinto para detectar el cambio.
+  const destino = original === 'B' ? 'C' : 'B';
   try {
-    await sel.selectOption('B');
+    await sel.selectOption(destino);
     await expect(page.locator('.savebar .sv')).toHaveText('Cambios sin guardar');
     await guardar.click();
     await expect(page.locator('.savebar .sv')).toHaveText('Todo guardado', { timeout: 15_000 });
-    // Confirma persistencia: al recargar la config, el select vuelve en B.
+    // Confirma persistencia: al recargar la config, el select vuelve en el destino.
     await page.reload();
-    await expect(page.locator('.plantilla-sel')).toHaveValue('B', { timeout: 15_000 });
+    await expect(page.locator('.plantilla-sel')).toHaveValue(destino, { timeout: 15_000 });
   } finally {
-    // Dejar demo en A para no ensuciar otros specs / la landing por defecto.
-    await page.locator('.plantilla-sel').selectOption('A');
+    await page.locator('.plantilla-sel').selectOption(original);
     await page.locator('.save-btn').click();
     await expect(page.locator('.savebar .sv')).toHaveText('Todo guardado', { timeout: 15_000 });
   }

@@ -1,8 +1,12 @@
 import {
   ApplicationConfig,
+  PLATFORM_ID,
+  inject,
+  provideAppInitializer,
   provideBrowserGlobalErrorListeners,
   provideZonelessChangeDetection,
 } from '@angular/core';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { provideRouter } from '@angular/router';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { provideHttpClient, withInterceptors, withFetch } from '@angular/common/http';
@@ -12,6 +16,8 @@ import { definePreset } from '@primeng/themes';
 import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
+import { aplicarMarcaCacheada } from './core/branding/branding-boot';
+import { currentTenantSlug } from './core/tenant/tenant';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { platformInterceptor } from './core/platform/platform.interceptor';
 import { tenantInterceptor } from './core/tenant/tenant.interceptor';
@@ -42,6 +48,17 @@ export const appConfig: ApplicationConfig = {
     provideZonelessChangeDetection(),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
+    // Aplica los colores cacheados del club ANTES del primer paint. Sin esto la marca entra recién
+    // cuando renderiza la nav del panel (chunk lazy) y el admin —que es client-render, sin el HTML
+    // del server que ya trae la marca en la landing— pinta el color de plataforma y salta al del
+    // club. Se llama al helper suelto y NO a BrandingService a propósito: el servicio depende de la
+    // API del panel y arrastraba todo ese árbol al bundle inicial de cualquier visitante público.
+    provideAppInitializer(() => {
+      const platformId = inject(PLATFORM_ID);
+      const doc = inject(DOCUMENT);
+      if (!isPlatformBrowser(platformId)) return;
+      aplicarMarcaCacheada(doc.documentElement.style, currentTenantSlug());
+    }),
     // authInterceptor PRIMERO: adjunta el Bearer mientras la URL todavía es relativa
     // (`/api/v1/...`). tenantInterceptor corre después y reescribe a la URL absoluta del
     // back (apiBase) + agrega X-Tenant; el clone preserva el Authorization ya puesto.

@@ -174,6 +174,16 @@ export class ConfigComponent {
         // La marca es parte de la cadena de guardado: recoloreamos el panel (nav/acentos) en vivo,
         // sin recargar, con los valores que el back devolvió.
         this.branding.apply(this.st.marcaColor(), this.st.marcaColorSec(), this.st.marcaLogoUrl());
+        if (this.st.marcaError()) {
+          // La marca no se pudo leer al abrir la config, así que el guardado la salteó (mandarla
+          // pisaría la real con los defaults). Avisamos en vez de decir "Guardado" a secas.
+          this.messages.add({
+            severity: 'warn',
+            summary: 'Guardado parcial',
+            detail: 'Se guardó todo menos la marca: recargá la página para editar colores y plantilla.',
+          });
+          return;
+        }
         this.messages.add({ severity: 'success', summary: 'Guardado', detail: 'Cambios guardados' });
       },
       error: (err: HttpErrorResponse) => {
