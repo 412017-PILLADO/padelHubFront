@@ -10,9 +10,9 @@
       <label class="marca-label">Color primario</label>
       <div class="color-row">
         <input type="color" class="color-swatch" [ngModel]="marcaColor()"
-          (ngModelChange)="marcaColor.set($event)" aria-label="Elegí el color primario" />
+          (ngModelChange)="setMarcaColor($event)" aria-label="Elegí el color primario" />
         <input type="text" class="color-hex mono" [ngModel]="marcaColor()"
-          (ngModelChange)="marcaColor.set($event)" placeholder="#0a8a99" spellcheck="false" />
+          (ngModelChange)="setMarcaColor($event)" placeholder="#0a8a99" spellcheck="false" />
       </div>
     </div>
 
@@ -26,20 +26,17 @@
         @if (marcaColorSec()) {
           <button type="button" class="btn-ghost" (click)="clearColorSec()">Quitar</button>
         }
-        <button type="button" class="btn-save" [disabled]="savingMarca()" (click)="saveMarca()">
-          {{ savingMarca() ? 'Guardando…' : 'Guardar marca' }}
-        </button>
       </div>
     </div>
 
     <div class="marca-field">
       <label class="marca-label">Plantilla de la landing</label>
       <div class="plantilla-row">
-        <select class="plantilla-sel" [ngModel]="marcaPlantilla()" (ngModelChange)="marcaPlantilla.set($event)"
+        <select class="plantilla-sel" [ngModel]="marcaPlantilla()" (ngModelChange)="setMarcaPlantilla($event)"
           aria-label="Plantilla de la landing">
           @for (p of plantillas; track p.value) { <option [value]="p.value">{{ p.label }} — {{ p.hint }}</option> }
         </select>
-        <span class="marca-opt">Cambia el diseño de tu página pública. Se aplica al guardar la marca.</span>
+        <span class="marca-opt">Cambia el diseño de tu página pública. Se aplica al guardar.</span>
       </div>
     </div>
 

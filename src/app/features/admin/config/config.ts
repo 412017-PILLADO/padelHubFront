@@ -14,6 +14,7 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
 import { AdminNavComponent } from '../admin-nav/admin-nav';
+import { BrandingService } from '../../../core/branding/branding.service';
 import { UnsavedChangesService } from '../unsaved-changes.service';
 import { ConfigStateService } from './config-state.service';
 import { TabClubComponent } from './tabs/tab-club/tab-club';
@@ -81,6 +82,7 @@ export class ConfigComponent {
    *  pestaña) vive en el componente de esa pestaña. `MessageService`/`ConfirmationService` se proveen
    *  acá (`providers` del componente) para que los hijos los compartan por DI. */
   protected readonly st = inject(ConfigStateService);
+  private readonly branding = inject(BrandingService);
 
   // ── Pestañas ──
   readonly tabs = CONFIG_TABS;
@@ -93,6 +95,7 @@ export class ConfigComponent {
   readonly invalidDuraciones = this.st.invalidDuraciones;
   readonly invalidPrecio = this.st.invalidPrecio;
   readonly invalidSena = this.st.invalidSena;
+  readonly invalidMarca = this.st.invalidMarca;
   readonly invalidHorario = this.st.invalidHorario;
   readonly invalidBreak = this.st.invalidBreak;
   readonly canSave = this.st.canSave;
@@ -168,6 +171,9 @@ export class ConfigComponent {
     if (!this.st.canSave()) return;
     this.st.save().subscribe({
       next: () => {
+        // La marca es parte de la cadena de guardado: recoloreamos el panel (nav/acentos) en vivo,
+        // sin recargar, con los valores que el back devolvió.
+        this.branding.apply(this.st.marcaColor(), this.st.marcaColorSec(), this.st.marcaLogoUrl());
         this.messages.add({ severity: 'success', summary: 'Guardado', detail: 'Cambios guardados' });
       },
       error: (err: HttpErrorResponse) => {

@@ -27,7 +27,7 @@ import {
   PublicConfig,
   Slot,
 } from '../../core/api/booking.service';
-import { inkOnAccent } from '../../core/branding/branding.service';
+import { applyTenantColors } from '../../core/branding/branding.service';
 import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-modal';
 import { PoliticaModal } from './politica-modal/politica-modal';
 
@@ -173,12 +173,6 @@ export class Landing {
     const h = this.instagramHandle();
     return h ? `https://instagram.com/${h}` : null;
   });
-
-  /** El item "El club" de la nav de la plantilla C apunta a la card de dirección si existe
-   *  (`#ic-donde`, ver `infoCards`); si el club no cargó dirección pero sí tiene WhatsApp/IG,
-   *  esa card no se renderiza y hay que apuntar a `#ic-contacto` en su lugar (misma condición de
-   *  visibilidad del item: `direccion() || whatsappUrl() || instagramHandle()`). */
-  readonly clubAnchorId = computed(() => (this.direccion() ? 'ic-donde' : 'ic-contacto'));
 
   readonly horarios = computed<HoursRow[]>(() =>
     groupHorarios(this.config()?.horarios ?? [])
@@ -460,18 +454,6 @@ export class Landing {
     return validTpl;
   }
 
-  /** Los anchors de solo-fragmento se resuelven contra <base href="/"> y se llevan puesto el
-   *  query string (rompe ?plantilla= de la preview). Scrolleamos a mano y dejamos la URL como está.
-   *  Además movemos el foco al destino (`tabindex="-1"` en las cards, ver landing.html): el
-   *  comportamiento nativo de un fragment mueve el foco, y si no lo replicamos a mano el próximo
-   *  Tab de teclado/lector de pantalla sigue en el rail de nav en vez de continuar por la sección. */
-  irA(event: Event, id: string): void {
-    event.preventDefault();
-    const el = document.getElementById(id);
-    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    el?.focus({ preventScroll: true });
-  }
-
   /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
    *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
   setPreviewPlantilla(tpl: string): void {
@@ -510,20 +492,11 @@ export class Landing {
    */
   private applyBranding(cfg: PublicConfig): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    const root = document.documentElement.style;
     // El preview (`?color=`) pisa el color del tenant; ya viene validado por readPreviewParams().
-    const color = (this.previewColor() ?? cfg.tenant.colorPrimario)?.trim();
-    if (color) {
-      root.setProperty('--court', color);
-      root.setProperty('--court-deep', `color-mix(in srgb, ${color} 82%, #000)`);
-      root.setProperty('--court-soft', `color-mix(in srgb, ${color} 12%, #fff)`);
-      // M11: texto legible sobre el primario (chips/botones/afiche) si el club usa un color claro.
-      root.setProperty('--ink-on-accent', inkOnAccent(color));
-    }
-    // Color secundario (acento; ej. el grip de la paleta). Si no hay, el CSS cae al primario.
-    const colorSec = cfg.tenant.colorSecundario?.trim();
-    if (colorSec) root.setProperty('--court-2', colorSec);
-    else root.removeProperty('--court-2');
+    // Los derivados (deep/soft) y la tinta legible de cada color los resuelve el helper compartido
+    // con BrandingService, que es la única fuente de verdad de los tokens de marca.
+    const color = this.previewColor() ?? cfg.tenant.colorPrimario;
+    applyTenantColors(document.documentElement.style, color, cfg.tenant.colorSecundario);
   }
 
   /**

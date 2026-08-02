@@ -36,14 +36,52 @@ const DARK_INK_RGB: [number, number, number] = [0x11, 0x16, 0x2b]; // matchea --
  * blanco puro y contra la tinta oscura del sistema (`--ink`), y devuelve el que gana — así un
  * primario claro (amarillo, celeste) no le pisa el texto blanco fijo a chips/botones/afiche.
  * `#fff` si `hex` no es parseable (mismo comportamiento que antes de M11).
+ *
+ * El fondo no siempre es el color plano: el afiche y el panel de login son un gradiente hasta
+ * `--court-deep` (18% más oscuro). Por eso se evalúa el PEOR de los dos extremos, y no solo el
+ * color base: si no, un color en el límite elige una tinta que se cae en la mitad oscura.
  */
 export function inkOnAccent(hex: string | null | undefined): string {
   const rgb = hex ? hexToRgb(hex) : null;
   if (!rgb) return '#fff';
-  const l = relativeLuminance(rgb);
-  const vsWhite = contrastRatio(l, 1);
-  const vsInk = contrastRatio(l, relativeLuminance(DARK_INK_RGB));
-  return vsWhite >= vsInk ? '#fff' : 'var(--ink)';
+  // `color-mix(in srgb, c 82%, #000)` = cada canal × 0.82.
+  const deep: [number, number, number] = [rgb[0] * 0.82, rgb[1] * 0.82, rgb[2] * 0.82];
+  const luminancias = [relativeLuminance(rgb), relativeLuminance(deep)];
+  const peorContraste = (lTinta: number) =>
+    Math.min(...luminancias.map((lFondo) => contrastRatio(lFondo, lTinta)));
+  return peorContraste(1) >= peorContraste(relativeLuminance(DARK_INK_RGB)) ? '#fff' : 'var(--ink)';
+}
+
+/**
+ * Escribe los colores del tenant y sus derivados en un `:root` (el `style` del `<html>`).
+ *
+ * Única fuente de verdad: la usan tanto `BrandingService` (panel/login) como la landing, que antes
+ * duplicaban estas mismas líneas — con el bug de que la landing nunca derivaba tinta para el
+ * secundario. Cada color de fondo del tenant deja su tinta legible al lado (`--ink-on-accent` para
+ * el primario, `--ink-on-accent-2` para el secundario) para que el CSS nunca tenga que hardcodear
+ * `#fff`: un club con secundario blanco rompía el texto de todo lo pintado con el secundario.
+ */
+export function applyTenantColors(
+  root: CSSStyleDeclaration,
+  primario?: string | null,
+  secundario?: string | null,
+): void {
+  const c = primario?.trim();
+  if (c) {
+    root.setProperty('--court', c);
+    root.setProperty('--court-deep', `color-mix(in srgb, ${c} 82%, #000)`);
+    root.setProperty('--court-soft', `color-mix(in srgb, ${c} 12%, #fff)`);
+    root.setProperty('--ink-on-accent', inkOnAccent(c));
+  }
+  const c2 = secundario?.trim();
+  if (c2) {
+    root.setProperty('--court-2', c2);
+    root.setProperty('--ink-on-accent-2', inkOnAccent(c2));
+  } else {
+    // Sin secundario el CSS cae al primario (var(--court-2, var(--court))), y su tinta también.
+    root.removeProperty('--court-2');
+    root.removeProperty('--ink-on-accent-2');
+  }
 }
 
 /**
@@ -94,18 +132,7 @@ export class BrandingService {
    */
   private applyColor(color?: string | null, colorSec?: string | null): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    const root = document.documentElement.style;
-    const c = color?.trim();
-    if (c) {
-      root.setProperty('--court', c);
-      root.setProperty('--court-deep', `color-mix(in srgb, ${c} 82%, #000)`);
-      root.setProperty('--court-soft', `color-mix(in srgb, ${c} 12%, #fff)`);
-      // M11: texto legible sobre el primario (chips/botones/afiche) si el club usa un color claro.
-      root.setProperty('--ink-on-accent', inkOnAccent(c));
-    }
-    const c2 = colorSec?.trim();
-    if (c2) root.setProperty('--court-2', c2);
-    else root.removeProperty('--court-2');
+    applyTenantColors(document.documentElement.style, color, colorSec);
   }
 
   /** Resuelve la URL del logo: absoluta tal cual, o relativa al backend; null si no hay. */
