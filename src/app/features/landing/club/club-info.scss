@@ -31,8 +31,12 @@
    =================================================================== */
 
 /* PLANTILLA B · la tarjeta es uno de los paneles de vidrio. Las declaraciones están escritas a mano
-   porque la misma receta la usa `.tpl-b .booking-flow` en booking-flow.scss y `@extend` no cruza de
-   hoja (antes las compartía el placeholder `%b-glass` de landing.scss). Si tocás una, tocá la otra. */
+   porque la misma receta la declara `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los
+   que se pinta el flujo de reserva) y `@extend` no cruza de hoja. Antes las compartía el placeholder
+   `%b-glass` de landing.scss; después fue la regla `.tpl-b .booking-flow` de booking-flow.scss, que
+   el Task 10 reemplazó por esos tokens. La obligación de sincronía es en los dos sentidos: si tocás
+   esta copia, tocá la otra (y al revés). El `border-radius` sí difiere a propósito: 20px la tarjeta,
+   28px el panel del flujo. */
 :host-context(.tpl-b) .ic-card {
   background: color-mix(in srgb, var(--surface) 58%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);

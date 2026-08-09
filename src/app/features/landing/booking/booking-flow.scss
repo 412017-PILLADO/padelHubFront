@@ -22,9 +22,12 @@
    Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
    se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
 
-   Regla del contrato: NINGUNA hoja de afuera apunta al DOM de este componente, y esta hoja no
-   nombra ninguna plantilla. Por eso la encapsulación volvió a ser la default (Emulated) — ver el
-   docblock de booking-flow.ts.
+   Regla del contrato: ninguna hoja de afuera apunta al DOM de este componente POR CLASE DE
+   PLANTILLA, y esta hoja no nombra ninguna plantilla. Por eso la encapsulación volvió a ser la
+   default (Emulated) — ver el docblock de booking-flow.ts. (La excepción, deliberada y
+   agnóstica de la encapsulación, es `:host ::ng-deep .politica-link` en landing.scss: el MISMO
+   link vive en dos componentes hijos y su aspecto base se define una sola vez arriba. No depende
+   de qué plantilla sea, así que no rompe el contrato ni pide un token.)
    =================================================================== */
 
 /* El host no dibuja: `display: contents` deja al <main class="booking-flow"> como hijo directo de
