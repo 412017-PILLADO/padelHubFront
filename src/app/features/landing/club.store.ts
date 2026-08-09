@@ -138,8 +138,9 @@ export class ClubStore {
     if (!isPlatformBrowser(this.platformId)) return null;
     const params = new URLSearchParams(location.search);
 
-    const tpl = (params.get('plantilla') ?? '').trim().toUpperCase() as CodigoPlantilla;
-    const validTpl = PLANTILLAS_PREVIEW.includes(tpl) ? tpl : null;
+    // El `find` valida y tipa de una: nada de castear a CodigoPlantilla lo que vino en la URL.
+    const tpl = (params.get('plantilla') ?? '').trim().toUpperCase();
+    const validTpl = PLANTILLAS_PREVIEW.find((c) => c === tpl) ?? null;
 
     const color = params.get('color');
     if (color) {
