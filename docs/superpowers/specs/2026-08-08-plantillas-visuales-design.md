@@ -195,7 +195,12 @@ En vez de afirmar que el producto es personalizable, lo demuestra: swatches de c
 ## 10. Testing
 
 **Unitario**
-- Matriz de contraste: 5 plantillas × 4 colores extremos (`#FFD400` amarillo, `#FFFFFF` blanco, `#111111` negro, `#FF2D95` fucsia). La tinta calculada debe dar **≥4.5:1** en texto y **≥3:1** en bordes e íconos. Sin browser, corre en milisegundos.
+- Matriz de contraste sobre 4 colores extremos (`#FFD400` amarillo, `#FFFFFF` blanco, `#111111` negro, `#FF2D95` fucsia), evaluando el **peor extremo** del gradiente (color base y `--court-deep` al 82%):
+  - **Propiedad invariante:** la tinta elegida es siempre la de mejor peor-caso entre blanco y la tinta de la plantilla. Vale para cualquier color.
+  - **Umbral ≥4.5:1** para amarillo, blanco y negro.
+  - **Umbral ≥3:1** para fucsia. Con solo dos tintas posibles, un fucsia saturado no alcanza 4.5:1 contra ninguna (blanco da 3.45:1, tinta oscura 3.57:1 en el peor extremo). No es un bug del cálculo sino un límite del color.
+  - **Regla de diseño que se deriva:** ningún shell pone **texto de párrafo** sobre `--court` crudo. Sobre el acento van solo textos grandes o bold (chips, botones, títulos), que se rigen por el umbral de 3:1. Para bloques con texto corrido, el shell usa `--court-deep` o una superficie propia.
+- Sin browser, corre en milisegundos.
 - Registry: cada plantilla declara esquema, tinta base, fuentes y shell.
 
 **e2e (Playwright)**
