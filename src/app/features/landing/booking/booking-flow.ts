@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ViewEncapsulation,
-  inject,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
@@ -19,10 +13,12 @@ import { BookingStore } from './booking.store';
  * shell de cada plantilla (ver la spec de plantillas, §4). No agregar acá reglas que dependan de
  * una plantilla en particular.
  *
- * `ViewEncapsulation.None` es un andamio deliberado del plan (lo saca el Task 10): hoy las
- * plantillas todavía pintan el interior del flujo desde afuera (`.tpl-b .booking-flow`,
- * `.tpl-c .flow-head .mono`). Esas reglas viven en `booking-flow.scss` y necesitan que la hoja sea
- * global para que `.tpl-b`/`.tpl-c` — que salen del template de `Landing` — casen con el flujo.
+ * La encapsulación es la default (Emulated): la hoja no se filtra al resto de la app. Hasta el
+ * Task 10 tenía `ViewEncapsulation.None`, porque las plantillas pintaban el interior del flujo
+ * desde afuera (`.tpl-b .booking-flow`, `.tpl-c .flow-head .mono`) y esas reglas necesitaban una
+ * hoja global para casar. Ya no existen: todo eso viaja por los tokens `--flow-*`. Si alguna vez
+ * hace falta volver a `None`, es la señal de que algo se está pintando desde afuera y de que
+ * falta un token.
  *
  * No provee los stores: los toma del injector de `Landing`, que es quien los declara. Así los dos
  * comparten la misma instancia (el flujo y la cáscara hablan del mismo club y de la misma reserva).
@@ -31,7 +27,6 @@ import { BookingStore } from './booking.store';
   selector: 'app-booking-flow',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
   imports: [FormsModule, DatePickerModule, InputTextModule],
   templateUrl: './booking-flow.html',
   styleUrl: './booking-flow.scss',

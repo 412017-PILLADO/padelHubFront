@@ -76,15 +76,6 @@ const ES_TRANSLATION = {
 export class Landing {
   private readonly primeng = inject(PrimeNG);
   private readonly club = inject(ClubStore);
-  /**
-   * No se usa desde acá: se inyecta para que `BookingStore` se construya en este punto y no recién
-   * cuando `<app-booking-flow>` lo pida, ya adentro de la cáscara y durante el primer render. Es el
-   * orden que tenía antes de que las plantillas fueran componentes: el effect sobre
-   * `club.estadoCarga()` que registra su constructor queda armado ANTES del `cargar()` de abajo
-   * (que con el transfer state del SSR puede resolver sincrónicamente). El effect es idempotente
-   * por transición, así que crearlo tarde tampoco rompería — pero este task no cambia timings.
-   */
-  private readonly booking = inject(BookingStore);
 
   /**
    * La cáscara que se dibuja: manda el `@switch` del template Y el `data-tpl` del host, que tienen
@@ -114,6 +105,14 @@ export class Landing {
   readonly showPolitica = signal(false);
 
   constructor() {
+    // Se inyecta por su EFECTO, no por su valor (por eso no queda guardado en ningún campo): fuerza
+    // a que `BookingStore` se construya acá y no recién cuando `<app-booking-flow>` lo pida, ya
+    // adentro de la cáscara y durante el primer render. Es el orden que tenía antes de que las
+    // plantillas fueran componentes: el effect sobre `club.estadoCarga()` que registra su
+    // constructor queda armado ANTES del `cargar()` de abajo (que con el transfer state del SSR
+    // puede resolver sincrónicamente). No borrar ni reordenar: `landing.spec.ts` cubre esa carrera.
+    inject(BookingStore);
+
     this.primeng.setTranslation(ES_TRANSLATION);
     // El fetch es async y el flujo de reserva depende de él: BookingStore lo espera con un effect
     // sobre estadoCarga() (duración default + día inicial, o defaults + toast si falla).

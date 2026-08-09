@@ -5,6 +5,8 @@
    Salió tal cual del bloque `.tpl-c` de landing.scss: `.tpl-c` era el div que envolvía la
    plantilla y ahora es el host de esta cáscara, así que esas reglas pasan a `:host`.
    =================================================================== */
+/* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
+@use 'tokens';
 /* `display: block` es lo único que se agrega al mudar la regla: el `.tpl-c` de antes era un <div>
    (bloque por defecto) y el host es un elemento desconocido, que por defecto es inline. Los dos
    breakpoints de más abajo lo pisan (flex / grid) y cubren todo el rango, así que no cambia nada
@@ -22,8 +24,9 @@
   padding: clamp(20px, 3vw, 40px) clamp(16px, 3vw, 40px) clamp(24px, 4vw, 44px);
   gap: clamp(20px, 4vw, 36px); }
 .c-book { width: 100%; max-width: 920px; scroll-margin-top: 16px; }
-/* Lo que C le pinta al flujo (`.tpl-c .booking-flow`, `.tpl-c .flow-head .mono`) vive en
-   booking-flow.scss por la encapsulación — misma razón que en B. */
+/* Lo que C le pinta al flujo (ir a sangre, sin padding propio, y sin el nombre del club en el
+   encabezado) lo declara `_tokens.scss` como tokens --flow-*. Ninguna regla de esta cáscara apunta
+   al DOM del `<app-booking-flow>`. */
 .c-info { width: 100%; max-width: 920px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px; scroll-margin-top: 16px; }
 /* Lo que C le pinta a las tarjetas de info vive en club-info.scss (`:host-context(.tpl-c)`). */

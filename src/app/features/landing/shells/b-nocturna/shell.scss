@@ -5,6 +5,10 @@
    Salió tal cual del bloque `.tpl-b` de landing.scss: `.tpl-b` era el div que envolvía la
    plantilla y ahora es el host de esta cáscara, así que esas reglas pasan a `:host`.
    =================================================================== */
+/* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva (incluido el vidrio del
+   panel, que antes vivía en booking-flow.scss como `.tpl-b .booking-flow`). */
+@use 'tokens';
+
 /* El fondo es el decorado de la plantilla (pedido del owner): un degradé armado con los DOS colores
    del club — primario arriba-izquierda, secundario arriba-derecha (cae al primario si el club no
    eligió uno) — más una diagonal suave que los cruza de punta a punta y un halo abajo. Es el telón
@@ -22,10 +26,10 @@
     var(--paper);
   background-attachment: fixed;
 }
-/* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) ya no
-   se declara acá: sus dos consumidores viven en otras hojas (`.tpl-b .booking-flow` en
-   booking-flow.scss y `.ic-card` en club-info.scss) y `@extend` no cruza de hoja. Si tocás una de
-   las dos copias, tocá la otra — hasta el Task 10, que unifica el vidrio en tokens. */
+/* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) tiene
+   hoy dos copias escritas a mano, porque `@extend` no cruza de hoja: los tokens --flow-* de
+   `_tokens.scss` (que visten al flujo de reserva) y `.ic-card` en club-info.scss. Si tocás una de
+   las dos, tocá la otra. */
 
 .b-nav {
   position: sticky; top: 0; z-index: 20;
@@ -52,8 +56,9 @@
 
 .b-book { width: 100%; max-width: 880px; margin: 0 auto;
   padding: clamp(8px, 3vw, 28px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px); scroll-margin-top: 76px; }
-/* El vidrio del flujo (antes `.tpl-b .booking-flow { @extend %b-glass; … }`) se mudó a
-   booking-flow.scss: desde acá, encapsulado, ya no llegaría al DOM del componente. */
+/* El vidrio del flujo NO se pinta desde acá: lo declara `_tokens.scss` como tokens --flow-*, que
+   el flujo lee desde su propia hoja (encapsulada). Ninguna regla de esta cáscara apunta al DOM del
+   `<app-booking-flow>`. */
 
 .b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }

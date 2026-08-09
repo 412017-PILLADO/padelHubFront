@@ -10,6 +10,8 @@
    host es el de `<app-landing>` (el que lleva el atributo), no el de esta cáscara — sigue en
    landing.scss.
    =================================================================== */
+/* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
+@use 'tokens';
 
 /* ===================== LAYOUT =====================
    En desktop (≥900px) la página se fija al viewport (100svh, sin scroll de documento): el
@@ -201,7 +203,8 @@
   }
   .logo-type .name { font-size: clamp(2rem, 8.5vw, 2.8rem); }
 
-  /* (2) el formulario completo — su `order: 2` y su padding mobile viven en booking-flow.scss */
+  /* (2) el formulario completo — su `order: 2` vive en booking-flow.scss y su padding mobile sale
+     del token `--flow-padding-mobile` de `_tokens.scss` */
 
   /* (3) banda azul inferior: horarios + dónde estamos + contacto + footer */
   .info {

@@ -1,0 +1,31 @@
+/* ===================================================================
+   CONTRATO --flow-* · PLANTILLA C (minimalista)
+
+   Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
+   NO tiene identidad visual propia: lee estos nueve valores (ver el encabezado de
+   booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
+
+   Toda cáscara nueva tiene que declarar los nueve.
+
+   En la C el flujo va a sangre dentro de `.c-book`, sin caja propia: el aire y el ancho máximo los
+   pone la cáscara (ver shell.scss), no el flujo — por eso el padding es 0 en los dos breakpoints.
+   =================================================================== */
+:host {
+  /* Sin caja: la C ya está sobre `--paper` y separa con hairlines, no con cajas. */
+  --flow-surface: transparent;
+  --flow-border: none;
+  --flow-radius: 0;
+  --flow-shadow: none;
+  --flow-backdrop: none;
+
+  /* Scroll de documento: en la C la columna principal no se clava al viewport. */
+  --flow-overflow: visible;
+
+  /* El aire lo pone `.c-main` / `.c-book`; el flujo no agrega el suyo. */
+  --flow-padding: 0;
+  --flow-padding-mobile: 0;
+
+  /* El nombre ya vive junto al logo en el rail: en el encabezado de la reserva sería la misma marca
+     dos veces (solo en C — A y B lo resuelven distinto, ahí la marca está en el afiche/héroe). */
+  --flow-marca-display: none;
+}

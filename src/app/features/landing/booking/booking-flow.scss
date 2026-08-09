@@ -1,32 +1,57 @@
 /* ===================================================================
-   Estilos del flujo de reserva. Salieron tal cual de landing.scss (sección FLUJO + ÉXITO +
-   seña): este task es puro movimiento, no cambia un pixel.
+   Estilos del flujo de reserva.
 
-   La hoja es GLOBAL (ViewEncapsulation.None, ver booking-flow.ts): al final del archivo quedan
-   las reglas con las que las plantillas B y C todavía pintan el interior del flujo desde afuera.
-   Esas reglas necesitan casar `.tpl-b`/`.tpl-c` (hoy el host de cada cáscara) con el DOM
-   del flujo, y con estilos encapsulados no lo harían. El Task 10 las reemplaza por tokens
-   --flow-* y ahí se puede volver a encapsular.
+   El flujo NO tiene identidad visual propia: la caja que lo contiene se pinta con los tokens
+   `--flow-*` que declara la cáscara de cada plantilla (shells/<x>/_tokens.scss). Esta hoja es el
+   único consumidor del contrato y el que lo define; toda cáscara nueva tiene que declarar los
+   nueve tokens:
+
+     --flow-surface         fondo del contenedor
+     --flow-border          borde del contenedor (shorthand completo, o `none`)
+     --flow-radius          radio del contenedor
+     --flow-shadow          sombra del contenedor (o `none`)
+     --flow-backdrop        filtro de fondo / vidrio (o `none`)
+     --flow-overflow        overflow-y del contenedor en ≥900px: `auto` si la plantilla clava el
+                            flujo al viewport y lo scrollea internamente, `visible` si scrollea el
+                            documento. En <900px el flujo siempre va `visible` (regla propia).
+     --flow-padding         padding del contenedor en ≥900px
+     --flow-padding-mobile  padding del contenedor en <900px
+     --flow-marca-display   `display` del nombre del club en el encabezado: `none` cuando la
+                            plantilla ya muestra la marca en otro lado de la misma pantalla.
+
+   Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
+   se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
+
+   Regla del contrato: NINGUNA hoja de afuera apunta al DOM de este componente, y esta hoja no
+   nombra ninguna plantilla. Por eso la encapsulación volvió a ser la default (Emulated) — ver el
+   docblock de booking-flow.ts.
    =================================================================== */
 
 /* El host no dibuja: `display: contents` deja al <main class="booking-flow"> como hijo directo de
    la cáscara, igual que cuando el flujo se insertaba con ngTemplateOutlet. Sin esto el
    <app-booking-flow> se interpone como caja y rompe el grid de la plantilla A en desktop y el
-   `order` de las bandas en mobile. Va por nombre de elemento y no por `:host` porque con
-   ViewEncapsulation.None Angular no traduce `:host`. */
-app-booking-flow { display: contents; }
+   `order` de las bandas en mobile. */
+:host { display: contents; }
 
 /* ===================== FLUJO ===================== */
 .booking-flow {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: clamp(20px, 3vw, 40px);
-  /* la columna derecha ENTERA scrollea (título + selectores + horario + cancha + datos);
-     el afiche izquierdo queda fijo. */
-  overflow-y: auto;
+  padding: var(--flow-padding, clamp(20px, 3vw, 40px));
+  /* Con `auto` (plantilla A) la columna derecha ENTERA scrollea (título + selectores + horario +
+     cancha + datos) y el afiche izquierdo queda fijo; con `visible` (B y C) scrollea el documento. */
+  overflow-y: var(--flow-overflow, auto);
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
+
+  /* La caja la pone la plantilla: sin tokens, el flujo va a sangre sobre el papel (que es la A). */
+  background: var(--flow-surface, transparent);
+  border: var(--flow-border, none);
+  border-radius: var(--flow-radius, 0);
+  box-shadow: var(--flow-shadow, none);
+  -webkit-backdrop-filter: var(--flow-backdrop, none);
+  backdrop-filter: var(--flow-backdrop, none);
 }
 .booking-flow::-webkit-scrollbar { width: 8px; }
 .booking-flow::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
@@ -41,7 +66,9 @@ app-booking-flow { display: contents; }
   text-transform: uppercase;
 }
 .hdash { flex: 1; min-width: 24px; height: 2px; background: var(--line-strong); }
-.flow-head .mono { color: var(--ink-dim); font-size: 0.85rem; }
+/* El nombre del club. Las plantillas que ya lo muestran en otro lado de la misma pantalla lo
+   apagan con `--flow-marca-display: none` (ver el contrato arriba). */
+.flow-head .mono { display: var(--flow-marca-display, inline); color: var(--ink-dim); font-size: 0.85rem; }
 
 /* selectores compactos (duración + día) fijos arriba */
 .flow-top { flex: none; }
@@ -117,9 +144,10 @@ app-booking-flow { display: contents; }
   border: 1px solid var(--line);
   overflow: hidden;
 }
-/* Sin `::ng-deep` (lo tenía en landing.scss): la hoja ya es global, así que llega al datepicker de
-   PrimeNG igual, y con ViewEncapsulation.None Angular no traduciría el pseudo-selector. */
-.cal.open .p-datepicker {
+/* `::ng-deep` para atravesar la encapsulación del datepicker de PrimeNG, que es un componente
+   aparte (mismo recurso que usa el calendario del panel, ver admin/panel/panel.scss). Queda acotado
+   al `.cal` de este componente: no es una regla global. */
+.cal.open ::ng-deep .p-datepicker {
   border: none;
   box-shadow: none;
 }
@@ -412,11 +440,12 @@ app-booking-flow { display: contents; }
 
 /* ===================== MOBILE (<900px) ===================== */
 @media (max-width: 899px) {
-  /* (2) formulario completo */
+  /* (2) formulario completo. En mobile ninguna plantilla clava el flujo al viewport: el scroll es
+     siempre del documento, así que `overflow` va fijo y no pasa por `--flow-overflow`. */
   .booking-flow {
     order: 2;
     overflow: visible;
-    padding: clamp(20px, 5vw, 26px) clamp(16px, 5vw, 24px) 26px;
+    padding: var(--flow-padding-mobile, clamp(20px, 5vw, 26px) clamp(16px, 5vw, 24px) 26px);
   }
   .flow-body { overflow: visible; }
 
@@ -428,39 +457,6 @@ app-booking-flow { display: contents; }
   .slot { padding: 12px 8px; }
   .form { max-width: none; }
 }
-
-/* ===================================================================
-   LO QUE LAS PLANTILLAS LE PINTAN AL FLUJO DESDE AFUERA
-   Deuda reconocida del plan: el flujo no debería saber que existen B y C. Vive acá (y no en
-   landing.scss) porque esta hoja es global y por lo tanto llega al DOM del flujo; en landing.scss,
-   encapsulada, `.tpl-b .booking-flow` ya no casaría. El Task 10 lo reemplaza por tokens --flow-*.
-   =================================================================== */
-
-/* PLANTILLA B · el flujo es uno de los paneles de vidrio. Las declaraciones están escritas a mano
-   porque la misma receta viste a las `.ic-card` desde club-info.scss y `@extend` no cruza de hoja
-   (era el placeholder `%b-glass` de landing.scss). Si se toca una, tocar la otra — hasta el Task 10,
-   que borra esta. */
-.tpl-b .booking-flow {
-  background: color-mix(in srgb, var(--surface) 58%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
-  border: 1px solid color-mix(in srgb, #fff 60%, transparent);
-  box-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border-radius: 28px;
-  overflow: visible;
-}
-/* El nombre ya está en la nav (y en el héroe, en desktop): en el encabezado de la reserva sobra. */
-.tpl-b .flow-head .mono { display: none; }
-
-@media (max-width: 899px) {
-  .tpl-b .booking-flow { padding-left: clamp(14px, 5vw, 20px); padding-right: clamp(14px, 5vw, 20px); }
-}
-
-/* PLANTILLA C · el flujo va a sangre dentro de .c-book, sin caja propia. */
-.tpl-c .booking-flow { overflow: visible; padding: 0; }
-/* El nombre ya vive junto al logo en el rail: en el encabezado de la reserva sería la misma marca
-   dos veces (solo en C — A y B lo siguen mostrando, ahí la marca está en el afiche/héroe). */
-.tpl-c .flow-head .mono { display: none; }
 
 /* Política de cancelación dentro del bloque de seña del éxito (fondo claro), como un link más chico
    debajo de las acciones. El resto de `.politica-link` lo sigue poniendo landing.scss. */

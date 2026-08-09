@@ -1,0 +1,32 @@
+/* ===================================================================
+   CONTRATO --flow-* · PLANTILLA B (liquid glass)
+
+   Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
+   NO tiene identidad visual propia: lee estos nueve valores (ver el encabezado de
+   booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
+
+   Toda cáscara nueva tiene que declarar los nueve.
+
+   En la B el flujo es uno de los paneles de vidrio: los valores de acá son la MISMA receta que
+   `:host-context(.tpl-b) .ic-card` en club/club-info.scss (el otro consumidor del vidrio). Están
+   escritos a mano en las dos hojas porque `@extend` no cruza de hoja; si tocás una, tocá la otra.
+   =================================================================== */
+:host {
+  /* Vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno. */
+  --flow-surface: color-mix(in srgb, var(--surface) 58%, transparent);
+  --flow-border: 1px solid color-mix(in srgb, #fff 60%, transparent);
+  --flow-radius: 28px;
+  --flow-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --flow-backdrop: blur(22px) saturate(1.6);
+
+  /* El panel crece con su contenido y scrollea el documento: recortarlo le comería el vidrio. */
+  --flow-overflow: visible;
+
+  /* Los laterales se achican en mobile: el panel ya está anidado dentro del padding de .b-book. */
+  --flow-padding: clamp(20px, 3vw, 40px);
+  --flow-padding-mobile: clamp(20px, 5vw, 26px) clamp(14px, 5vw, 20px) 26px;
+
+  /* El nombre ya está en la nav (y en el héroe, en desktop): en el encabezado de la reserva sobra. */
+  --flow-marca-display: none;
+}
