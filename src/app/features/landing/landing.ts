@@ -63,10 +63,12 @@ export class Landing {
   private readonly primeng = inject(PrimeNG);
   private readonly club = inject(ClubStore);
   /**
-   * Se inyecta acá y no recién cuando `<app-booking-flow>` lo pide (allá adentro de la cáscara):
-   * `BookingStore` registra en su constructor el effect sobre `club.estadoCarga()`, y tiene que
-   * estar registrado ANTES del `cargar()` de abajo. Con el transfer state del SSR la config puede
-   * resolver sincrónicamente, antes del primer render — o sea, antes de que exista la cáscara.
+   * No se usa desde acá: se inyecta para que `BookingStore` se construya en este punto y no recién
+   * cuando `<app-booking-flow>` lo pida, ya adentro de la cáscara y durante el primer render. Es el
+   * orden que tenía antes de que las plantillas fueran componentes: el effect sobre
+   * `club.estadoCarga()` que registra su constructor queda armado ANTES del `cargar()` de abajo
+   * (que con el transfer state del SSR puede resolver sincrónicamente). El effect es idempotente
+   * por transición, así que crearlo tarde tampoco rompería — pero este task no cambia timings.
    */
   private readonly booking = inject(BookingStore);
 
