@@ -423,10 +423,6 @@ export class BookingStore {
   isCanchaSelected(id: number): boolean {
     return this.selectedCancha() === id;
   }
-  canchaTipo(c: CanchaLibre): string {
-    const techo = c.techada ? 'Techada' : 'Descubierta';
-    return c.tipoPared ? `${techo} · ${c.tipoPared}` : techo;
-  }
 
   /** Etiqueta del material de la pared para la card de cancha (espeja tipoPared). */
   materialLabel(c: CanchaLibre): string {

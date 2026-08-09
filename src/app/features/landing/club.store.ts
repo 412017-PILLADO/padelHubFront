@@ -76,7 +76,6 @@ export class ClubStore {
   readonly requiereTelefono = computed(() => this.config()?.tenant.requiereTelefono ?? true);
 
   // ── Seña ──────────────────────────────────────────────────────────
-  readonly requiereSena = computed(() => this.config()?.requiereSena ?? false);
   readonly senaMonto = computed(() => this.config()?.senaMonto ?? null);
   readonly senaMontoFmt = computed(() => {
     const m = this.senaMonto();
@@ -100,8 +99,6 @@ export class ClubStore {
     const h = this.instagramHandle();
     return h ? `https://instagram.com/${h}` : null;
   });
-
-  readonly politicaCancelacion = computed(() => this.config()?.politicaCancelacion ?? null);
 
   readonly horarios = computed<HoursRow[]>(() =>
     agruparHorarios(this.config()?.horarios ?? [])

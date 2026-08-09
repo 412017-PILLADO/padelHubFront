@@ -11,8 +11,10 @@ import { LandingFooterComponent } from '../../club/landing-footer';
  * izquierda, la reserva ocupando la columna principal.
  *
  * El `<div class="tpl-c">` que envolvía todo en `landing.html` es ahora el host (`host: { class }`):
- * los e2e siguen viendo `.tpl-c`, y `club-info.scss` / `booking-flow.scss` la siguen usando como
- * ancestro (`:host-context(.tpl-c)`, `.tpl-c .booking-flow`).
+ * los e2e siguen viendo `.tpl-c`, y `club-info.scss` la sigue usando como ancestro
+ * (`:host-context(.tpl-c)`). El flujo de reserva ya NO: `booking-flow.scss` no tiene un solo
+ * selector `.tpl-*` desde que se lo viste con los tokens `--flow-*` que declara `_tokens.scss` de
+ * esta cáscara.
  *
  * Los dos modales son transversales a las 3 plantillas y viven en `Landing`: la cáscara solo avisa
  * que hay que abrirlos — mismo contrato que ya usan `<app-booking-flow>` y `<app-landing-footer>`.

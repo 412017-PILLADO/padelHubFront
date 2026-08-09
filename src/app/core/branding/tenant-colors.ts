@@ -86,6 +86,10 @@ export function inkOnAccent(hex: string | null | undefined, inkHex: string = DAR
 function tokensPrimeNG(c: string): Record<string, string> {
   const tokens: Record<string, string> = {
     '--p-primary-color': c,
+    // A propósito SIN pasarle la tinta del shell: los componentes de PrimeNG (datepicker, dialogs,
+    // selects) se pintan sobre superficies claras del sistema en las tres plantillas, no sobre el
+    // fondo de la cáscara. Cablearle la tinta de la plantilla —cuando la B pase a oscura— le daría
+    // el contraste al revés justo acá. Esta llamada está bien como está: no la "arregles".
     '--p-primary-contrast-color': inkOnAccent(c),
     '--p-primary-hover-color': `color-mix(in srgb, ${c} 88%, #000)`,
     '--p-primary-active-color': `color-mix(in srgb, ${c} 78%, #000)`,

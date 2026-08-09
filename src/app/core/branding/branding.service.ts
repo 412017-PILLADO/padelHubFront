@@ -26,7 +26,11 @@ const PLANTILLA_PANEL = 'A';
  *
  * Fuentes de datos según el contexto:
  * - Panel autenticado (`loadAdmin`): `/api/v1/agenda/marca`, la marca del tenant del JWT.
- * - Login / landing (`apply`): datos ya cargados de `/public/config` (resuelto por subdominio).
+ * - Login (`apply`): datos ya cargados de `/public/config` (resuelto por subdominio).
+ *
+ * La landing pública NO pasa por acá: `ClubStore.applyBranding()` llama derecho a
+ * `applyTenantColors()` con la tinta de su plantilla. Por eso `PLANTILLA_PANEL` puede ser una
+ * constante — este archivo sólo pinta panel y login, y ninguno de los dos varía la tinta.
  */
 @Injectable({ providedIn: 'root' })
 export class BrandingService {
