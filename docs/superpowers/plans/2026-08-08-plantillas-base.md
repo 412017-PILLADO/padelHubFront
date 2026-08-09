@@ -17,7 +17,7 @@
 - **SSR:** la landing se renderiza en server (`RenderMode.Server`). Nada de `window`/`localStorage`/`document` global sin guardar con `isPlatformBrowser`; el `DOCUMENT` va **inyectado**, nunca el global (es el patrón que ya usan `landing.ts:115` y `branding.service.ts:25`).
 - **Etapa A no cambia pixels.** Se mueven clases, atributos y estructura DOM tal cual. Si algo *parece* mejorable, se anota y se deja para el Plan 2.
 - **Prohibido tocar los specs e2e existentes en los Tasks 1-5.** Son la prueba de que el refactor no rompió nada. Si un spec falla, se arregla el código, no el spec.
-- Verificación de cada task: `npm run build` verde **y** `npx playwright test e2e` verde (suite completa; hoy 13 tests).
+- Verificación de cada task: `npm run build` verde **y** `npx playwright test e2e` verde (suite completa; hoy 20 tests).
 - **Playwright se corre SIEMPRE con el path `e2e`** (`npx playwright test e2e`). Sin el path, el runner escanea `src/`, `.claude/` y el proyecto hermano `BarberApp`, carga dos `@playwright/test` y se corrompe ("did not expect test()").
 - Pre-requisitos para los e2e: MySQL arriba (`docker compose up -d` en `padelBack`, puerto 3308) y backend en **:8095** (`e2e/helpers.ts:3`). El front lo levanta el propio Playwright en :4400 — **no** dejar un `ng serve` propio ocupando ese puerto.
 - Unit tests: `npm test` (builder `@angular/build:unit-test`, corre todos los `*.spec.ts` de `src/`).
@@ -62,6 +62,9 @@ Saca de `landing.ts` todo lo que responde "qué club es éste": config pública,
     readonly senaMontoFmt: Signal<string | null>;
     readonly senaAlias: Signal<string | null>;
     readonly politicaCancelacion: Signal<string | null>;
+    /** Estado del fetch. `error` es un estado propio y no "config sigue en null": el flujo de
+     *  reserva necesita distinguirlos para arrancar con sus defaults y avisarle al visitante. */
+    readonly estadoCarga: Signal<'idle' | 'cargando' | 'ok' | 'error'>;
     cargar(): void;                               // fetch + branding + SEO (idempotente)
     setPreviewPlantilla(tpl: string): void;
   }
@@ -120,6 +123,10 @@ Crear el archivo con:
 
 `cargar()` es idempotente: si ya hay `config()` cargada, retorna sin hacer nada.
 
+**Ojo — `loadConfig` mezcla dos responsabilidades.** Su `subscribe` hace, además del fetch y el branding, tres cosas que son del flujo de reserva: `duracion.set(cfg.duracionDefault)` e `initDefaultDay()` en el camino feliz, y `duracion.set(90)` + `initDefaultDay()` + un toast de error en el otro. Esas tres **no** van a `ClubStore` (no inyecta `MessageService` ni conoce la duración).
+
+La separación: `cargar()` mueve `estadoCarga` a `'cargando'` al empezar y a `'ok'`/`'error'` al terminar, y en `Landing` un `effect()` sobre `estadoCarga()` dispara lo del flujo — con el toast copiado **literal** del `error:` de hoy. En el Task 2 ese mismo effect se muda a `BookingStore` sin cambios. Se usa una señal de estado y no un callback justamente para que esa mudanza sea un corte y pegue.
+
 - [ ] **Step 4: Correr el test y verificar que pasa**
 
 ```bash
@@ -161,7 +168,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: build verde; Playwright **13 passed**. Si algún test falla, el problema está en el movimiento — arreglá el código, no el spec.
+Esperado: build verde; Playwright **20 passed**. Si algún test falla, el problema está en el movimiento — arreglá el código, no el spec.
 
 - [ ] **Step 7: Commit**
 
@@ -180,7 +187,8 @@ git commit -m "refactor(landing): extrae ClubStore con la identidad del club"
 - Modify: `src/app/features/landing/landing.ts`
 
 **Interfaces:**
-- Consumes: `ClubStore` (Task 1) para `config`, `requiereTelefono`, `mostrarPrecios`; `BookingService.disponibilidad()`, `.crearReserva()`, `.crearLinkSena()`.
+- Consumes: `ClubStore` (Task 1) para `config`, `estadoCarga`, `requiereTelefono`, `mostrarPrecios`; `BookingService.disponibilidad()`, `.crearReserva()`, `.crearLinkSena()`.
+- **Se muda acá el `effect()` sobre `estadoCarga`** que el Task 1 dejó en `Landing` (duración default + día inicial en `'ok'`; defaults + toast en `'error'`). Es un corte y pegue: el `MessageService` se inyecta ahora en `BookingStore`.
 - Produces:
   ```ts
   @Injectable() export class BookingStore {
@@ -315,7 +323,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: build verde; **13 passed**. Este es el task de mayor riesgo del plan: si algo se rompe, mirá primero `confirm()` y `loadAvailability()`, que son los que más `this.` cruzados tenían.
+Esperado: build verde; **20 passed**. Este es el task de mayor riesgo del plan: si algo se rompe, mirá primero `confirm()` y `loadAvailability()`, que son los que más `this.` cruzados tenían.
 
 - [ ] **Step 7: Commit**
 
@@ -391,7 +399,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: **13 passed**. Estos specs tocan `.dur-chips .chip`, `.times .slot`, `.ccard.any`, `#fName`, `.confirm`, `.success.open` y `.recap`: si pasan, el contrato del markup se mantuvo.
+Esperado: **20 passed**. Estos specs tocan `.dur-chips .chip`, `.times .slot`, `.ccard.any`, `#fName`, `.confirm`, `.success.open` y `.recap`: si pasan, el contrato del markup se mantuvo.
 
 - [ ] **Step 5: Revisión visual obligatoria**
 
@@ -464,7 +472,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: **13 passed** (`arrepentimiento.spec.ts` cubre el botón del footer: es el que valida este task).
+Esperado: **20 passed** (`arrepentimiento.spec.ts` cubre el botón del footer: es el que valida este task).
 
 - [ ] **Step 5: Revisión visual en las tres plantillas**
 
@@ -530,7 +538,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: **13 passed**. `plantillas.spec.ts` verifica `[data-tpl="A|B|C"]` **y** `.poster`/`.tpl-b`/`.tpl-c` visibles: es exactamente el contrato de este task.
+Esperado: **20 passed**. `plantillas.spec.ts` verifica `[data-tpl="A|B|C"]` **y** `.poster`/`.tpl-b`/`.tpl-c` visibles: es exactamente el contrato de este task.
 
 - [ ] **Step 4: Revisión visual de las tres, 390 y 1440**
 
@@ -878,7 +886,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: **13 passed** — el comportamiento visible no cambia todavía (las tres plantillas actuales son claras y usan la tinta por defecto).
+Esperado: **20 passed** — el comportamiento visible no cambia todavía (las tres plantillas actuales son claras y usan la tinta por defecto).
 
 - [ ] **Step 7: Commit**
 
@@ -1119,7 +1127,7 @@ npm run build
 npx playwright test e2e
 ```
 
-Esperado: **13 passed**. Y comparación visual de las tres plantillas en 390×844 y 1440×900 — este task es 100% indirección, así que **cualquier** diferencia visible es un error de transcripción de un valor.
+Esperado: **20 passed**. Y comparación visual de las tres plantillas en 390×844 y 1440×900 — este task es 100% indirección, así que **cualquier** diferencia visible es un error de transcripción de un valor.
 
 - [ ] **Step 5: Commit**
 
@@ -1137,7 +1145,7 @@ Con los 10 tasks hechos: el visitante ve **exactamente lo mismo que antes**, per
 **Qué NO cambió y es correcto que no haya cambiado:** ninguna plantilla se ve distinta, la galería del panel sigue siendo un `<select>` y marketing sigue sin la sección de personalización. Eso es el Plan 2 y el Plan 3.
 
 **Antes de empezar el Plan 2**, verificar que se cumple todo esto:
-- `npx playwright test e2e` → 13 passed, **con los specs sin modificar**.
+- `npx playwright test e2e` → 20 passed, **con los specs sin modificar**.
 - `npm test` → 19 passed.
 - `./mvnw verify` en `padelBack` → verde, con los 2 tests nuevos de `PlatformIT`.
 - Ningún shell pinta el flujo desde afuera: `grep -rn "booking-flow" src/app/features/landing/shells/` no devuelve reglas de estilo.
