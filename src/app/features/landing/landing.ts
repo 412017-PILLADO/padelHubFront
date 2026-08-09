@@ -18,6 +18,7 @@ import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-mo
 import { PoliticaModal } from './politica-modal/politica-modal';
 import { ClubStore } from './club.store';
 import { BookingStore } from './booking/booking.store';
+import { BookingFlowComponent } from './booking/booking-flow';
 
 const ES_TRANSLATION = {
   firstDayOfWeek: 1,
@@ -49,6 +50,7 @@ const ES_TRANSLATION = {
     NgTemplateOutlet,
     ArrepentimientoModal,
     PoliticaModal,
+    BookingFlowComponent,
   ],
   providers: [MessageService, ClubStore, BookingStore],
   templateUrl: './landing.html',
