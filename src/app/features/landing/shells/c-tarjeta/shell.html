@@ -1,0 +1,24 @@
+<aside class="c-rail">
+  <!-- El nombre acompaña SIEMPRE al logo (pedido del owner): es la marca del club, y el rail
+       es el único lugar donde vive. Para que entre en 280px el nombre puede ir a dos líneas
+       y el logo se topea más chico — ver shell.scss. -->
+  <div class="c-brandline">
+    <app-brand-mark />
+    <span class="c-brandname display">{{ tenantNombre() }}</span>
+  </div>
+  <!-- La info del club vive en el rail: la columna principal queda entera para reservar
+       (lo que promete la plantilla). En mobile el rail se disuelve (display:contents) y la
+       info vuelve a caer debajo de la reserva — ver shell.scss. -->
+  <section id="c-info" class="c-info">
+    <app-club-info />
+  </section>
+</aside>
+
+<main class="c-main">
+  <section id="reservar" class="c-book" tabindex="-1">
+    <app-booking-flow (abrirPolitica)="abrirPolitica.emit()" />
+  </section>
+</main>
+
+<app-landing-footer class="c-foot"
+  (abrirArrepentimiento)="abrirArrepentimiento.emit()" (abrirPolitica)="abrirPolitica.emit()" />

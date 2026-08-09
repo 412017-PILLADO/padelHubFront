@@ -4,6 +4,7 @@ import { MessageService } from 'primeng/api';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { Landing } from './landing';
+import { BookingStore } from './booking/booking.store';
 import { BookingService } from '../../core/api/booking.service';
 
 /**
@@ -18,8 +19,9 @@ import { BookingService } from '../../core/api/booking.service';
  * config falla → el visitante clickea una duración → el toast de error NO debe repetirse.
  *
  * Se mantiene apuntando a `Landing` a propósito, aunque el effect ya viva en `BookingStore`: así
- * cubre también el cableado real (el componente provee ClubStore + BookingStore + MessageService y
- * el click entra por el alias `pickDuracion` que usa landing.html).
+ * cubre también el cableado real (el componente provee ClubStore + BookingStore + MessageService, y
+ * el click se toma del MISMO `BookingStore` del árbol, que es el que inyecta el `<app-booking-flow>`
+ * de la cáscara — el mismo objeto contra el que corre el effect).
  */
 describe('Landing — effect de estadoCarga', () => {
   it('un click de duración después de que la config falló no repite el toast de error', () => {
@@ -43,7 +45,10 @@ describe('Landing — effect de estadoCarga', () => {
     expect(addSpy).toHaveBeenCalledTimes(1); // el toast de "no pudimos cargar la configuración"
 
     // El visitante clickea una duración DESPUÉS de que la config ya falló y el toast ya salió.
-    fixture.componentInstance.pickDuracion(60);
+    // El click entra por el store (es lo que hace el botón de `<app-booking-flow>`); el store es el
+    // que provee `Landing`, o sea el dueño del effect que este test vigila.
+    const store = fixture.debugElement.injector.get(BookingStore);
+    store.pickDuracion(60);
     TestBed.tick();
 
     // Con el bug (duracionElegida como signal leída dentro del effect), este click reagendaba el

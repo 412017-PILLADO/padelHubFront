@@ -5,8 +5,8 @@ import { ClubStore } from '../club.store';
 
 /**
  * Info del club (horarios + dónde estamos + contacto) como tarjetas, reusada por las plantillas B y
- * C. La plantilla A tiene su propia versión bespoke (`.info-block/.hours/.link-row`, todavía en
- * `landing.html`): se unifica en el Plan 2, cuando se pueda comparar el pixel.
+ * C. La plantilla A tiene su propia versión bespoke (`.info-block/.hours/.link-row`, en
+ * `shells/a-afiche/`): se unifica en el Plan 2, cuando se pueda comparar el pixel.
  *
  * El host es `display: contents` a propósito: las `.ic-card` son items de la grilla que declara la
  * cáscara (`.b-info` / `.c-info`). Si el host fuese una caja, la grilla pasaría a tener UN hijo y

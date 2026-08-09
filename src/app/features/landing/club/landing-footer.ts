@@ -9,8 +9,9 @@ import { ClubStore } from '../club.store';
  * salvo la clase del contenedor.
  *
  * Esa clase (`pb-foot` / `b-foot` / `c-foot`) sigue siendo responsabilidad de la cáscara: se pone
- * sobre el host y desde `landing.scss` le da a cada plantilla su borde, su padding y su lugar en el
- * layout. Acá viven `:host` con lo que las tres comparten y el interior del pie.
+ * sobre el host y desde la hoja de cada cáscara (ver shells/) le da a cada plantilla su borde, su
+ * padding y su lugar en el layout. Acá viven `:host` con lo que las tres comparten y el interior
+ * del pie.
  *
  * Los dos modales (arrepentimiento y política) son transversales y viven en `Landing`: el pie solo
  * avisa que hay que abrirlos — mismo contrato que ya usa `<app-booking-flow>`.

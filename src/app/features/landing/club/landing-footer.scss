@@ -1,6 +1,6 @@
 /* Lo que las tres cáscaras tenían en común. El resto (margen, padding, borde, color de fondo y
-   lugar en el layout) sigue en landing.scss sobre `.pb-foot` / `.b-foot` / `.c-foot`, que son
-   clases del host y por lo tanto le siguen llegando desde el template de la landing. */
+   lugar en el layout) lo pone cada cáscara en SU hoja (ver shells/) sobre `.pb-foot` / `.b-foot` /
+   `.c-foot`, que son clases del host y por lo tanto le siguen llegando desde afuera. */
 :host {
   display: flex;
   justify-content: space-between;

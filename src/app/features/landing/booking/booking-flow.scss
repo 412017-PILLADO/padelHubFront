@@ -4,7 +4,7 @@
 
    La hoja es GLOBAL (ViewEncapsulation.None, ver booking-flow.ts): al final del archivo quedan
    las reglas con las que las plantillas B y C todavía pintan el interior del flujo desde afuera.
-   Esas reglas necesitan casar `.tpl-b`/`.tpl-c` (que vienen del template de Landing) con el DOM
+   Esas reglas necesitan casar `.tpl-b`/`.tpl-c` (hoy el host de cada cáscara) con el DOM
    del flujo, y con estilos encapsulados no lo harían. El Task 10 las reemplaza por tokens
    --flow-* y ahí se puede volver a encapsular.
    =================================================================== */

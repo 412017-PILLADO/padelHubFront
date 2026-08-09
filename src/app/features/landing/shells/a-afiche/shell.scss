@@ -1,0 +1,223 @@
+/* ===================================================================
+   PLANTILLA A · Afiche (la default).
+
+   Salió tal cual del bloque `.poster*` de landing.scss, EN EL MISMO ORDEN (hay reglas que se pisan
+   entre sí por orden de aparición, no por especificidad: ver los @media de poca altura, que van
+   antes de la regla base de `.poster-brand`). `.poster` era el div que envolvía la plantilla y
+   ahora es el host de esta cáscara, así que esas reglas pasan a `:host`.
+
+   La que NO se pudo mudar es `:host([data-tpl='A']) { height: 100svh; overflow: hidden; }`: ese
+   host es el de `<app-landing>` (el que lleva el atributo), no el de esta cáscara — sigue en
+   landing.scss.
+   =================================================================== */
+
+/* ===================== LAYOUT =====================
+   En desktop (≥900px) la página se fija al viewport (100svh, sin scroll de documento): el
+   afiche izquierdo queda CLAVADO y solo scrollea internamente la columna derecha (los pasos).
+   La info del afiche se muestra completa (altura natural, footer al fondo con margin-top:auto)
+   gracias a la compactación por altura de más abajo. En mobile el flujo se apila natural. */
+:host {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 100svh;
+}
+@media (min-width: 900px) {
+  :host {
+    height: 100svh;
+    min-height: 0;
+    grid-template-columns: minmax(300px, 34%) 1fr;
+  }
+}
+/* Desktop de poca altura (notebooks 768/720): el héroe decorativo aprieta la info y la mandaba a
+   scroll. El título ya está grande en la columna derecha, así que acá lo ocultamos y compactamos
+   para que horarios + contacto entren completos sin scroll interno. */
+@media (min-width: 900px) and (max-height: 880px) {
+  .poster-brand { padding-top: 28px; padding-bottom: 26px; }
+  .poster-hero { display: none; }
+  .info { margin-top: 20px; gap: 16px; }
+}
+@media (min-width: 900px) and (max-height: 760px) {
+  .poster-brand { padding-top: 22px; padding-bottom: 18px; }
+  .info { margin-top: 14px; gap: 12px; }
+  .link-row, .map-stub { padding-top: 9px; padding-bottom: 9px; }
+  .pb-foot { margin-top: 12px; padding-top: 10px; }
+  .brand-mark { width: 30px; height: 30px; }
+  .logo-type .name { font-size: 1.45rem; }
+  .logo-type .rule { margin: 6px 0 4px; }
+  .info-h { margin-bottom: 6px; }
+  .addr { margin-bottom: 8px; }
+}
+
+/* ===================== AFICHE (marca) =====================
+   Texto del afiche: usa --ink-on-accent (blanco u oscuro según la luminancia del color del tenant,
+   ver BrandingService/ClubStore.applyBranding) en vez de blanco fijo, para que un club con color claro
+   (amarillo, celeste) siga siendo legible (M11). Fallback #fff = comportamiento previo. */
+.poster-brand {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(150deg, var(--court), var(--court-deep));
+  color: var(--ink-on-accent, #fff);
+  padding: clamp(24px, 3vw, 40px);
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.watermark {
+  position: absolute;
+  right: -0.1em;
+  bottom: -0.18em;
+  font-size: clamp(7rem, 16vw, 12rem);
+  line-height: 0.8;
+  color: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
+  z-index: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.poster-brand > * { position: relative; z-index: 1; }
+
+.pb-head { flex: none; }
+/* El logo se alinea con la primera línea del nombre (no centrado contra un nombre de 2 líneas). */
+.brand { display: flex; align-items: flex-start; gap: 14px; }
+/* Ícono paleta por defecto (sin logo): cuerpo del color de texto del afiche; el grip usa el
+   color secundario del tenant si está definido (se ve distinto al primario del fondo), si no, el mismo. */
+.brand-mark { width: 34px; height: 34px; color: var(--ink-on-accent, #fff); --paddle-grip: var(--court-2, currentColor); }
+.brand-mark svg { width: 100%; height: 100%; }
+/* Logo subido por el club (si lo tiene); si no, cae al de Padel-HUB.
+   Va sin chip: se apoya directo sobre el color del afiche, respetando la transparencia del PNG
+   (decisión del owner). Contrapartida: un logo del mismo tono que el color del club pierde
+   legibilidad — la card Marca recomienda fondo transparente y buen contraste. */
+.brand-logo {
+  display: inline-flex; align-items: center;
+  /* Compensa el line-height 0.92 del nombre para que el logo quede ópticamente a su nivel. */
+  margin-top: -2px;
+}
+.brand-logo img { height: 56px; width: auto; max-width: 200px; object-fit: contain; display: block; }
+.logo-type .name {
+  font-size: clamp(1.5rem, 2.6vw, 2.2rem);
+  line-height: 0.92;
+  color: var(--ink-on-accent, #fff);
+}
+.logo-type .rule { height: 2px; width: 46px; background: color-mix(in srgb, var(--ink-on-accent, #fff) 60%, transparent); margin: 8px 0 6px; }
+.logo-type .sub { color: color-mix(in srgb, var(--ink-on-accent, #fff) 92%, transparent); }
+
+.poster-hero {
+  flex: none;
+  font-size: clamp(2rem, 3.4vw, 3rem);
+  line-height: 0.92;
+  margin: clamp(12px, 2vh, 22px) 0;
+  color: var(--ink-on-accent, #fff);
+}
+.poster-hero span { color: color-mix(in srgb, var(--ink-on-accent, #fff) 72%, transparent); }
+
+/* — Info (altura natural, SIN scroll: el afiche izquierdo queda fijo y se ve completo) — */
+.info {
+  flex: 0 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.info-h { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.info-h .t { color: color-mix(in srgb, var(--ink-on-accent, #fff) 95%, transparent); }
+.info-h .ln { flex: 1; height: 1px; background: color-mix(in srgb, var(--ink-on-accent, #fff) 22%, transparent); }
+.hours { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.hours li { display: flex; justify-content: space-between; gap: 16px; font-size: 0.95rem; }
+.hours .d { color: color-mix(in srgb, var(--ink-on-accent, #fff) 98%, transparent); }
+.hours .h { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); }
+.hours .closed { color: color-mix(in srgb, var(--ink-on-accent, #fff) 70%, transparent); }
+.addr { color: color-mix(in srgb, var(--ink-on-accent, #fff) 98%, transparent); margin-bottom: 12px; }
+.map-stub {
+  border: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 25%, transparent);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.map-stub:hover {
+  background: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ink-on-accent, #fff) 50%, transparent);
+}
+.mlabel { display: inline-flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+.mlabel svg { width: 18px; height: 18px; }
+.actions { display: flex; flex-direction: column; gap: 10px; }
+.link-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  border: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 25%, transparent);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.link-row:hover {
+  background: color-mix(in srgb, var(--ink-on-accent, #fff) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ink-on-accent, #fff) 50%, transparent);
+}
+.lr-l { display: inline-flex; align-items: center; gap: 12px; }
+.lr-ic { width: 22px; height: 22px; flex-shrink: 0; }
+.lr-t { display: block; font-weight: 600; font-size: 0.95rem; }
+.lr-s { display: block; font-size: 0.78rem; color: color-mix(in srgb, var(--ink-on-accent, #fff) 85%, transparent); }
+.arr { width: 18px; height: 18px; opacity: 0.7; }
+
+/* El pie es <app-landing-footer class="pb-foot">: acá va lo que la plantilla le pone desde afuera
+   (su lugar en el afiche y su borde); el interior lo viste landing-footer.scss. */
+.pb-foot {
+  flex: none;
+  margin-top: auto; /* empuja el footer al fondo del afiche cuando sobra alto */
+  padding-top: 14px;
+  border-top: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 18%, transparent);
+  align-items: center;
+}
+
+/* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
+   mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada
+   contra el ancho angosto de la columna afiche (que partía el © en 2 líneas y apilaba los links).
+   Solo toca .pb-foot (A); B y C ya se ven bien en una línea, quedan como están. El orden de los
+   hijos, que ya es DEL pie, se resuelve en landing-footer.scss. */
+@media (min-width: 900px) {
+  .pb-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* ===================== MOBILE (<900px) =====================
+   Orden pedido: (1) banda azul con "PADEL HUB DEMO" grande, (2) el formulario completo,
+   (3) banda azul con horarios/contacto abajo. Para poder intercalar el form ENTRE las dos
+   partes del afiche, disolvemos el <aside> con display:contents y ordenamos sus hijos junto
+   al form; cada banda azul recupera su fondo/padding (ya no lo aporta el aside). */
+@media (max-width: 899px) {
+  :host { display: flex; flex-direction: column; }
+  .poster-brand { display: contents; }
+  .poster-hero,
+  .watermark { display: none; }
+
+  /* (1) banda azul superior: el nombre del club, grande */
+  .pb-head {
+    order: 1;
+    background: linear-gradient(150deg, var(--court), var(--court-deep));
+    color: var(--ink-on-accent, #fff);
+    padding: 30px clamp(18px, 6vw, 26px) 26px;
+  }
+  .logo-type .name { font-size: clamp(2rem, 8.5vw, 2.8rem); }
+
+  /* (2) el formulario completo — su `order: 2` y su padding mobile viven en booking-flow.scss */
+
+  /* (3) banda azul inferior: horarios + dónde estamos + contacto + footer */
+  .info {
+    order: 3;
+    overflow: visible;
+    flex: 0 0 auto;
+    margin-top: 0;
+    background: linear-gradient(150deg, var(--court-deep), var(--court));
+    color: var(--ink-on-accent, #fff);
+    padding: 28px clamp(18px, 6vw, 26px) 18px;
+  }
+  .pb-foot {
+    order: 4;
+    margin-top: 0;
+    background: var(--court-deep);
+    color: var(--ink-on-accent, #fff);
+    padding: 14px clamp(18px, 6vw, 26px) 26px;
+  }
+}

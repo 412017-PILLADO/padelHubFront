@@ -8,15 +8,13 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
-import { CanchaLibre, Slot } from '../../core/api/booking.service';
 import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-modal';
 import { PoliticaModal } from './politica-modal/politica-modal';
 import { ClubStore } from './club.store';
 import { BookingStore } from './booking/booking.store';
-import { BookingFlowComponent } from './booking/booking-flow';
-import { BrandMarkComponent } from './club/brand-mark';
-import { ClubInfoComponent } from './club/club-info';
-import { LandingFooterComponent } from './club/landing-footer';
+import { ShellAComponent } from './shells/a-afiche/shell';
+import { ShellBComponent } from './shells/b-nocturna/shell';
+import { ShellCComponent } from './shells/c-tarjeta/shell';
 
 const ES_TRANSLATION = {
   firstDayOfWeek: 1,
@@ -35,6 +33,15 @@ const ES_TRANSLATION = {
   clear: 'Limpiar',
 };
 
+/**
+ * Dispatcher de la landing: elige la cáscara de la plantilla del club (ver shells/) y se queda con
+ * lo que es transversal a las tres — el toast, los defs SVG compartidos, los dos modales
+ * (arrepentimiento y política) y el selector flotante del preview de venta.
+ *
+ * Es el dueño de los tres providers del árbol: `ClubStore` (quién es el club), `BookingStore` (qué
+ * está reservando este visitante) y el `MessageService` de PrimeNG que alimenta al `<p-toast>`.
+ * Las cáscaras y sus hijos los inyectan desde acá.
+ */
 @Component({
   selector: 'app-landing',
   standalone: true,
@@ -43,10 +50,9 @@ const ES_TRANSLATION = {
     ToastModule,
     ArrepentimientoModal,
     PoliticaModal,
-    BookingFlowComponent,
-    BrandMarkComponent,
-    ClubInfoComponent,
-    LandingFooterComponent,
+    ShellAComponent,
+    ShellBComponent,
+    ShellCComponent,
   ],
   providers: [MessageService, ClubStore, BookingStore],
   templateUrl: './landing.html',
@@ -56,120 +62,23 @@ const ES_TRANSLATION = {
 export class Landing {
   private readonly primeng = inject(PrimeNG);
   private readonly club = inject(ClubStore);
+  /**
+   * Se inyecta acá y no recién cuando `<app-booking-flow>` lo pide (allá adentro de la cáscara):
+   * `BookingStore` registra en su constructor el effect sobre `club.estadoCarga()`, y tiene que
+   * estar registrado ANTES del `cargar()` de abajo. Con el transfer state del SSR la config puede
+   * resolver sincrónicamente, antes del primer render — o sea, antes de que exista la cáscara.
+   */
   private readonly booking = inject(BookingStore);
 
-  // ── Identidad del club (config, branding, SEO, horarios, contacto, seña) ──────────
-  // Alias hacia ClubStore: andamio a propósito para no tocar landing.html en este refactor.
-  readonly config = this.club.config;
-  readonly tenantNombre = this.club.tenantNombre;
-  readonly tenantPrimerNombre = this.club.tenantPrimerNombre;
+  /** La plantilla elegida: manda el `@switch` del template y el `data-tpl` del host. */
   readonly plantilla = this.club.plantilla;
+  /** El texto de la política de cancelación sale de acá (`config()?.politicaCancelacion`). */
+  readonly config = this.club.config;
   readonly previewPlantilla = this.club.previewPlantilla;
-  readonly logoSrc = this.club.logoSrc;
-  readonly horarios = this.club.horarios;
-  readonly direccion = this.club.direccion;
-  readonly mapaUrl = this.club.mapaUrl;
-  readonly whatsappUrl = this.club.whatsappUrl;
-  readonly instagramHandle = this.club.instagramHandle;
-  readonly instagramUrl = this.club.instagramUrl;
-  readonly mostrarPrecios = this.club.mostrarPrecios;
-  readonly requiereTelefono = this.club.requiereTelefono;
-  readonly requiereSena = this.club.requiereSena;
-  readonly senaMonto = this.club.senaMonto;
-  readonly senaMontoFmt = this.club.senaMontoFmt;
-  readonly senaAlias = this.club.senaAlias;
 
   /** Click en el selector flotante A/B/C: delega en ClubStore (ver ahí el detalle). */
   setPreviewPlantilla(tpl: string): void {
     this.club.setPreviewPlantilla(tpl);
-  }
-
-  // ── Flujo de reserva (duración, día, hora, cancha, datos, confirmación, éxito) ────
-  // Mismo andamio que arriba, ahora hacia BookingStore: los nombres son los que ya usa landing.html.
-  readonly minDate = this.booking.minDate;
-  readonly duraciones = this.booking.duraciones;
-  readonly duracion = this.booking.duracion;
-  readonly showDuracion = this.booking.showDuracion;
-  readonly showCancha = this.booking.showCancha;
-  readonly stepNums = this.booking.stepNums;
-  readonly chips = this.booking.chips;
-  readonly customDay = this.booking.customDay;
-  readonly calOpen = this.booking.calOpen;
-  readonly pickerValue = this.booking.pickerValue;
-  readonly slots = this.booking.slots;
-  readonly loadingSlots = this.booking.loadingSlots;
-  readonly selectedTime = this.booking.selectedTime;
-  readonly canchasDelSlot = this.booking.canchasDelSlot;
-  readonly ANY = this.booking.ANY;
-  readonly dayDone = this.booking.dayDone;
-  readonly timeDone = this.booking.timeDone;
-  readonly canchaDone = this.booking.canchaDone;
-  readonly timeHint = this.booking.timeHint;
-  readonly showTimes = this.booking.showTimes;
-  readonly nombre = this.booking.nombre;
-  readonly whatsapp = this.booking.whatsapp;
-  readonly empresa = this.booking.empresa;
-  readonly nombreTouched = this.booking.nombreTouched;
-  readonly whatsappTouched = this.booking.whatsappTouched;
-  readonly nombreValid = this.booking.nombreValid;
-  readonly whatsappValid = this.booking.whatsappValid;
-  readonly formValid = this.booking.formValid;
-  readonly formOpen = this.booking.formOpen;
-  readonly canConfirm = this.booking.canConfirm;
-  readonly confirmBlockedReason = this.booking.confirmBlockedReason;
-  readonly precioResumen = this.booking.precioResumen;
-  readonly recap = this.booking.recap;
-  readonly enviando = this.booking.enviando;
-  readonly success = this.booking.success;
-  readonly successData = this.booking.successData;
-  readonly senaInitPoint = this.booking.senaInitPoint;
-  readonly aliasCopiado = this.booking.aliasCopiado;
-  readonly whatsappSenaUrl = this.booking.whatsappSenaUrl;
-
-  pickDuracion(d: number): void {
-    this.booking.pickDuracion(d);
-  }
-  chipDate(d: Date): string {
-    return this.booking.chipDate(d);
-  }
-  isChipSelected(d: Date): boolean {
-    return this.booking.isChipSelected(d);
-  }
-  selectDay(date: Date): void {
-    this.booking.selectDay(date);
-  }
-  toggleCalendar(): void {
-    this.booking.toggleCalendar();
-  }
-  onPickerSelect(value: Date): void {
-    this.booking.onPickerSelect(value);
-  }
-  selectTime(slot: Slot): void {
-    this.booking.selectTime(slot);
-  }
-  selectCancha(id: number): void {
-    this.booking.selectCancha(id);
-  }
-  isCanchaSelected(id: number): boolean {
-    return this.booking.isCanchaSelected(id);
-  }
-  materialLabel(c: CanchaLibre): string {
-    return this.booking.materialLabel(c);
-  }
-  precioEsEspecial(c: CanchaLibre): boolean {
-    return this.booking.precioEsEspecial(c);
-  }
-  precioTurno(c: CanchaLibre): string | null {
-    return this.booking.precioTurno(c);
-  }
-  confirm(): void {
-    this.booking.confirm();
-  }
-  backHome(): void {
-    this.booking.backHome();
-  }
-  copyAlias(): void {
-    this.booking.copyAlias();
   }
 
   // ── Botón de arrepentimiento (Res. 424/2020) ───────────────────────
@@ -193,10 +102,5 @@ export class Landing {
   // ── Política de cancelación ─────────────────────────────────────────
   abrirPolitica(): void {
     this.showPolitica.set(true);
-  }
-
-  openMaps(): void {
-    const url = this.mapaUrl();
-    if (url) window.open(url, '_blank');
   }
 }

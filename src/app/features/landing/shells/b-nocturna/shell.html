@@ -1,0 +1,25 @@
+<!-- La marca (logo + nombre) vive UNA sola vez, arriba en la nav: el héroe repetía el mismo
+     logo debajo (feedback del owner) y en mobile, con el héroe oculto, el nombre terminaba
+     colgado en el encabezado de la reserva. -->
+<header class="b-nav">
+  <div class="b-brandline">
+    <app-brand-mark />
+    <span class="b-brandname display">{{ tenantNombre() }}</span>
+  </div>
+</header>
+
+<section class="b-hero">
+  <h1 class="b-title display">{{ tenantNombre() }}</h1>
+  <p class="b-lede">Reservá tu cancha en 30 segundos. Sin llamados, sin esperas.</p>
+</section>
+
+<section id="reservar" class="b-book">
+  <app-booking-flow (abrirPolitica)="abrirPolitica.emit()" />
+</section>
+
+<section id="b-info" class="b-info">
+  <app-club-info />
+</section>
+
+<app-landing-footer class="b-foot"
+  (abrirArrepentimiento)="abrirArrepentimiento.emit()" (abrirPolitica)="abrirPolitica.emit()" />
