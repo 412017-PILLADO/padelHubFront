@@ -1,6 +1,8 @@
-import { isPlatformBrowser } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { ChangeDetectionStrategy, Component, PLATFORM_ID, inject, output } from '@angular/core';
 
+import { cargarFuentes } from '../../../../core/landing/fuentes';
+import { PLANTILLAS, urlFuentes } from '../../../../core/landing/plantillas';
 import { ClubStore } from '../../club.store';
 import { BookingFlowComponent } from '../../booking/booking-flow';
 import { LandingFooterComponent } from '../../club/landing-footer';
@@ -34,9 +36,17 @@ export class ShellAComponent {
   private readonly club = inject(ClubStore);
   /** La landing se renderiza también en el server: nada de `window` sin este guard. */
   private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
+  /** Inyectado (no el global): en SSR es el documento que se serializa — ver constructor. */
+  private readonly doc = inject(DOCUMENT);
 
   readonly abrirArrepentimiento = output<void>();
   readonly abrirPolitica = output<void>();
+
+  constructor() {
+    // Cada cáscara pide SU tipografía y ninguna más. Como esto corre también en el server, el
+    // <link> viaja en el HTML servido y no hay parpadeo con la fuente del sistema hasta hidratar.
+    cargarFuentes(this.doc, urlFuentes(PLANTILLAS.A.fuentes));
+  }
 
   // Alias con los nombres que ya usaba landing.html: el template se movió verbatim.
   readonly tenantNombre = this.club.tenantNombre;

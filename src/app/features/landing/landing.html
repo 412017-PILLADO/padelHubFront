@@ -15,8 +15,10 @@
 
 <!-- ===================================================================
      Cada plantilla es una cáscara con su propio markup y su propia hoja (ver shells/). Acá solo se
-     elige cuál: la del club, o la del preview `?plantilla=` si vino en la URL. El @default es la A,
-     que es la plantilla por defecto de un club que no eligió ninguna.
+     elige cuál: la del club, o la del preview `?plantilla=` si vino en la URL — el código ya viene
+     validado contra el registry (core/landing/plantillas.ts). El @default cubre dos casos: la A,
+     que es la plantilla por defecto, y los códigos del registry que todavía no tienen cáscara
+     propia (D y E), que hasta el Plan 2 se muestran como la A.
      =================================================================== -->
 @switch (plantilla()) {
   @case ('B') {
@@ -48,14 +50,15 @@
 
 <!-- ===================================================================
      Preview de plantillas (herramienta de venta): solo aparece si vino `?plantilla=` en la URL.
-     Deja probar las 3 plantillas en vivo sin persistir nada (ver landing.ts: previewPlantilla).
+     Deja probar en vivo, sin persistir nada, las plantillas que tienen cáscara (ver
+     club.store.ts: PLANTILLAS_PREVIEW; landing.ts: opcionesPreview).
      =================================================================== -->
 @if (previewPlantilla(); as activa) {
   <div class="tpl-pill" role="group" aria-label="Preview de plantilla">
-    @for (opt of ['A', 'B', 'C']; track opt) {
-      <button type="button" class="tpl-opt" [class.on]="opt === activa"
-        [attr.aria-pressed]="opt === activa"
-        (click)="setPreviewPlantilla(opt)">{{ opt }}</button>
+    @for (opt of opcionesPreview; track opt.codigo) {
+      <button type="button" class="tpl-opt" [class.on]="opt.codigo === activa"
+        [attr.aria-pressed]="opt.codigo === activa" [attr.title]="opt.nombre"
+        (click)="setPreviewPlantilla(opt.codigo)">{{ opt.codigo }}</button>
     }
   </div>
 }

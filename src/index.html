@@ -43,10 +43,13 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="site.webmanifest">
 
-  <!-- ===== Tipografías ===== -->
+  <!-- ===== Tipografías =====
+       Sólo los preconnect: el <link> de la hoja lo arma la app, porque cada plantilla de landing
+       pide su propia familia (ver core/landing/plantillas.ts + fuentes.ts). El trío de plataforma
+       (Archivo · Hanken Grotesk · Space Mono) lo carga el initializer de app.config.ts, y como eso
+       corre también en SSR el <link> igual viaja en el HTML que sirve el server. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 
   <!-- ===== Datos estructurados (JSON-LD) ===== -->
   <script type="application/ld+json">

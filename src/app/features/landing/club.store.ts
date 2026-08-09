@@ -4,6 +4,7 @@ import { Meta, Title } from '@angular/platform-browser';
 
 import { BookingService, PublicConfig } from '../../core/api/booking.service';
 import { applyTenantColors } from '../../core/branding/tenant-colors';
+import { CodigoPlantilla, normalizarPlantilla } from '../../core/landing/plantillas';
 import { environment } from '../../../environments/environment';
 
 /** diaSemana 0..6 → Lunes..Domingo (matchea el contrato de /public/config). */
@@ -16,6 +17,14 @@ export interface HoursRow {
   rango: string;
   cerrado: boolean;
 }
+
+/**
+ * Plantillas que el preview de venta deja forzar por `?plantilla=`: las que hoy tienen cáscara
+ * propia. El registry ya lista las cinco, pero los shells de D y E llegan en el Plan 2 — dejar que
+ * se fuercen ahora mostraría la cáscara A con un `data-tpl` ajeno y un selector sin opción activa.
+ * Cuando existan sus shells, esta lista pasa a ser `CODIGOS_PLANTILLA` y se borra.
+ */
+export const PLANTILLAS_PREVIEW: readonly CodigoPlantilla[] = ['A', 'B', 'C'];
 
 /**
  * Quién es este club: config pública, sus derivados (branding, horarios agrupados, contacto, seña) y
@@ -43,17 +52,20 @@ export class ClubStore {
   readonly tenantPrimerNombre = computed(() => this.tenantNombre().split(/\s+/)[0]);
 
   // ── Preview de plantilla/color por query params (herramienta de venta, 100% efímero) ──
-  /** `?plantilla=A|B|C` (case-insensitive); cualquier otro valor → null. Se lee una sola vez al
-   *  iniciar (solo browser) y desde ahí en más se maneja con el selector flotante. */
-  readonly previewPlantilla = signal<string | null>(null);
+  /** `?plantilla=` con uno de los códigos de `PLANTILLAS_PREVIEW` (case-insensitive); cualquier
+   *  otro valor → null. Se lee una sola vez al iniciar (solo browser) y desde ahí en más se maneja
+   *  con el selector flotante. */
+  readonly previewPlantilla = signal<CodigoPlantilla | null>(null);
   /** `?color=%23RRGGBB` (hex `#RGB`/`#RRGGBB`, validado); cualquier otro valor → null. Nunca se
    *  inyecta el valor crudo en CSS sin pasar por este regex. */
   readonly previewColor = signal<string | null>(null);
 
-  /** Plantilla de landing elegida por el club: 'A' (poster), 'B' (hero), 'C' (app). Default 'A'.
-   *  El preview (`?plantilla=`) pisa la del tenant sin persistir nada. */
-  readonly plantilla = computed(() =>
-    (this.previewPlantilla() ?? this.config()?.tenant.plantilla ?? 'A').toUpperCase()
+  /** Plantilla de landing elegida por el club, ya normalizada contra el registry (ver
+   *  core/landing/plantillas.ts): un código que el catálogo no conozca cae en la default 'A', así
+   *  el `data-tpl` del host nunca expone un valor inventado por el back. El preview
+   *  (`?plantilla=`) pisa la del tenant sin persistir nada. */
+  readonly plantilla = computed<CodigoPlantilla>(() =>
+    normalizarPlantilla(this.previewPlantilla() ?? this.config()?.tenant.plantilla)
   );
 
   /** Logo del club: si el tenant tiene uno, la URL absoluta lista para el <img>; si no, null. */
@@ -122,12 +134,12 @@ export class ClubStore {
    * que el constructor decida CUÁNDO aplicarla. Después de este arranque, el selector flotante
    * actualiza `previewPlantilla` + la URL directamente (ya post-hidratación, sin este cuidado).
    */
-  private readPreviewParams(): string | null {
+  private readPreviewParams(): CodigoPlantilla | null {
     if (!isPlatformBrowser(this.platformId)) return null;
     const params = new URLSearchParams(location.search);
 
-    const tpl = params.get('plantilla');
-    const validTpl = tpl && /^[ABC]$/i.test(tpl) ? tpl.toUpperCase() : null;
+    const tpl = (params.get('plantilla') ?? '').trim().toUpperCase() as CodigoPlantilla;
+    const validTpl = PLANTILLAS_PREVIEW.includes(tpl) ? tpl : null;
 
     const color = params.get('color');
     if (color) {
@@ -144,7 +156,7 @@ export class ClubStore {
 
   /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
    *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
-  setPreviewPlantilla(tpl: string): void {
+  setPreviewPlantilla(tpl: CodigoPlantilla): void {
     this.previewPlantilla.set(tpl);
     if (!isPlatformBrowser(this.platformId)) return;
     const url = new URL(location.href);

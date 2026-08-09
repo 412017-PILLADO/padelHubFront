@@ -8,9 +8,10 @@ import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
 
+import { CodigoPlantilla, PLANTILLAS } from '../../core/landing/plantillas';
 import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-modal';
 import { PoliticaModal } from './politica-modal/politica-modal';
-import { ClubStore } from './club.store';
+import { ClubStore, PLANTILLAS_PREVIEW } from './club.store';
 import { BookingStore } from './booking/booking.store';
 import { ShellAComponent } from './shells/a-afiche/shell';
 import { ShellBComponent } from './shells/b-nocturna/shell';
@@ -37,6 +38,13 @@ const ES_TRANSLATION = {
  * Dispatcher de la landing: elige la cáscara de la plantilla del club (ver shells/) y se queda con
  * lo que es transversal a las tres — el toast, los defs SVG compartidos, los dos modales
  * (arrepentimiento y política) y el selector flotante del preview de venta.
+ *
+ * Qué plantillas existen y cuál es la default lo decide el registry (`core/landing/plantillas.ts`),
+ * no este archivo: `ClubStore.plantilla` ya viene normalizada contra él y el selector de preview
+ * sale de ahí. Lo único que queda acá es el mapeo código → componente, que el `@switch` del
+ * template tiene que escribir con referencias estáticas para que el compilador de Angular las vea
+ * (`NgComponentOutlet` sabría tomarlas de un mapa, pero no puede bindear los `output()` de las
+ * cáscaras). Los códigos sin cáscara todavía —D y E— caen en el `@default`, que es la A.
  *
  * Es el dueño de los tres providers del árbol: `ClubStore` (quién es el club), `BookingStore` (qué
  * está reservando este visitante) y el `MessageService` de PrimeNG que alimenta al `<p-toast>`.
@@ -72,14 +80,19 @@ export class Landing {
    */
   private readonly booking = inject(BookingStore);
 
-  /** La plantilla elegida: manda el `@switch` del template y el `data-tpl` del host. */
+  /** La plantilla elegida (ya normalizada contra el registry): manda el `@switch` del template y el
+   *  `data-tpl` del host. */
   readonly plantilla = this.club.plantilla;
   /** El texto de la política de cancelación sale de acá (`config()?.politicaCancelacion`). */
   readonly config = this.club.config;
   readonly previewPlantilla = this.club.previewPlantilla;
 
-  /** Click en el selector flotante A/B/C: delega en ClubStore (ver ahí el detalle). */
-  setPreviewPlantilla(tpl: string): void {
+  /** Botones del selector flotante: la ficha completa del registry de cada plantilla previsualizable
+   *  (el código pinta el botón, el nombre va de tooltip para quien está mostrando los diseños). */
+  readonly opcionesPreview = PLANTILLAS_PREVIEW.map((codigo) => PLANTILLAS[codigo]);
+
+  /** Click en el selector flotante: delega en ClubStore (ver ahí el detalle). */
+  setPreviewPlantilla(tpl: CodigoPlantilla): void {
     this.club.setPreviewPlantilla(tpl);
   }
 
