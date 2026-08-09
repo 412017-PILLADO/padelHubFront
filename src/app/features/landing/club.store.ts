@@ -37,7 +37,7 @@ export class ClubStore {
   /** Estado del fetch de la config pública. `error` es un estado propio y no "config sigue en
    *  null": el flujo de reserva necesita distinguirlos para arrancar con sus defaults y avisarle
    *  al visitante. */
-  readonly estadoCarga = signal<'idle' | 'cargando' | 'ok' | 'error'>('idle');
+  readonly estadoCarga = signal<'inicial' | 'cargando' | 'ok' | 'error'>('inicial');
 
   readonly tenantNombre = computed(() => this.config()?.complejo.nombre ?? 'Tu club');
   readonly tenantPrimerNombre = computed(() => this.tenantNombre().split(/\s+/)[0]);

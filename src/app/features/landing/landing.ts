@@ -133,8 +133,12 @@ export class Landing {
   readonly duracion = signal<number>(90);
   /** true en cuanto el visitante elige la duración a mano. El default de la config llega por un
    *  effect (ver constructor) que puede resolver DESPUÉS del primer click del visitante (el fetch
-   *  real es async); sin esta bandera ese default tardío pisaría la elección manual. */
-  private readonly duracionElegida = signal(false);
+   *  real es async); sin esta bandera ese default tardío pisaría la elección manual. Campo común
+   *  (NO signal) a propósito: el effect la lee, y si fuera reactiva, leerla adentro de sus ramas la
+   *  volvería una dependencia más — un click (que la pone en true) dispararía una re-ejecución
+   *  completa del effect (initDefaultDay() de nuevo, toast de error repetido). Nada la lee desde el
+   *  template tampoco, así que no hay ninguna razón para que sea reactiva. */
+  private duracionElegida = false;
 
   /**
    * Mostramos el paso de duración solo si el club permite otras duraciones y hay más de una. Si no,
@@ -359,6 +363,11 @@ export class Landing {
     () => this.dayDone() && !this.loadingSlots() && this.slots().length > 0
   );
 
+  /** Último estado de `club.estadoCarga()` ya procesado por el effect del constructor. Campo
+   *  común (no signal, no se lee reactivamente): solo sirve para que el effect sea idempotente
+   *  por transición si llega a re-ejecutarse más de una vez para el mismo estado. */
+  private ultimoEstadoAtendido: 'inicial' | 'cargando' | 'ok' | 'error' = 'inicial';
+
   constructor() {
     this.primeng.setTranslation(ES_TRANSLATION);
     // El fetch de config (ClubStore.cargar()) es async: la duración default y el día inicial del
@@ -367,13 +376,19 @@ export class Landing {
     // Ver ClubStore para el detalle de fetch + branding + SEO.
     effect(() => {
       const estado = this.club.estadoCarga();
+      // Idempotente por transición: sin esto, cualquier re-ejecución del effect (el propio Angular
+      // puede disparar una si el body llega a leer OTRA señal, como pasó con duracionElegida antes
+      // de bajarla a campo común) repetiría initDefaultDay()/el toast de error para el MISMO estado.
+      if (estado === this.ultimoEstadoAtendido) return;
+      this.ultimoEstadoAtendido = estado;
       if (estado === 'ok') {
         // Si el visitante ya clickeó una duración mientras esto resolvía, su elección gana: el
-        // default de la config no se le impone tarde (ver duracionElegida).
-        if (!this.duracionElegida()) this.duracion.set(this.club.config()!.duracionDefault);
+        // default de la config no se le impone tarde (ver duracionElegida). Lectura de un campo
+        // común, no de un signal: no debe volverse dependencia del effect.
+        if (!this.duracionElegida) this.duracion.set(this.club.config()!.duracionDefault);
         this.initDefaultDay();
       } else if (estado === 'error') {
-        if (!this.duracionElegida()) this.duracion.set(90);
+        if (!this.duracionElegida) this.duracion.set(90);
         this.initDefaultDay();
         this.messages.add({
           severity: 'error',
@@ -405,7 +420,7 @@ export class Landing {
 
   // ── Paso 1 · Duración ─────────────────────────────────────────────
   pickDuracion(d: number): void {
-    this.duracionElegida.set(true);
+    this.duracionElegida = true;
     if (this.duracion() === d) return;
     this.duracion.set(d);
     this.selectedTime.set(null);
