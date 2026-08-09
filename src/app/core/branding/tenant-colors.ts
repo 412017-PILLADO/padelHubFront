@@ -114,6 +114,9 @@ function tokensPrimeNG(c: string): Record<string, string> {
  *
  * Devuelve las variables que dejó escritas: es lo que se cachea para repintar en el próximo arranque
  * sin recalcular nada (ver ./branding-boot).
+ *
+ * `inkHex` es la tinta base del shell (ver `decidirTinta`): opcional porque no todos los llamadores
+ * conocen su plantilla (p. ej. `BrandingService`, que cae en la tinta oscura por defecto).
  */
 export function applyTenantColors(
   root: CSSStyleDeclaration,

@@ -197,6 +197,10 @@ export class ClubStore {
     // sale de `plantilla()` (ya normalizada, ver ese computed): no se vuelve a normalizar acá para
     // no tener dos nociones de "cuál es la plantilla actual".
     const color = this.previewColor() ?? cfg.tenant.colorPrimario;
+    // `plantilla()` puede devolver 'D'/'E' (sin cáscara propia todavía: shellDePlantilla() las manda
+    // a la A para renderizar). Hoy es inofensivo — D y E cargan INK_OSCURA en el registry, igual que
+    // A — pero si alguna vez una plantilla oscura aterriza bajo un código sin cáscara, la tinta y la
+    // cáscara dibujada divergirían: ver PLANTILLAS en core/landing/plantillas.ts.
     const inkHex = PLANTILLAS[this.plantilla()].inkHex;
     applyTenantColors(this.doc.documentElement.style, color, cfg.tenant.colorSecundario, inkHex);
   }
