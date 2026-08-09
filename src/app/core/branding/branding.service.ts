@@ -7,16 +7,6 @@ import { guardarMarcaCacheada, leerMarcaCacheada } from './branding-boot';
 import { applyTenantColors } from './tenant-colors';
 
 /**
- * Aplica la marca del tenant (color primario + secundario + logo) a toda la app, no solo a la
- * landing. El cálculo de los tokens vive en ./tenant-colors y el caché de arranque en
- * ./branding-boot: los dos sin dependencias, para que el arranque de la app pinte la marca sin
- * arrastrar la API del panel al bundle inicial de cualquier visitante público.
- *
- * Fuentes de datos según el contexto:
- * - Panel autenticado (`loadAdmin`): `/api/v1/agenda/marca`, la marca del tenant del JWT.
- * - Login / landing (`apply`): datos ya cargados de `/public/config` (resuelto por subdominio).
- */
-/**
  * Plantilla bajo la que este archivo cachea la marca del panel/login. El panel es client-render:
  * hasta que la API contesta no sabemos cuál es la plantilla real del tenant (ver
  * core/landing/plantillas.ts), así que cacheamos siempre bajo la default del sistema. Es inofensivo
@@ -28,6 +18,16 @@ import { applyTenantColors } from './tenant-colors';
  */
 const PLANTILLA_PANEL = 'A';
 
+/**
+ * Aplica la marca del tenant (color primario + secundario + logo) a toda la app, no solo a la
+ * landing. El cálculo de los tokens vive en ./tenant-colors y el caché de arranque en
+ * ./branding-boot: los dos sin dependencias, para que el arranque de la app pinte la marca sin
+ * arrastrar la API del panel al bundle inicial de cualquier visitante público.
+ *
+ * Fuentes de datos según el contexto:
+ * - Panel autenticado (`loadAdmin`): `/api/v1/agenda/marca`, la marca del tenant del JWT.
+ * - Login / landing (`apply`): datos ya cargados de `/public/config` (resuelto por subdominio).
+ */
 @Injectable({ providedIn: 'root' })
 export class BrandingService {
   private readonly agenda = inject(AgendaConfigService);
