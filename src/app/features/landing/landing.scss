@@ -154,42 +154,26 @@
 .lr-s { display: block; font-size: 0.78rem; color: color-mix(in srgb, var(--ink-on-accent, #fff) 85%, transparent); }
 .arr { width: 18px; height: 18px; opacity: 0.7; }
 
+/* El pie es <app-landing-footer class="pb-foot">: acá va lo que la plantilla le pone desde afuera
+   (su lugar en el afiche y su borde); el interior lo viste landing-footer.scss. */
 .pb-foot {
   flex: none;
   margin-top: auto; /* empuja el footer al fondo del afiche cuando sobra alto */
   padding-top: 14px;
   border-top: 1px solid color-mix(in srgb, var(--ink-on-accent, #fff) 18%, transparent);
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  font-size: 0.78rem;
+  align-items: center;
 }
-.pb-foot .cr { color: color-mix(in srgb, var(--ink-on-accent, #fff) 85%, transparent); }
-.pb-foot .panel-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-weight: 600; }
-.pb-foot .panel-link:hover { color: var(--ink-on-accent, #fff); text-decoration: underline; }
 
 /* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
    mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada
    contra el ancho angosto de la columna afiche (que partía el © en 2 líneas y apilaba los links).
-   Solo toca .pb-foot (A); B y C ya se ven bien en una línea, quedan como están. */
+   Solo toca .pb-foot (A); B y C ya se ven bien en una línea, quedan como están. El orden de los
+   hijos, que ya es DEL pie, se resuelve en landing-footer.scss. */
 @media (min-width: 900px) {
   .pb-foot {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-  }
-  .pb-foot .foot-links {
-    order: 1;
-  }
-  .pb-foot .cr {
-    order: 2;
-    font-size: 0.72rem;
-  }
-  .pb-foot .foot-links > *:not(:first-child) {
-    position: relative;
-  }
-  .pb-foot .foot-links > *:not(:first-child)::before {
-    content: '·';
-    margin-right: 10px;
-    opacity: 0.45;
   }
 }
 
@@ -234,34 +218,8 @@
   }
 }
 
-/* ===================================================================
-   MARCA + TARJETAS DE INFO compartidas por las plantillas B y C
-   =================================================================== */
-.tpl-mark { display: inline-flex; width: 40px; height: 40px; color: var(--court); --paddle-grip: var(--court-2, var(--court-deep)); }
-.tpl-mark svg { width: 100%; height: 100%; }
-.tpl-logo { display: inline-flex; align-items: center; }
-.tpl-logo img { height: 40px; width: auto; max-width: 160px; object-fit: contain; display: block; }
-
-/* scroll-margin-top: si se llega por anchor (nav de C, ids ic-horarios/ic-donde/ic-contacto) que el
-   header sticky de B (.b-nav) no tape la card al saltar. */
-.ic-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; scroll-margin-top: 76px; }
-.ic-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.ic-ic { width: 32px; height: 32px; border-radius: 9px; background: var(--court-soft); color: var(--court); display: grid; place-items: center; flex: none; }
-.ic-ic svg { width: 17px; height: 17px; }
-.ic-t { font-weight: 700; font-size: 0.98rem; color: var(--ink); }
-.ic-hours { list-style: none; display: flex; flex-direction: column; gap: 6px; }
-.ic-hours li { display: flex; justify-content: space-between; gap: 14px; font-size: 0.9rem; }
-.ic-hours .d { color: var(--ink-dim); }
-.ic-hours .h { color: var(--ink); font-weight: 600; }
-.ic-hours .closed { color: var(--ink-faint); }
-.ic-addr { color: var(--ink-dim); font-size: 0.92rem; margin-bottom: 10px; }
-.ic-links { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-.ic-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0;
-  cursor: pointer; color: var(--court-deep); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
-.ic-link:hover { text-decoration: underline; }
-/* Icono de WhatsApp/Instagram delante del link: visible en todos los breakpoints (feedback owner
-   post-desktop revierte el display:none de escritorio que se había puesto en M-mobile-plantillas). */
-.ic-link-svg { display: inline-flex; width: 18px; height: 18px; flex: none; }
+/* La marca (.tpl-logo/.tpl-mark) y las tarjetas de info (.ic-*) que comparten B y C se mudaron a
+   club/brand-mark.ts y club/club-info.scss, junto con lo que cada plantilla les pinta encima. */
 
 /* ===================================================================
    PLANTILLA B · Liquid Glass — paneles frosted translúcidos sobre una malla de luz teñida por el
@@ -284,17 +242,10 @@
     var(--paper);
   background-attachment: fixed;
 }
-/* pilar del vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno.
-   OJO: estas declaraciones están copiadas a mano en `booking-flow.scss` (regla
-   `.tpl-b .booking-flow`), porque `@extend` no cruza de hoja y el flujo ya es otro componente.
-   Si tocás acá, tocá allá — hasta el Task 10, que borra aquella copia. */
-%b-glass {
-  background: color-mix(in srgb, var(--surface) 58%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
-  border: 1px solid color-mix(in srgb, #fff 60%, transparent);
-  box-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
+/* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) ya no
+   se declara acá: sus dos consumidores viven en otras hojas (`.tpl-b .booking-flow` en
+   booking-flow.scss y `.ic-card` en club-info.scss) y `@extend` no cruza de hoja. Si tocás una de
+   las dos copias, tocá la otra — hasta el Task 10, que unifica el vidrio en tokens. */
 
 .b-nav {
   position: sticky; top: 0; z-index: 20;
@@ -305,9 +256,7 @@
   border-bottom: 1px solid color-mix(in srgb, #fff 45%, transparent);
 }
 .b-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.b-brandline .tpl-mark { width: 30px; height: 30px; }
-/* El logo cede ancho: el nombre del club va al lado siempre, también en mobile. */
-.b-brandline .tpl-logo img { height: 32px; max-width: 120px; }
+/* Lo que B le ajusta al tamaño de la marca vive en brand-mark.ts (`:host-context(.b-brandline)`). */
 /* La nav es una sola línea: acá el nombre largo se recorta (no baja de renglón como en C). */
 .b-brandname { min-width: 0; font-size: 1.12rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -328,13 +277,10 @@
 
 .b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }
-.tpl-b .ic-card { @extend %b-glass; border-radius: 20px; }
-.tpl-b .ic-ic { background: color-mix(in srgb, var(--court) 16%, transparent); }
+/* El vidrio de las tarjetas de info vive en club-info.scss (`:host-context(.tpl-b)`). */
 .b-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
   border-top: 1px solid color-mix(in srgb, #fff 40%, transparent);
-  display: flex; justify-content: space-between; gap: 12px; font-size: 0.78rem; color: var(--ink-faint); }
-.b-foot a { color: var(--ink-dim); text-decoration: none; }
-.b-foot a:hover { color: var(--court-deep); }
+  color: var(--ink-faint); }
 
 /* Mobile (M-mobile-plantillas, feedback owner): arranca directo en la reserva. El héroe (marca
    grande + título + tagline + CTAs) es redundante con la card de reserva que está en la misma
@@ -352,9 +298,7 @@
 .c-rail { background: var(--surface); border-right: 1px solid var(--line);
   padding: 26px 22px; display: flex; flex-direction: column; gap: 24px; }
 .c-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.c-brandline .tpl-mark { width: 30px; height: 30px; }
-/* El logo cede ancho: el nombre va al lado siempre, y en el rail de 280px hay que repartir. */
-.c-brandline .tpl-logo img { height: 30px; max-width: 104px; }
+/* Lo que C le ajusta al tamaño de la marca vive en brand-mark.ts (`:host-context(.c-brandline)`). */
 /* Nombre al lado del logo: si no entra en una línea, baja a dos (antes se recortaba con ellipsis
    y en el rail angosto quedaba "Padel Hu…"). `anywhere` para que un nombre de una sola palabra
    larguísima corte en vez de desbordar el rail de 280px. */
@@ -367,14 +311,11 @@
    booking-flow.scss por la encapsulación — misma razón que en B. */
 .c-info { width: 100%; max-width: 920px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 14px; scroll-margin-top: 16px; }
-.tpl-c .ic-card { border-radius: 14px; }
-.tpl-c .ic-ic { background: color-mix(in srgb, var(--court) 10%, transparent); }
+/* Lo que C le pinta a las tarjetas de info vive en club-info.scss (`:host-context(.tpl-c)`). */
 /* El footer respira arriba y abajo: en desktop es la última fila de la grilla y quedaba pegado al
    borde inferior de la ventana (el margin de la fila no le daba aire propio). */
 .c-foot { margin-top: 8px; padding: 20px 0 clamp(22px, 3vw, 34px); border-top: 1px solid var(--line);
-  display: flex; justify-content: space-between; gap: 12px; font-size: 0.78rem; color: var(--ink-faint); }
-.c-foot a { color: var(--ink-dim); text-decoration: none; }
-.c-foot a:hover { color: var(--court-deep); }
+  color: var(--ink-faint); }
 
 @media (min-width: 900px) {
   /* Dos columnas: el rail (marca + info del club) ocupa las dos filas de la izquierda; la reserva
@@ -383,10 +324,9 @@
   .c-rail { grid-column: 1; grid-row: 1 / -1; position: sticky; top: 0; height: 100svh; overflow-y: auto; }
   .c-main { grid-column: 2; grid-row: 1; }
   .c-foot { grid-column: 2; grid-row: 2; margin: 0 clamp(16px, 3vw, 40px); }
-  /* En el rail angosto la info va apilada, una card por fila. Y el horario deja de ser
-     día-a-la-izquierda / rango-a-la-derecha (parte feo en 280px): se apila. */
+  /* En el rail angosto la info va apilada, una card por fila. (El horario, que también se apila,
+     vive en club-info.scss con `:host-context(.c-rail)`.) */
   .c-rail .c-info { grid-template-columns: 1fr; }
-  .c-rail .ic-hours li { flex-direction: column; align-items: flex-start; gap: 2px; }
 }
 @media (max-width: 899px) {
   /* El rail se disuelve y sus hijos pasan a ser hermanos de la reserva, para poder ordenarlos:
@@ -404,75 +344,25 @@
 }
 
 /* ===================================================================
-   Botón de arrepentimiento (Res. 424/2020): link discreto en el pie de cada plantilla (visible sin
-   scroll, exigencia legal) + modal único compartido entre las 3.
+   Política de cancelación: mismo tratamiento visual que el link de arrepentimiento. El aspecto base
+   se queda acá (y no en el pie) porque el MISMO link aparece en DOS componentes hijos: el pie
+   (<app-landing-footer>) y el bloque de seña del éxito (<app-booking-flow>). `:host ::ng-deep`
+   atraviesa la encapsulación de los dos — sin eso, esos botones se quedarían con el aspecto de
+   <button> pelado. Sigue acotado al subárbol de la landing. Los colores por plantilla, que solo
+   valen para el pie, viven en club/landing-footer.scss.
    =================================================================== */
-.foot-links { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.arrep-link {
-  background: none; border: none; padding: 0; cursor: pointer;
-  text-decoration: underline; font-size: 0.78rem; opacity: 0.85;
-  transition: opacity 0.15s ease, color 0.15s ease;
-}
-.arrep-link:hover { opacity: 1; }
-/* Sobre el afiche (fondo con el color del tenant): mismo tratamiento que panel-link. */
-.pb-foot .arrep-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-family: inherit; }
-.pb-foot .arrep-link:hover { color: var(--ink-on-accent, #fff); }
-/* Sobre fondo claro (héroe / rail): mismo tratamiento que el resto de los links del pie. */
-.b-foot .arrep-link, .c-foot .arrep-link { color: var(--ink-dim); font-family: inherit; }
-.b-foot .arrep-link:hover, .c-foot .arrep-link:hover { color: var(--court-deep); }
-
-/* Política de cancelación: mismo tratamiento visual que el link de arrepentimiento.
-   `:host ::ng-deep` porque el mismo link también aparece DENTRO de <app-booking-flow> (bloque de
-   seña de la pantalla de éxito): sin atravesar la encapsulación, ese botón se quedaría con el
-   aspecto de <button> pelado. Sigue acotado al subárbol de la landing y mantiene la especificidad
-   que tenía la regla encapsulada. */
 :host ::ng-deep .politica-link {
   background: none; border: none; padding: 0; cursor: pointer;
   text-decoration: underline; font-size: 0.78rem; opacity: 0.85;
   transition: opacity 0.15s ease, color 0.15s ease;
 }
 :host ::ng-deep .politica-link:hover { opacity: 1; }
-.pb-foot .politica-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-family: inherit; }
-.pb-foot .politica-link:hover { color: var(--ink-on-accent, #fff); }
-.b-foot .politica-link, .c-foot .politica-link { color: var(--ink-dim); font-family: inherit; }
-.b-foot .politica-link:hover, .c-foot .politica-link:hover { color: var(--court-deep); }
 /* `.sena-politica` (la variante del bloque de seña) se mudó a booking-flow.scss. */
 /* El texto de la política es libre: puede tener saltos de línea que hay que respetar (estilos del
    modal en sí: ver arrepentimiento-modal/ y politica-modal/, autocontenidos). */
 
-/* ===================================================================
-   MOBILE — pulido de las 3 plantillas (feedback owner, M-mobile-plantillas). Desktop sin cambios:
-   todo lo de acá vive detrás de max-width:899px.
-   =================================================================== */
-@media (max-width: 899px) {
-  /* Pie (© + links): hoy escalonado. Nuevo: los links en una fila centrada con wrap (con un punto
-     medio de separador entre ellos) y el © debajo, centrado, chico y apagado. Mismo criterio en
-     las 3 plantillas (pb-foot/b-foot/c-foot comparten .foot-links/.foot-copy). */
-  .pb-foot, .b-foot, .c-foot {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 8px;
-  }
-  .foot-links {
-    order: 1;
-    justify-content: center;
-    width: 100%;
-  }
-  .foot-copy {
-    order: 2;
-    font-size: 0.7rem;
-    opacity: 0.6;
-  }
-  .foot-links > *:not(:first-child) {
-    position: relative;
-  }
-  .foot-links > *:not(:first-child)::before {
-    content: '·';
-    margin-right: 10px;
-    opacity: 0.45;
-  }
-}
+/* El interior del pie (© + links de arrepentimiento/política/panel, en las 3 plantillas y en los
+   dos breakpoints) se mudó a club/landing-footer.scss. */
 
 /* ===================================================================
    Preview de plantillas (herramienta de venta): pill flotante abajo-derecha, solo visible con

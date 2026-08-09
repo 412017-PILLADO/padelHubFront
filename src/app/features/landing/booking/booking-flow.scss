@@ -437,8 +437,9 @@ app-booking-flow { display: contents; }
    =================================================================== */
 
 /* PLANTILLA B · el flujo es uno de los paneles de vidrio. Las declaraciones están escritas a mano
-   porque el placeholder `%b-glass` (que sigue vistiendo a las .ic-card) vive en landing.scss y
-   `@extend` no cruza de hoja. Si se toca una, tocar la otra — hasta el Task 10, que borra esta. */
+   porque la misma receta viste a las `.ic-card` desde club-info.scss y `@extend` no cruza de hoja
+   (era el placeholder `%b-glass` de landing.scss). Si se toca una, tocar la otra — hasta el Task 10,
+   que borra esta. */
 .tpl-b .booking-flow {
   background: color-mix(in srgb, var(--surface) 58%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);

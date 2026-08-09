@@ -4,8 +4,6 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { NgTemplateOutlet } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
@@ -16,6 +14,9 @@ import { PoliticaModal } from './politica-modal/politica-modal';
 import { ClubStore } from './club.store';
 import { BookingStore } from './booking/booking.store';
 import { BookingFlowComponent } from './booking/booking-flow';
+import { BrandMarkComponent } from './club/brand-mark';
+import { ClubInfoComponent } from './club/club-info';
+import { LandingFooterComponent } from './club/landing-footer';
 
 const ES_TRANSLATION = {
   firstDayOfWeek: 1,
@@ -39,12 +40,13 @@ const ES_TRANSLATION = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    RouterLink,
     ToastModule,
-    NgTemplateOutlet,
     ArrepentimientoModal,
     PoliticaModal,
     BookingFlowComponent,
+    BrandMarkComponent,
+    ClubInfoComponent,
+    LandingFooterComponent,
   ],
   providers: [MessageService, ClubStore, BookingStore],
   templateUrl: './landing.html',

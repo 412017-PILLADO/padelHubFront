@@ -1,0 +1,8 @@
+<span class="cr mono foot-copy">© 2026 {{ tenantNombre() }}</span>
+<span class="foot-links">
+  <button type="button" class="arrep-link" (click)="abrirArrepentimiento.emit()">Botón de arrepentimiento</button>
+  @if (config()?.politicaCancelacion) {
+    <button type="button" class="politica-link" (click)="abrirPolitica.emit()">Política de cancelación</button>
+  }
+  <a class="panel-link mono" routerLink="/admin">Panel del club</a>
+</span>
