@@ -5,7 +5,8 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { Landing } from './landing';
 import { BookingStore } from './booking/booking.store';
-import { BookingService } from '../../core/api/booking.service';
+import { BookingService, PublicConfig } from '../../core/api/booking.service';
+import { CODIGOS_CON_SHELL, PLANTILLAS } from '../../core/landing/plantillas';
 
 /**
  * Regresión del Critical de la review de la Task 1: el effect que reacciona a
@@ -56,4 +57,91 @@ describe('Landing — effect de estadoCarga', () => {
     // no tiene motivo para volver a correr → sigue en 1.
     expect(addSpy).toHaveBeenCalledTimes(1);
   });
+});
+
+/** Config pública mínima y válida, con la plantilla que pida cada test. */
+function configConPlantilla(plantilla: string): PublicConfig {
+  return {
+    tenant: {
+      nombre: 'Club Test', colorPrimario: '#112233', colorSecundario: null, fuente: '',
+      logoUrl: null, mostrarPrecios: false, requiereTelefono: true, plantilla,
+    },
+    complejo: {
+      id: 1, nombre: 'Club Test', direccion: null, telefono: null, whatsapp: null,
+      mapaUrl: null, instagram: null,
+    },
+    pasoMinutos: 30,
+    duracionesPermitidas: [60, 90],
+    duracionDefault: 90,
+    permitirOtrasDuraciones: true,
+    requiereSena: false, senaMonto: null, senaAlias: null,
+    autoasignacion: false, pagoOnline: false,
+    politicaCancelacion: null,
+    precioFranjas: [],
+    canchas: [],
+    horarios: [],
+  };
+}
+
+/** Monta la landing de un tenant que eligió `plantilla` y devuelve el host ya renderizado. */
+function montarLanding(plantilla: string): HTMLElement {
+  TestBed.resetTestingModule();
+  TestBed.configureTestingModule({
+    imports: [Landing],
+    providers: [
+      provideRouter([]),
+      {
+        provide: BookingService,
+        useValue: { config: () => of(configConPlantilla(plantilla)), disponibilidad: () => of([]) },
+      },
+    ],
+  });
+  const fixture = TestBed.createComponent(Landing);
+  TestBed.tick();
+  return fixture.nativeElement as HTMLElement;
+}
+
+/**
+ * El host de la landing publica el código de la cáscara que realmente se dibuja, no el que eligió
+ * el club. Importa porque `landing.scss` engancha el layout por atributo:
+ * `:host([data-tpl='A']) { height: 100svh; overflow: hidden }` es lo que clava el viewport del
+ * afiche. El back ya acepta los cinco códigos pero D y E no tienen cáscara hasta el Plan 2: si un
+ * tenant en D publicara `data-tpl="D"` y se dibujara la A, la A quedaría con su `height: 100svh`
+ * adentro de un host sin clamp ni `overflow: hidden`, o sea con doble scroll.
+ */
+describe('Landing — plantilla y cáscara', () => {
+  it('un tenant en D dibuja la cáscara A y el host publica data-tpl="A"', () => {
+    const host = montarLanding('D');
+
+    expect(host.querySelector('app-shell-a')).not.toBeNull();
+    expect(host.querySelector('app-shell-b')).toBeNull();
+    expect(host.querySelector('app-shell-c')).toBeNull();
+    // Lo que hace que las reglas de la A enganchen:
+    expect(host.getAttribute('data-tpl')).toBe('A');
+    expect(host.querySelector('app-shell-a')!.classList).toContain(PLANTILLAS.A.claseShell);
+  });
+
+  it('un código que el catálogo no conoce también cae en la A', () => {
+    const host = montarLanding('ZZ');
+
+    expect(host.querySelector('app-shell-a')).not.toBeNull();
+    expect(host.getAttribute('data-tpl')).toBe('A');
+  });
+
+  /**
+   * `claseShell` del registry no la consume nadie todavía (cada cáscara declara su clase en el
+   * `host` del decorador, que es estático a propósito). Sin este test las dos podrían separarse en
+   * silencio: los e2e buscan `.poster`/`.tpl-b`/`.tpl-c` literales y seguirían pasando.
+   */
+  it.each(CODIGOS_CON_SHELL)(
+    'la plantilla %s dibuja su cáscara con la clase que declara el registry',
+    (codigo) => {
+      const host = montarLanding(codigo);
+      const shell = host.querySelector(`app-shell-${codigo.toLowerCase()}`);
+
+      expect(shell).not.toBeNull();
+      expect(host.getAttribute('data-tpl')).toBe(codigo);
+      expect(shell!.classList).toContain(PLANTILLAS[codigo].claseShell);
+    }
+  );
 });

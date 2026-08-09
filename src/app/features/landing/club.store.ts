@@ -4,7 +4,11 @@ import { Meta, Title } from '@angular/platform-browser';
 
 import { BookingService, PublicConfig } from '../../core/api/booking.service';
 import { applyTenantColors } from '../../core/branding/tenant-colors';
-import { CodigoPlantilla, normalizarPlantilla } from '../../core/landing/plantillas';
+import {
+  CODIGOS_CON_SHELL,
+  CodigoPlantilla,
+  normalizarPlantilla,
+} from '../../core/landing/plantillas';
 import { environment } from '../../../environments/environment';
 
 /** diaSemana 0..6 → Lunes..Domingo (matchea el contrato de /public/config). */
@@ -17,14 +21,6 @@ export interface HoursRow {
   rango: string;
   cerrado: boolean;
 }
-
-/**
- * Plantillas que el preview de venta deja forzar por `?plantilla=`: las que hoy tienen cáscara
- * propia. El registry ya lista las cinco, pero los shells de D y E llegan en el Plan 2 — dejar que
- * se fuercen ahora mostraría la cáscara A con un `data-tpl` ajeno y un selector sin opción activa.
- * Cuando existan sus shells, esta lista pasa a ser `CODIGOS_PLANTILLA` y se borra.
- */
-export const PLANTILLAS_PREVIEW: readonly CodigoPlantilla[] = ['A', 'B', 'C'];
 
 /**
  * Quién es este club: config pública, sus derivados (branding, horarios agrupados, contacto, seña) y
@@ -52,9 +48,9 @@ export class ClubStore {
   readonly tenantPrimerNombre = computed(() => this.tenantNombre().split(/\s+/)[0]);
 
   // ── Preview de plantilla/color por query params (herramienta de venta, 100% efímero) ──
-  /** `?plantilla=` con uno de los códigos de `PLANTILLAS_PREVIEW` (case-insensitive); cualquier
-   *  otro valor → null. Se lee una sola vez al iniciar (solo browser) y desde ahí en más se maneja
-   *  con el selector flotante. */
+  /** `?plantilla=` con uno de los códigos de `CODIGOS_CON_SHELL` (case-insensitive); cualquier otro
+   *  valor → null. Se lee una sola vez al iniciar (solo browser) y desde ahí en más se maneja con
+   *  el selector flotante. */
   readonly previewPlantilla = signal<CodigoPlantilla | null>(null);
   /** `?color=%23RRGGBB` (hex `#RGB`/`#RRGGBB`, validado); cualquier otro valor → null. Nunca se
    *  inyecta el valor crudo en CSS sin pasar por este regex. */
@@ -138,9 +134,10 @@ export class ClubStore {
     if (!isPlatformBrowser(this.platformId)) return null;
     const params = new URLSearchParams(location.search);
 
-    // El `find` valida y tipa de una: nada de castear a CodigoPlantilla lo que vino en la URL.
+    // El `find` valida y tipa de una: nada de castear a CodigoPlantilla lo que vino en la URL. Se
+    // acepta sólo lo que tiene cáscara: forzar D o E mostraría la A con el selector sin activa.
     const tpl = (params.get('plantilla') ?? '').trim().toUpperCase();
-    const validTpl = PLANTILLAS_PREVIEW.find((c) => c === tpl) ?? null;
+    const validTpl = CODIGOS_CON_SHELL.find((c) => c === tpl) ?? null;
 
     const color = params.get('color');
     if (color) {

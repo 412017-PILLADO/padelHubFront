@@ -17,8 +17,6 @@ import Aura from '@primeng/themes/aura';
 
 import { routes } from './app.routes';
 import { aplicarMarcaCacheada } from './core/branding/branding-boot';
-import { cargarFuentes } from './core/landing/fuentes';
-import { FUENTES_PLATAFORMA, urlFuentes } from './core/landing/plantillas';
 import { currentTenantSlug } from './core/tenant/tenant';
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { platformInterceptor } from './core/platform/platform.interceptor';
@@ -60,16 +58,6 @@ export const appConfig: ApplicationConfig = {
       const doc = inject(DOCUMENT);
       if (!isPlatformBrowser(platformId)) return;
       aplicarMarcaCacheada(doc.documentElement.style, currentTenantSlug());
-    }),
-    // Tipografía de plataforma. Antes venía de un <link> fijo en index.html; ahora la landing pide
-    // la de SU plantilla (ver core/landing/fuentes.ts) y este initializer se ocupa del resto de la
-    // app —marketing, panel, los modales compartidos de la landing— que sigue viviendo de
-    // `--display`/`--body`/`--mono` de styles.scss. SIN guard de browser a propósito: corre también
-    // en el server (DOCUMENT inyectado, nunca el global) para que el <link> viaje en el HTML
-    // servido y el primer paint ya salga con la tipografía correcta. Es idempotente por URL, así
-    // que en la plantilla A —que usa las mismas tres familias— sigue habiendo un solo <link>.
-    provideAppInitializer(() => {
-      cargarFuentes(inject(DOCUMENT), urlFuentes(FUENTES_PLATAFORMA));
     }),
     // authInterceptor PRIMERO: adjunta el Bearer mientras la URL todavía es relativa
     // (`/api/v1/...`). tenantInterceptor corre después y reescribe a la URL absoluta del

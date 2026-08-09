@@ -49,12 +49,8 @@
               ],
               "budgets": [
                 {
-                  // 500kB dejaba 0.19kB de aire: el bundle inicial ya venía en 499.81kB, así que
-                  // cualquier byte nuevo disparaba el warning. Subido a 510kB al mover el <link> de
-                  // fuentes de index.html al initializer de app.config (+1.77kB crudos / +0.66kB
-                  // transferidos: el registry de plantillas y los helpers de tipografía).
                   "type": "initial",
-                  "maximumWarning": "510kB",
+                  "maximumWarning": "500kB",
                   "maximumError": "1MB"
                 },
                 {

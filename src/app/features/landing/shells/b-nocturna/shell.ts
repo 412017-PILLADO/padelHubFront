@@ -1,8 +1,5 @@
-import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
 
-import { cargarFuentes } from '../../../../core/landing/fuentes';
-import { PLANTILLAS, urlFuentes } from '../../../../core/landing/plantillas';
 import { ClubStore } from '../../club.store';
 import { BookingFlowComponent } from '../../booking/booking-flow';
 import { BrandMarkComponent } from '../../club/brand-mark';
@@ -33,17 +30,9 @@ import { LandingFooterComponent } from '../../club/landing-footer';
 })
 export class ShellBComponent {
   private readonly club = inject(ClubStore);
-  /** Inyectado (no el global): en SSR es el documento que se serializa — ver constructor. */
-  private readonly doc = inject(DOCUMENT);
 
   readonly abrirArrepentimiento = output<void>();
   readonly abrirPolitica = output<void>();
 
   readonly tenantNombre = this.club.tenantNombre;
-
-  constructor() {
-    // Cada cáscara pide SU tipografía y ninguna más. Como esto corre también en el server, el
-    // <link> viaja en el HTML servido y no hay parpadeo con la fuente del sistema hasta hidratar.
-    cargarFuentes(this.doc, urlFuentes(PLANTILLAS.B.fuentes));
-  }
 }

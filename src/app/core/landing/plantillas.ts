@@ -3,18 +3,22 @@
  * consumen el dispatcher, la inyección de fuentes, la galería del panel y la sección de
  * personalización de marketing. Sin dependencias de Angular a propósito, para poder usarse desde
  * cualquiera de esos lugares sin arrastrar árboles ajenos.
+ *
+ * Todo lo que exporta es de sólo lectura: si esto es la fuente de verdad, nadie de afuera tiene
+ * por qué poder editarla en caliente.
  */
 export type CodigoPlantilla = 'A' | 'B' | 'C' | 'D' | 'E';
 
 export interface Plantilla {
-  codigo: CodigoPlantilla;
-  nombre: string;
-  descripcion: string;
-  esquema: 'light' | 'dark';
+  readonly codigo: CodigoPlantilla;
+  readonly nombre: string;
+  readonly descripcion: string;
+  readonly esquema: 'light' | 'dark';
   /** Tinta base del shell. La usa decidirTinta() para elegir texto legible sobre el color del club. */
-  inkHex: string;
-  fuentes: string[];
-  claseShell: string;
+  readonly inkHex: string;
+  readonly fuentes: readonly string[];
+  /** Clase que la cáscara pone en su host. Pineada contra los shells reales en landing.spec.ts. */
+  readonly claseShell: string;
 }
 
 /** Tinta oscura del sistema (matchea --ink en styles.scss). */
@@ -22,7 +26,7 @@ const INK_OSCURA = '#11162b';
 /** Tinta clara de la plantilla oscura. */
 const INK_CLARA = '#eef2f8';
 
-export const PLANTILLAS: Record<CodigoPlantilla, Plantilla> = {
+export const PLANTILLAS: Readonly<Record<CodigoPlantilla, Plantilla>> = {
   A: { codigo: 'A', nombre: 'Afiche',   descripcion: 'Editorial, marca grande',   esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Archivo', 'Hanken Grotesk', 'Space Mono'], claseShell: 'poster' },
   B: { codigo: 'B', nombre: 'Nocturna', descripcion: 'Oscura, luz de cancha',     esquema: 'dark',  inkHex: INK_CLARA,  fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-b' },
   C: { codigo: 'C', nombre: 'Tarjeta',  descripcion: 'Tipo app, para el pulgar',  esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Outfit', 'Inter'],                          claseShell: 'tpl-c' },
@@ -30,12 +34,38 @@ export const PLANTILLAS: Record<CodigoPlantilla, Plantilla> = {
   E: { codigo: 'E', nombre: 'Diurna',   descripcion: 'Clara, vidrio sobre color', esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-e' },
 };
 
-export const CODIGOS_PLANTILLA = Object.keys(PLANTILLAS) as CodigoPlantilla[];
+export const CODIGOS_PLANTILLA: readonly CodigoPlantilla[] =
+  Object.keys(PLANTILLAS) as CodigoPlantilla[];
+
+/**
+ * Códigos que hoy tienen cáscara propia en `features/landing/shells/`. El catálogo lista las cinco
+ * porque el back ya acepta las cinco, pero las cáscaras de D y E llegan en el Plan 2: hasta
+ * entonces `shellDePlantilla()` las manda a la A. Cuando existan, esta lista se borra y todo el
+ * mundo pasa a usar `CODIGOS_PLANTILLA`.
+ */
+export const CODIGOS_CON_SHELL: readonly CodigoPlantilla[] = ['A', 'B', 'C'];
 
 /** Normaliza a un código válido; cualquier cosa rara cae en la plantilla por defecto. */
 export function normalizarPlantilla(v: string | null | undefined): CodigoPlantilla {
   const up = (v ?? '').trim().toUpperCase();
-  return (CODIGOS_PLANTILLA as string[]).includes(up) ? (up as CodigoPlantilla) : 'A';
+  return CODIGOS_PLANTILLA.some((c) => c === up) ? (up as CodigoPlantilla) : 'A';
+}
+
+/**
+ * Qué cáscara termina dibujando un código. Es distinto de `normalizarPlantilla()`: ese contesta
+ * "¿existe esta plantilla?" y a un tenant en D le devuelve 'D'; este contesta "¿qué puedo dibujar
+ * hoy?" y a un tenant en D le devuelve 'A'.
+ *
+ * La diferencia no es cosmética. El `data-tpl` del host de la landing es lo que engancha las reglas
+ * de layout de cada plantilla: `landing.scss` clava el viewport del afiche con
+ * `:host([data-tpl='A']) { height: 100svh; overflow: hidden }`. Si un tenant en D publicara
+ * `data-tpl="D"` y abajo se dibujara la cáscara A, la A quedaría con su `height: 100svh` adentro de
+ * un host sin clamp y sin `overflow: hidden` — un afiche con doble scroll. Por eso el host publica
+ * SIEMPRE el código de la cáscara que se está dibujando.
+ */
+export function shellDePlantilla(v: string | null | undefined): CodigoPlantilla {
+  const codigo = normalizarPlantilla(v);
+  return CODIGOS_CON_SHELL.some((c) => c === codigo) ? codigo : 'A';
 }
 
 /**
@@ -46,7 +76,7 @@ export function normalizarPlantilla(v: string | null | undefined): CodigoPlantil
  * devuelve `font-stretch: 100%` y el display de todas las plantillas adelgaza.
  * Verificado contra fonts.googleapis.com: las diez familias responden 200 con caras.
  */
-const EJES_POR_FAMILIA: Record<string, string> = {
+const EJES_POR_FAMILIA: Readonly<Record<string, string>> = {
   Archivo: 'wdth,wght@100..125,400..900',
   'Hanken Grotesk': 'wght@400;500;600;700;800',
   'Space Mono': 'wght@400;700',
@@ -62,8 +92,12 @@ const EJES_POR_FAMILIA: Record<string, string> = {
 /** Para una familia que todavía no esté en el mapa de arriba: el rango que usa el resto del sistema. */
 const EJES_DEFAULT = 'wght@400;500;600;700;800';
 
-/** URL de Google Fonts con todas las familias pedidas (ejes por familia + `display=swap`). */
-export function urlFuentes(fuentes: string[]): string {
+/**
+ * URL de Google Fonts con todas las familias pedidas (ejes por familia + `display=swap`). Sin
+ * familias devuelve string vacío: una URL de css2 sin un solo `family=` no le sirve a nadie.
+ */
+export function urlFuentes(fuentes: readonly string[]): string {
+  if (!fuentes.length) return '';
   const familias = fuentes.map((f) => {
     const nombre = f.trim();
     return `family=${nombre.replace(/\s+/g, '+')}:${EJES_POR_FAMILIA[nombre] ?? EJES_DEFAULT}`;
@@ -73,8 +107,12 @@ export function urlFuentes(fuentes: string[]): string {
 
 /**
  * Familias del sistema de diseño de plataforma: las que declaran `--display`/`--body`/`--mono` en
- * styles.scss y de las que viven marketing, el panel y los modales de la landing. Hoy coinciden con
- * las de la plantilla A, pero se listan aparte a propósito: si la A cambia de tipografía en el
- * rediseño, la plataforma no tiene por qué seguirla.
+ * styles.scss y de las que viven marketing, el panel y las tres plantillas de landing. Hoy
+ * coinciden con las de la plantilla A, pero se listan aparte a propósito: si la A cambia de
+ * tipografía en el rediseño, la plataforma no tiene por qué seguirla.
+ *
+ * Quien las carga es el `<link>` estático de `index.html`. Están acá para que el test pueda pinear
+ * esa URL contra el registry (ver plantillas.spec.ts) y que las dos no se separen sin que nadie
+ * se entere.
  */
-export const FUENTES_PLATAFORMA = ['Archivo', 'Hanken Grotesk', 'Space Mono'];
+export const FUENTES_PLATAFORMA: readonly string[] = ['Archivo', 'Hanken Grotesk', 'Space Mono'];

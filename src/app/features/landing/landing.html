@@ -15,10 +15,10 @@
 
 <!-- ===================================================================
      Cada plantilla es una cáscara con su propio markup y su propia hoja (ver shells/). Acá solo se
-     elige cuál: la del club, o la del preview `?plantilla=` si vino en la URL — el código ya viene
-     validado contra el registry (core/landing/plantillas.ts). El @default cubre dos casos: la A,
-     que es la plantilla por defecto, y los códigos del registry que todavía no tienen cáscara
-     propia (D y E), que hasta el Plan 2 se muestran como la A.
+     elige cuál: la del club, o la del preview `?plantilla=` si vino en la URL. `plantilla()` ya es
+     el código de la cáscara que SE PUEDE dibujar (shellDePlantilla en core/landing/plantillas.ts):
+     un tenant en D o E llega acá como 'A', y el `data-tpl` del host dice 'A' también, así las
+     reglas de layout del afiche enganchan. El @default es la A, la plantilla por defecto.
      =================================================================== -->
 @switch (plantilla()) {
   @case ('B') {
@@ -51,7 +51,7 @@
 <!-- ===================================================================
      Preview de plantillas (herramienta de venta): solo aparece si vino `?plantilla=` en la URL.
      Deja probar en vivo, sin persistir nada, las plantillas que tienen cáscara (ver
-     club.store.ts: PLANTILLAS_PREVIEW; landing.ts: opcionesPreview).
+     core/landing/plantillas.ts: CODIGOS_CON_SHELL; landing.ts: opcionesPreview).
      =================================================================== -->
 @if (previewPlantilla(); as activa) {
   <div class="tpl-pill" role="group" aria-label="Preview de plantilla">
