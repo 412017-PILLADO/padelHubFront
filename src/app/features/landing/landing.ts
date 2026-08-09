@@ -2,16 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   signal,
-  PLATFORM_ID,
-  afterNextRender,
 } from '@angular/core';
-import { DOCUMENT, isPlatformBrowser, NgTemplateOutlet } from '@angular/common';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { environment } from '../../../environments/environment';
 import { RouterLink } from '@angular/router';
-import { Meta, Title } from '@angular/platform-browser';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
@@ -21,15 +18,10 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
-import {
-  BookingService,
-  CanchaLibre,
-  PublicConfig,
-  Slot,
-} from '../../core/api/booking.service';
-import { applyTenantColors } from '../../core/branding/tenant-colors';
+import { BookingService, CanchaLibre, Slot } from '../../core/api/booking.service';
 import { ArrepentimientoModal } from './arrepentimiento-modal/arrepentimiento-modal';
 import { PoliticaModal } from './politica-modal/politica-modal';
+import { ClubStore } from './club.store';
 
 const MES_ABBR = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
@@ -40,16 +32,6 @@ const DOWS = [
 ];
 /** Abreviatura del día para el recap compacto ("Vie 24/07"). Índice = Date.getDay() (0=Domingo). */
 const DOW_ABBR = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
-/** diaSemana 0..6 → Lunes..Domingo (matchea el contrato de /public/config). */
-const DIA_SEMANA = [
-  'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo',
-];
-
-export interface HoursRow {
-  dias: string;
-  rango: string;
-  cerrado: boolean;
-}
 
 const ES_TRANSLATION = {
   firstDayOfWeek: 1,
@@ -101,7 +83,7 @@ function sameDay(a: Date | null, b: Date | null): boolean {
     ArrepentimientoModal,
     PoliticaModal,
   ],
-  providers: [MessageService],
+  providers: [MessageService, ClubStore],
   templateUrl: './landing.html',
   styleUrl: './landing.scss',
   host: { '[attr.data-tpl]': 'plantilla()' },
@@ -110,75 +92,38 @@ export class Landing {
   private readonly booking = inject(BookingService);
   private readonly messages = inject(MessageService);
   private readonly primeng = inject(PrimeNG);
-  private readonly platformId = inject(PLATFORM_ID);
-  /** Inyectado (no el global): en SSR es el documento que se serializa, ver applyBranding(). */
-  private readonly doc = inject(DOCUMENT);
-  private readonly title = inject(Title);
-  private readonly meta = inject(Meta);
+  private readonly club = inject(ClubStore);
 
-  // ── Config pública del tenant (GET /public/config) ────────────────
-  readonly config = signal<PublicConfig | null>(null);
+  // ── Identidad del club (config, branding, SEO, horarios, contacto, seña) ──────────
+  // Alias hacia ClubStore: andamio a propósito para no tocar landing.html en este refactor.
+  readonly config = this.club.config;
+  readonly tenantNombre = this.club.tenantNombre;
+  readonly tenantPrimerNombre = this.club.tenantPrimerNombre;
+  readonly plantilla = this.club.plantilla;
+  readonly previewPlantilla = this.club.previewPlantilla;
+  readonly logoSrc = this.club.logoSrc;
+  readonly horarios = this.club.horarios;
+  readonly direccion = this.club.direccion;
+  readonly mapaUrl = this.club.mapaUrl;
+  readonly whatsappUrl = this.club.whatsappUrl;
+  readonly instagramHandle = this.club.instagramHandle;
+  readonly instagramUrl = this.club.instagramUrl;
+  readonly mostrarPrecios = this.club.mostrarPrecios;
+  readonly requiereTelefono = this.club.requiereTelefono;
+  readonly requiereSena = this.club.requiereSena;
+  readonly senaMonto = this.club.senaMonto;
+  readonly senaMontoFmt = this.club.senaMontoFmt;
+  readonly senaAlias = this.club.senaAlias;
 
-  readonly tenantNombre = computed(() => this.config()?.complejo.nombre ?? 'Tu club');
-  readonly tenantPrimerNombre = computed(() => this.tenantNombre().split(/\s+/)[0]);
+  /** Click en el selector flotante A/B/C: delega en ClubStore (ver ahí el detalle). */
+  setPreviewPlantilla(tpl: string): void {
+    this.club.setPreviewPlantilla(tpl);
+  }
 
-  // ── Preview de plantilla/color por query params (herramienta de venta, 100% efímero) ──
-  /** `?plantilla=A|B|C` (case-insensitive); cualquier otro valor → null. Se lee una sola vez al
-   *  iniciar (solo browser) y desde ahí en más se maneja con el selector flotante. */
-  readonly previewPlantilla = signal<string | null>(null);
-  /** `?color=%23RRGGBB` (hex `#RGB`/`#RRGGBB`, validado); cualquier otro valor → null. Nunca se
-   *  inyecta el valor crudo en CSS sin pasar por este regex. */
-  readonly previewColor = signal<string | null>(null);
-
-  /** Plantilla de landing elegida por el club: 'A' (poster), 'B' (hero), 'C' (app). Default 'A'.
-   *  El preview (`?plantilla=`) pisa la del tenant sin persistir nada. */
-  readonly plantilla = computed(() =>
-    (this.previewPlantilla() ?? this.config()?.tenant.plantilla ?? 'A').toUpperCase()
-  );
-
-  /** Logo del club: si el tenant tiene uno, la URL absoluta lista para el <img>; si no, null. */
-  readonly logoSrc = computed(() => {
-    const u = this.config()?.tenant.logoUrl;
-    if (!u) return null;
-    return /^https?:\/\//i.test(u) ? u : environment.apiBase + u;
-  });
-
-  readonly mostrarPrecios = computed(() => this.config()?.tenant.mostrarPrecios ?? false);
-  readonly requiereTelefono = computed(() => this.config()?.tenant.requiereTelefono ?? true);
-
-  // ── Seña ──────────────────────────────────────────────────────────
-  readonly requiereSena = computed(() => this.config()?.requiereSena ?? false);
-  readonly senaMonto = computed(() => this.config()?.senaMonto ?? null);
-  readonly senaMontoFmt = computed(() => {
-    const m = this.senaMonto();
-    return m != null ? m.toLocaleString('es-AR') : null;
-  });
-  readonly senaAlias = computed(() => this.config()?.senaAlias?.trim() || null);
   /** Feedback breve del botón "Copiar" del alias en la pantalla de éxito. */
   readonly aliasCopiado = signal(false);
   /** Link de Checkout Pro para pagar la seña online (null = solo alias por transferencia). */
   readonly senaInitPoint = signal<string | null>(null);
-
-  // ── Info del complejo ─────────────────────────────────────────────
-  readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
-  readonly mapaUrl = computed(() => this.config()?.complejo.mapaUrl ?? null);
-  readonly whatsappRaw = computed(() => this.config()?.complejo.whatsapp ?? null);
-  readonly whatsappUrl = computed(() => {
-    const wa = this.whatsappRaw();
-    return wa
-      ? `https://wa.me/${wa.replace(/\D/g, '')}?text=` +
-          encodeURIComponent('¡Hola! Quería consultar por un turno de pádel.')
-      : null;
-  });
-  readonly instagramHandle = computed(() => this.config()?.complejo.instagram?.trim() || null);
-  readonly instagramUrl = computed(() => {
-    const h = this.instagramHandle();
-    return h ? `https://instagram.com/${h}` : null;
-  });
-
-  readonly horarios = computed<HoursRow[]>(() =>
-    groupHorarios(this.config()?.horarios ?? [])
-  );
 
   readonly today = startOfDay(new Date());
   readonly minDate = this.today;
@@ -186,6 +131,10 @@ export class Landing {
   // ── Paso 1 · Duración ─────────────────────────────────────────────
   readonly duraciones = computed(() => this.config()?.duracionesPermitidas ?? [60, 90, 120]);
   readonly duracion = signal<number>(90);
+  /** true en cuanto el visitante elige la duración a mano. El default de la config llega por un
+   *  effect (ver constructor) que puede resolver DESPUÉS del primer click del visitante (el fetch
+   *  real es async); sin esta bandera ese default tardío pisaría la elección manual. */
+  private readonly duracionElegida = signal(false);
 
   /**
    * Mostramos el paso de duración solo si el club permite otras duraciones y hay más de una. Si no,
@@ -255,7 +204,7 @@ export class Landing {
 
   /** Link de WhatsApp para mandar el comprobante de la seña (usa el turno recién reservado). */
   readonly whatsappSenaUrl = computed(() => {
-    const wa = this.whatsappRaw();
+    const wa = this.club.whatsappRaw();
     const d = this.successData();
     if (!wa || !d) return null;
     const msg =
@@ -412,113 +361,28 @@ export class Landing {
 
   constructor() {
     this.primeng.setTranslation(ES_TRANSLATION);
-    // Se lee ANTES del fetch de config: el fetch es async (HTTP), así que para cuando la
-    // respuesta llega y corre applyBranding() ya está seteado previewColor() y gana. El color se
-    // aplica imperativamente (setProperty en :root, fuera del árbol que hidrata Angular), así que
-    // no hay riesgo de mismatch aunque se lea/aplique ya en el constructor.
-    const previewTpl = this.readPreviewParams();
-    // previewPlantilla en cambio maneja el HTML que también sirve el server (host [attr.data-tpl]
-    // + el @switch de plantilla en el template, ruta '' con RenderMode.Server): si se pisara acá,
-    // síncrono, el primer render del cliente ya arrancaría distinto de lo que mandó el server y la
-    // hidratación tira NG0500 (mismatch) con re-render destructivo. Por eso el override se aplica
-    // recién DESPUÉS del primer render (afterNextRender) — el primer paint hidrata igual que el
-    // server, y el preview entra como un segundo paint prolijo, ya del lado cliente.
-    if (previewTpl) {
-      afterNextRender(() => this.previewPlantilla.set(previewTpl));
-    }
-    this.loadConfig();
-  }
-
-  /**
-   * Preview de venta: `?plantilla=A|B|C` y `?color=%23RRGGBB` pisan visualmente el tenant sin
-   * persistir nada. Solo en browser (en SSR no hay location) y solo se lee una vez al iniciar.
-   * Aplica `previewColor` directo (ver constructor); devuelve la plantilla validada (o null) para
-   * que el constructor decida CUÁNDO aplicarla. Después de este arranque, el selector flotante
-   * actualiza `previewPlantilla` + la URL directamente (ya post-hidratación, sin este cuidado).
-   */
-  private readPreviewParams(): string | null {
-    if (!isPlatformBrowser(this.platformId)) return null;
-    const params = new URLSearchParams(location.search);
-
-    const tpl = params.get('plantilla');
-    const validTpl = tpl && /^[ABC]$/i.test(tpl) ? tpl.toUpperCase() : null;
-
-    const color = params.get('color');
-    if (color) {
-      try {
-        const decoded = decodeURIComponent(color);
-        if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(decoded)) this.previewColor.set(decoded);
-      } catch {
-        // valor malformado (% suelto, etc.): ignoramos, previewColor queda null.
-      }
-    }
-
-    return validTpl;
-  }
-
-  /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
-   *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
-  setPreviewPlantilla(tpl: string): void {
-    this.previewPlantilla.set(tpl);
-    if (!isPlatformBrowser(this.platformId)) return;
-    const url = new URL(location.href);
-    url.searchParams.set('plantilla', tpl);
-    history.replaceState(null, '', url.pathname + url.search + url.hash);
-  }
-
-  private loadConfig(): void {
-    this.booking.config().subscribe({
-      next: (cfg) => {
-        this.config.set(cfg);
-        this.applyBranding(cfg);
-        this.applySeo(cfg);
-        this.duracion.set(cfg.duracionDefault);
+    // El fetch de config (ClubStore.cargar()) es async: la duración default y el día inicial del
+    // flujo de reserva dependen de que la config ya haya llegado (o haya fallado), así que se
+    // enganchan acá con un effect sobre estadoCarga() en vez de encadenarse a mano en un callback.
+    // Ver ClubStore para el detalle de fetch + branding + SEO.
+    effect(() => {
+      const estado = this.club.estadoCarga();
+      if (estado === 'ok') {
+        // Si el visitante ya clickeó una duración mientras esto resolvía, su elección gana: el
+        // default de la config no se le impone tarde (ver duracionElegida).
+        if (!this.duracionElegida()) this.duracion.set(this.club.config()!.duracionDefault);
         this.initDefaultDay();
-      },
-      error: () => {
-        this.duracion.set(90);
+      } else if (estado === 'error') {
+        if (!this.duracionElegida()) this.duracion.set(90);
         this.initDefaultDay();
         this.messages.add({
           severity: 'error',
           summary: 'Error',
           detail: 'No pudimos cargar la configuración. Probá de nuevo.',
         });
-      },
+      }
     });
-  }
-
-  /**
-   * Aplica la colorimetría del tenant al :root: el color primario y sus derivados (deep/soft, con
-   * color-mix). Así cada club sale con su propio color sin tocar los estilos. El logo se resuelve
-   * aparte vía logoSrc().
-   *
-   * Corre TAMBIÉN en el server (por eso `DOCUMENT` inyectado y no el global): el `style` del `<html>`
-   * se serializa en el HTML que se sirve, así el **primer paint ya sale con el color del club**. Con
-   * el guard de browser que había antes, el server mandaba el teal de plataforma y el color real
-   * entraba recién al hidratar (~1s de parpadeo medido).
-   */
-  private applyBranding(cfg: PublicConfig): void {
-    // El preview (`?color=`) pisa el color del tenant; ya viene validado por readPreviewParams().
-    // Los derivados (deep/soft) y la tinta legible de cada color los resuelve el helper compartido
-    // con BrandingService, que es la única fuente de verdad de los tokens de marca.
-    const color = this.previewColor() ?? cfg.tenant.colorPrimario;
-    applyTenantColors(this.doc.documentElement.style, color, cfg.tenant.colorSecundario);
-  }
-
-  /**
-   * Title + meta description por club, para que cada subdominio salga indexado con SU nombre (no el
-   * de Padel-HUB, que es lo que trae index.html por defecto). Corre en SSR también: el fetch de
-   * `/public/config` no está gateado a browser, así que esto ya queda seteado en el HTML servido
-   * (la ruta '' se renderiza con RenderMode.Server — ver app.routes.server.ts).
-   */
-  private applySeo(cfg: PublicConfig): void {
-    const nombre = cfg.complejo.nombre?.trim() || cfg.tenant.nombre?.trim() || 'Tu club';
-    this.title.setTitle(`${nombre} — Reservá tu cancha`);
-    const direccion = cfg.complejo.direccion?.trim();
-    const desc = direccion
-      ? `Reservá tu cancha en ${nombre} online, en segundos. ${direccion}.`
-      : `Reservá tu cancha en ${nombre} online, en segundos.`;
-    this.meta.updateTag({ name: 'description', content: desc });
+    this.club.cargar();
   }
 
   /** Proba HOY/MAÑANA/PASADO con la duración elegida; arranca en el primero con disponibilidad. */
@@ -541,6 +405,7 @@ export class Landing {
 
   // ── Paso 1 · Duración ─────────────────────────────────────────────
   pickDuracion(d: number): void {
+    this.duracionElegida.set(true);
     if (this.duracion() === d) return;
     this.duracion.set(d);
     this.selectedTime.set(null);
@@ -782,45 +647,4 @@ export class Landing {
       fail();
     }
   }
-}
-
-/**
- * Agrupa los horarios por franja en filas de display: por cada día (0..6 = Lun..Dom) el
- * span es min(inicio)–max(fin); días consecutivos con el mismo span se colapsan; sin
- * horario → "Cerrado".
- */
-function groupHorarios(horarios: PublicConfig['horarios']): HoursRow[] {
-  const spans: ({ from: string; to: string } | null)[] = Array(7).fill(null);
-  for (const h of horarios) {
-    if (h.diaSemana < 0 || h.diaSemana > 6) continue;
-    const cur = spans[h.diaSemana];
-    if (!cur) {
-      spans[h.diaSemana] = { from: h.horaInicio, to: h.horaFin };
-    } else {
-      if (h.horaInicio < cur.from) cur.from = h.horaInicio;
-      if (h.horaFin > cur.to) cur.to = h.horaFin;
-    }
-  }
-
-  type Group = { start: number; end: number; sig: string; from: string; to: string };
-  const groups: Group[] = [];
-  for (let i = 0; i < 7; i++) {
-    const span = spans[i];
-    const sig = span ? `${span.from}-${span.to}` : 'closed';
-    const last = groups[groups.length - 1];
-    if (last && last.sig === sig) {
-      last.end = i;
-    } else {
-      groups.push({ start: i, end: i, sig, from: span?.from ?? '', to: span?.to ?? '' });
-    }
-  }
-
-  return groups.map((g) => {
-    const cerrado = g.sig === 'closed';
-    const dias =
-      g.start === g.end
-        ? `${DIA_SEMANA[g.start]}s`
-        : `${DIA_SEMANA[g.start]} a ${DIA_SEMANA[g.end]}`;
-    return { dias, rango: cerrado ? 'Cerrado' : `${g.from} — ${g.to}`, cerrado };
-  });
 }
