@@ -7,6 +7,7 @@ import { applyTenantColors } from '../../core/branding/tenant-colors';
 import {
   CODIGOS_CON_SHELL,
   CodigoPlantilla,
+  PLANTILLAS,
   normalizarPlantilla,
 } from '../../core/landing/plantillas';
 import { environment } from '../../../environments/environment';
@@ -192,9 +193,12 @@ export class ClubStore {
   private applyBranding(cfg: PublicConfig): void {
     // El preview (`?color=`) pisa el color del tenant; ya viene validado por readPreviewParams().
     // Los derivados (deep/soft) y la tinta legible de cada color los resuelve el helper compartido
-    // con BrandingService, que es la única fuente de verdad de los tokens de marca.
+    // con BrandingService, que es la única fuente de verdad de los tokens de marca. La tinta base
+    // sale de `plantilla()` (ya normalizada, ver ese computed): no se vuelve a normalizar acá para
+    // no tener dos nociones de "cuál es la plantilla actual".
     const color = this.previewColor() ?? cfg.tenant.colorPrimario;
-    applyTenantColors(this.doc.documentElement.style, color, cfg.tenant.colorSecundario);
+    const inkHex = PLANTILLAS[this.plantilla()].inkHex;
+    applyTenantColors(this.doc.documentElement.style, color, cfg.tenant.colorSecundario, inkHex);
   }
 
   /**
