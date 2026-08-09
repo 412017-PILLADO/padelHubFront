@@ -5,10 +5,7 @@ import {
   signal,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DatePickerModule } from 'primeng/datepicker';
-import { InputTextModule } from 'primeng/inputtext';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { PrimeNG } from 'primeng/config';
@@ -42,10 +39,7 @@ const ES_TRANSLATION = {
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule,
     RouterLink,
-    DatePickerModule,
-    InputTextModule,
     ToastModule,
     NgTemplateOutlet,
     ArrepentimientoModal,

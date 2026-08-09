@@ -284,7 +284,10 @@
     var(--paper);
   background-attachment: fixed;
 }
-/* pilar del vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno */
+/* pilar del vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno.
+   OJO: estas declaraciones están copiadas a mano en `booking-flow.scss` (regla
+   `.tpl-b .booking-flow`), porque `@extend` no cruza de hoja y el flujo ya es otro componente.
+   Si tocás acá, tocá allá — hasta el Task 10, que borra aquella copia. */
 %b-glass {
   background: color-mix(in srgb, var(--surface) 58%, transparent);
   -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
