@@ -46,3 +46,6 @@ Thumbs.db
 # Playwright
 /test-results/
 /playwright-report/
+
+# Scratch de superpowers (ledger de ejecución, briefs y paquetes de review)
+.superpowers/
