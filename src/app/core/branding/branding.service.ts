@@ -16,6 +16,18 @@ import { applyTenantColors } from './tenant-colors';
  * - Panel autenticado (`loadAdmin`): `/api/v1/agenda/marca`, la marca del tenant del JWT.
  * - Login / landing (`apply`): datos ya cargados de `/public/config` (resuelto por subdominio).
  */
+/**
+ * Plantilla bajo la que este archivo cachea la marca del panel/login. El panel es client-render:
+ * hasta que la API contesta no sabemos cuál es la plantilla real del tenant (ver
+ * core/landing/plantillas.ts), así que cacheamos siempre bajo la default del sistema. Es inofensivo
+ * hoy: acá la tinta NO varía por plantilla (eso sólo lo hace `ClubStore.applyBranding`, para la
+ * landing pública, en base al esquema claro/oscuro del shell) — así que todas las lecturas y
+ * escrituras de este archivo caen siempre en el mismo bucket, sin pisar ni ser pisadas por el de
+ * ninguna otra plantilla. Si el panel alguna vez empieza a variar la tinta por plantilla, esta
+ * constante es lo único que hay que tocar acá.
+ */
+const PLANTILLA_PANEL = 'A';
+
 @Injectable({ providedIn: 'root' })
 export class BrandingService {
   private readonly agenda = inject(AgendaConfigService);
@@ -36,7 +48,7 @@ export class BrandingService {
     // Los COLORES cacheados ya los aplica el arranque de la app (ver app.config.ts, antes del primer
     // paint). Acá recuperamos además el logo, que sí necesita el servicio para la nav: así el panel
     // no arranca con el ícono por defecto y lo cambia cuando contesta la API.
-    const guardada = this.slug ? leerMarcaCacheada(this.slug) : null;
+    const guardada = this.slug ? leerMarcaCacheada(this.slug, PLANTILLA_PANEL) : null;
     if (guardada) this.logoSrc.set(this.resolveLogo(guardada.logoUrl));
   }
 
@@ -60,7 +72,7 @@ export class BrandingService {
   apply(colorPrimario?: string | null, colorSecundario?: string | null, logoUrl?: string | null): void {
     const vars = applyTenantColors(this.doc.documentElement.style, colorPrimario, colorSecundario);
     this.logoSrc.set(this.resolveLogo(logoUrl));
-    if (this.slug) guardarMarcaCacheada(this.slug, { vars, logoUrl: logoUrl ?? null });
+    if (this.slug) guardarMarcaCacheada(this.slug, PLANTILLA_PANEL, { vars, logoUrl: logoUrl ?? null });
   }
 
   /** Resuelve la URL del logo: absoluta tal cual, o relativa al backend; null si no hay. */

@@ -6,8 +6,13 @@
  * de verdad lo necesitan.
  */
 
-/** Una clave por club: dos clubes en el mismo navegador no se pisan la marca. */
-export const brandingCacheKey = (slug: string) => `padel_branding_${slug}`;
+/** Una clave por club Y plantilla: si el club cambia de plantilla, la marca vieja no se repinta (la
+ *  tinta legible depende del esquema claro/oscuro del shell, ver decidirTinta() en ./tenant-colors).
+ *  Antes la clave era sólo por club: un club que cambiaba de plantilla clara a oscura (o viceversa)
+ *  arriesgaba, en el primer paint de un visitante que vuelve, la tinta de la plantilla vieja hasta
+ *  que la API contestaba. */
+export const brandingCacheKey = (slug: string, plantilla: string) =>
+  `padel_branding_${slug}_${plantilla}`;
 
 /** Variables CSS ya resueltas + el logo, tal como quedaron la última vez que se aplicó la marca. */
 export interface MarcaCacheada {
@@ -15,18 +20,18 @@ export interface MarcaCacheada {
   logoUrl: string | null;
 }
 
-export function leerMarcaCacheada(slug: string): MarcaCacheada | null {
+export function leerMarcaCacheada(slug: string, plantilla: string): MarcaCacheada | null {
   try {
-    const raw = localStorage.getItem(brandingCacheKey(slug));
+    const raw = localStorage.getItem(brandingCacheKey(slug, plantilla));
     return raw ? (JSON.parse(raw) as MarcaCacheada) : null;
   } catch {
     return null; // JSON corrupto o storage bloqueado: seguimos con el color base.
   }
 }
 
-export function guardarMarcaCacheada(slug: string, marca: MarcaCacheada): void {
+export function guardarMarcaCacheada(slug: string, plantilla: string, marca: MarcaCacheada): void {
   try {
-    localStorage.setItem(brandingCacheKey(slug), JSON.stringify(marca));
+    localStorage.setItem(brandingCacheKey(slug, plantilla), JSON.stringify(marca));
   } catch {
     /* storage lleno o deshabilitado: el caché es un lujo, no rompemos por esto. */
   }
@@ -38,8 +43,8 @@ export function guardarMarcaCacheada(slug: string, marca: MarcaCacheada): void {
  * server con la marca ya escrita — sin esto pinta el color de plataforma y salta al del club recién
  * cuando contesta la API.
  */
-export function aplicarMarcaCacheada(root: CSSStyleDeclaration, slug: string): void {
-  const marca = leerMarcaCacheada(slug);
+export function aplicarMarcaCacheada(root: CSSStyleDeclaration, slug: string, plantilla: string): void {
+  const marca = leerMarcaCacheada(slug, plantilla);
   if (!marca?.vars) return;
   for (const [prop, valor] of Object.entries(marca.vars)) root.setProperty(prop, valor);
 }

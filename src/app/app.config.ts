@@ -53,11 +53,17 @@ export const appConfig: ApplicationConfig = {
     // del server que ya trae la marca en la landing— pinta el color de plataforma y salta al del
     // club. Se llama al helper suelto y NO a BrandingService a propósito: el servicio depende de la
     // API del panel y arrastraba todo ese árbol al bundle inicial de cualquier visitante público.
+    //
+    // La clave del caché ahora es por (club, plantilla) — ver brandingCacheKey() en branding-boot.ts.
+    // Acá, antes de que la API conteste, todavía no sabemos cuál es la plantilla real del tenant, así
+    // que usamos 'A' (mismo criterio que PLANTILLA_PANEL en branding.service.ts, que es quien escribe
+    // este caché): la tinta de este caché no varía por plantilla hoy, así que 'A' es un bucket estable
+    // que ni pisa ni lo pisa el de otra plantilla.
     provideAppInitializer(() => {
       const platformId = inject(PLATFORM_ID);
       const doc = inject(DOCUMENT);
       if (!isPlatformBrowser(platformId)) return;
-      aplicarMarcaCacheada(doc.documentElement.style, currentTenantSlug());
+      aplicarMarcaCacheada(doc.documentElement.style, currentTenantSlug(), 'A');
     }),
     // authInterceptor PRIMERO: adjunta el Bearer mientras la URL todavía es relativa
     // (`/api/v1/...`). tenantInterceptor corre después y reescribe a la URL absoluta del
