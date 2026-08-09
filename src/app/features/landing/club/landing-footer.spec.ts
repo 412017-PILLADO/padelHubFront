@@ -80,4 +80,30 @@ describe('LandingFooterComponent · links del pie', () => {
     const fixture = montar();
     expect(fixture.nativeElement.querySelector('.foot-copy').textContent).toContain('Costa Pádel');
   });
+
+  /**
+   * Las tres copias del pie eran idénticas SALVO dos clases que solo usa la plantilla A: `cr` en el
+   * © y `panel-link` en el link al panel (`.pb-foot .cr` / `.pb-foot .panel-link` les dan su color,
+   * y en desktop el `order` que pone el © debajo de los links). El pie unificado las lleva siempre:
+   * en B y C no casa ninguna regla, pero si se caen, el afiche cambia de aspecto en silencio — no
+   * hay e2e que lo note, porque es puramente cosmético.
+   */
+  it('el © lleva la clase `cr` que la plantilla A necesita para pintarlo', () => {
+    const fixture = montar();
+    expect(fixture.nativeElement.querySelector('.foot-copy.cr')).not.toBeNull();
+  });
+
+  /** El host reemplazó al <footer> de cada plantilla, que sí tenía rol implícito: sin este atributo
+   *  la página se queda sin landmark de pie. */
+  it('el host expone el landmark de pie', () => {
+    const fixture = montar();
+    expect(fixture.nativeElement.getAttribute('role')).toBe('contentinfo');
+  });
+
+  it('el link al panel lleva `panel-link` y apunta a /admin', () => {
+    const fixture = montar();
+    const panel = fixture.nativeElement.querySelector('a.panel-link');
+    expect(panel).not.toBeNull();
+    expect(panel.getAttribute('href')).toBe('/admin');
+  });
 });

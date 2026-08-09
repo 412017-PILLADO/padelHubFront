@@ -24,6 +24,9 @@ import { ClubStore } from '../club.store';
   imports: [RouterLink],
   templateUrl: './landing-footer.html',
   styleUrl: './landing-footer.scss',
+  // El pie era un <footer> en cada plantilla; el host es un elemento desconocido, que no tiene rol
+  // implícito. Sin esto la página se queda sin landmark de pie para lectores de pantalla.
+  host: { role: 'contentinfo' },
 })
 export class LandingFooterComponent {
   private readonly club = inject(ClubStore);

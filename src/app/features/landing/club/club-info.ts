@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, inject } from '@angular/core';
 
 import { ClubStore } from '../club.store';
 
@@ -22,6 +23,8 @@ import { ClubStore } from '../club.store';
 })
 export class ClubInfoComponent {
   private readonly club = inject(ClubStore);
+  /** La landing se renderiza también en el server: nada de `window` sin este guard. */
+  private readonly esNavegador = isPlatformBrowser(inject(PLATFORM_ID));
 
   // Alias con los nombres que ya usaba landing.html: el template se movió verbatim.
   readonly horarios = this.club.horarios;
@@ -33,6 +36,6 @@ export class ClubInfoComponent {
 
   openMaps(): void {
     const url = this.mapaUrl();
-    if (url) window.open(url, '_blank');
+    if (url && this.esNavegador) window.open(url, '_blank');
   }
 }
