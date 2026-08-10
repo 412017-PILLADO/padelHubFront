@@ -45,7 +45,10 @@
    `:host` para no escaparse de B. */
 :host ::ng-deep .display {
   font-stretch: normal;
-  letter-spacing: 0.01em;   /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible */
+  /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible. Va antes que las reglas
+     propias de la cáscara a propósito — `.b-title` empata en especificidad y declara su propio
+     tracking más abajo, así que el título conserva el suyo y esto sólo alcanza al resto. */
+  letter-spacing: 0.01em;
 }
 
 /* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) tiene
