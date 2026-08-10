@@ -34,17 +34,32 @@
   color: var(--ink);
   background: var(--paper);
 }
-/* La `.display` de plataforma (styles.scss) pide `font-stretch: 125%` — el eje de ancho variable de
-   Archivo. Anton NO tiene eje de ancho: el navegador sintetiza el estirado y la deforma. Acá se
-   anula, para el subárbol de B nada más.
+/* La `.display` de plataforma (styles.scss) está escrita para **Archivo**, que es variable en dos
+   ejes, y le pide los dos: `font-stretch: 125%` (eje `wdth`) y `font-weight: 800` (eje `wght`).
+   Anton no tiene ninguno de los dos — es una sola cara, `wght@400` (ver EJES_POR_FAMILIA en
+   plantillas.ts, que le pide 400 porque no hay otra). Cuando la cara pedida no existe el navegador
+   la **sintetiza**: estira los glifos en horizontal y los engorda por su cuenta. En una tipografía
+   que ya es condensada de fábrica eso cierra los contrapunzones, y escala con el tamaño. Acá se
+   anulan las dos síntesis, para el subárbol de B nada más.
 
-   Por qué `::ng-deep` y no un token: `.display` la emiten `club-info`, `landing-footer`,
-   `booking-flow` y la propia cáscara — cuatro componentes. Un token obligaría a tocar las cuatro
-   hojas para consumirlo. Es la segunda excepción deliberada a la encapsulación en este flujo, del
-   mismo tipo que `:host ::ng-deep .politica-link` en landing.scss, y como aquella va acotada con
-   `:host` para no escaparse de B. */
+   Por qué `::ng-deep`: dentro de B, `.display` la emiten DOS componentes — `booking-flow.html`
+   (encabezado del flujo y título de la pantalla de éxito) y esta misma cáscara (marca de la nav y
+   título del héroe). `club-info` y `landing-footer` no emiten ninguna. O sea que la alternativa
+   encapsulada cuesta UNA hoja ajena: `:host-context(.tpl-b) .display` dentro de booking-flow.scss,
+   que es el patrón por cáscara que el repo ya usa (club-info.scss, landing-footer.scss).
+
+   No se tomó por una razón concreta, no por costo: booking-flow.scss hoy no tiene **un solo**
+   selector `.tpl-*`, y eso no es casualidad — es una invariante que un plan anterior consiguió a
+   propósito vistiendo el flujo con los tokens `--flow-*`, y que está escrita en el header de
+   booking-flow.scss y en el docblock de shell.ts. Meter `:host-context(.tpl-b)` ahí la rompe y
+   obliga a desmentir esos dos comentarios. Entre reintroducir selectores de plantilla en la hoja
+   del flujo o usar la excepción de encapsulación que la spec ya acepta para `.politica-link`
+   (`:host ::ng-deep` en landing.scss), se eligió la segunda — acotada con `:host`, así que no se
+   escapa de B. Es la segunda excepción del producto: si la review prefiere pagar la invariante,
+   mover esto es un cambio de tres líneas. */
 :host ::ng-deep .display {
-  font-stretch: normal;
+  font-stretch: normal;    /* Archivo: eje wdth. Anton no lo tiene → estirado sintético. */
+  font-weight: 400;        /* Archivo: eje wght. Anton es una sola cara → negrita sintética. */
   /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible. Va antes que las reglas
      propias de la cáscara a propósito — `.b-title` empata en especificidad y declara su propio
      tracking más abajo, así que el título conserva el suyo y esto sólo alcanza al resto. */
@@ -82,8 +97,9 @@
 .b-book { width: 100%; max-width: 880px; margin: 0 auto;
   padding: clamp(8px, 3vw, 28px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px); scroll-margin-top: 76px; }
 /* El vidrio del flujo NO se pinta desde acá: lo declara `_tokens.scss` como tokens --flow-*, que
-   el flujo lee desde su propia hoja (encapsulada). Ninguna regla de esta cáscara apunta al DOM del
-   `<app-booking-flow>`. */
+   el flujo lee desde su propia hoja (encapsulada). La ÚNICA regla de esta cáscara que apunta al DOM
+   del `<app-booking-flow>` es el `:host ::ng-deep .display` de arriba, que anula las síntesis de
+   ancho y peso de Anton; el porqué de esa excepción está documentado ahí. */
 
 .b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }
