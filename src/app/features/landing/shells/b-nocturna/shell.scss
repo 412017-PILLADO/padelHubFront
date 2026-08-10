@@ -75,9 +75,13 @@
 :host ::ng-deep .display {
   font-stretch: normal;    /* Archivo: eje wdth. Anton no lo tiene → estirado sintético. */
   font-weight: 400;        /* Archivo: eje wght. Anton es una sola cara → negrita sintética. */
-  /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible. Va antes que las reglas
-     propias de la cáscara a propósito — `.b-title` empata en especificidad y declara su propio
-     tracking más abajo, así que el título conserva el suyo y esto sólo alcanza al resto. */
+  /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible, y sobre el telón oscuro
+     todavía más (el texto claro sobre fondo oscuro "engorda" ópticamente y cierra los blancos
+     internos). Desde el Task 5 esto alcanza TAMBIÉN al título del héroe: `.b-title` empata en
+     especificidad con esta regla y está más abajo en la hoja, así que le ganaba con su propio
+     `letter-spacing` — se le borró la declaración justamente para que no haya dos trackings de
+     display en la misma cáscara. Si alguna regla de más abajo vuelve a declarar `letter-spacing`,
+     va a ganar: es un empate resuelto por orden, no por especificidad. */
   letter-spacing: 0.01em;
 }
 
@@ -112,7 +116,19 @@
 /* Sin el chip de logo (era el segundo del mismo logo en la misma pantalla): el héroe es el nombre
    grande + la bajada. La marca gráfica queda solo en la nav. */
 .b-hero { text-align: center; padding: clamp(20px, 2.6vw, 36px) clamp(16px, 5vw, 40px) clamp(14px, 2vw, 20px); }
-.b-title { font-size: clamp(1.6rem, 3.4vw, 2.1rem); line-height: 1.05; color: var(--ink); letter-spacing: -0.02em; }
+/* Retocado contra el telón (Task 5), por dos medidas concretas a 1280:
+   · TAMAÑO — el techo era 2.1rem, exactamente el mismo que el de `.flow-head strong` del panel
+     (`clamp(1.4rem, 2.6vw, 2.1rem)`), así que arriba de ~1224px el título del héroe medía 33.6px y
+     el encabezado del flujo 33.3px: empatados, el héroe dejaba de tener rango sobre una sección
+     interna del panel. Sube SÓLO el techo (mínimo y pendiente intactos), que es donde estaba el
+     empate y donde sobra alto: a 1280 el panel arranca 8px más abajo, muy por encima del fold de
+     1440×900 que el owner pidió cuidar. Debajo de 900px nada de esto se ve: el héroe está oculto.
+   · TRACKING — el `-0.02em` venía de cuando el display era Archivo (expandida). Anton ya es muy
+     condensada de fábrica y encima el texto claro sobre fondo oscuro "engorda" ópticamente, así que
+     el negativo cerraba los contrapunzones. Se borra la declaración en vez de reescribirla: sin
+     ella gana el `+0.01em` de `:host ::ng-deep .display`, y B pasa a tener UN solo tracking de
+     display para nav, héroe y panel. */
+.b-title { font-size: clamp(1.6rem, 3.4vw, 2.6rem); line-height: 1.05; color: var(--ink); }
 .b-lede { margin: 8px auto 0; max-width: 42ch; color: var(--ink-dim); font-size: clamp(0.88rem, 1.6vw, 0.98rem); }
 
 .b-book { width: 100%; max-width: 880px; margin: 0 auto;
