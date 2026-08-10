@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, output } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
+import { cargarFuentes } from '../../../../core/landing/fuentes';
+import { PLANTILLAS, urlFuentes } from '../../../../core/landing/plantillas';
 import { ClubStore } from '../../club.store';
 import { BookingFlowComponent } from '../../booking/booking-flow';
 import { BrandMarkComponent } from '../../club/brand-mark';
@@ -32,9 +35,21 @@ import { LandingFooterComponent } from '../../club/landing-footer';
 })
 export class ShellBComponent {
   private readonly club = inject(ClubStore);
+  private readonly doc = inject(DOCUMENT);
 
   readonly abrirArrepentimiento = output<void>();
   readonly abrirPolitica = output<void>();
 
   readonly tenantNombre = this.club.tenantNombre;
+
+  constructor() {
+    // Primera cáscara con par tipográfico propio (spec §6.2), y por eso la primera que enchufa
+    // `cargarFuentes()`: hasta acá ninguna hoja del repo referenciaba las familias del registry, así
+    // que inyectar sólo agregaba peso. B sí las usa — shell.scss declara --display/--body/--mono con
+    // Anton/Inter Tight/JetBrains Mono.
+    // Corre también en SSR (el DOCUMENT inyectado se serializa), así que el HTML que sale del server
+    // ya pide la tipografía de B y la plantilla no parpadea con la fuente de plataforma hasta que
+    // hidrata. `cargarFuentes` es idempotente por URL: al hidratar no duplica el <link> del server.
+    cargarFuentes(this.doc, urlFuentes(PLANTILLAS.B.fuentes));
+  }
 }

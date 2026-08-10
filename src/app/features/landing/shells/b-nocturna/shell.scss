@@ -23,10 +23,31 @@
 
   color-scheme: dark;
 
+  /* Par tipográfico propio (spec §6): Anton para display, Inter Tight para texto, JetBrains Mono
+     para datos. El <link> a Google Fonts lo pide el constructor de shell.ts (también en SSR). */
+  --display: 'Anton', system-ui, sans-serif;
+  --body: 'Inter Tight', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
   min-height: 100svh; display: flex; flex-direction: column;
+  font-family: var(--body);
   color: var(--ink);
   background: var(--paper);
 }
+/* La `.display` de plataforma (styles.scss) pide `font-stretch: 125%` — el eje de ancho variable de
+   Archivo. Anton NO tiene eje de ancho: el navegador sintetiza el estirado y la deforma. Acá se
+   anula, para el subárbol de B nada más.
+
+   Por qué `::ng-deep` y no un token: `.display` la emiten `club-info`, `landing-footer`,
+   `booking-flow` y la propia cáscara — cuatro componentes. Un token obligaría a tocar las cuatro
+   hojas para consumirlo. Es la segunda excepción deliberada a la encapsulación en este flujo, del
+   mismo tipo que `:host ::ng-deep .politica-link` en landing.scss, y como aquella va acotada con
+   `:host` para no escaparse de B. */
+:host ::ng-deep .display {
+  font-stretch: normal;
+  letter-spacing: 0.01em;   /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible */
+}
+
 /* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) tiene
    hoy dos copias escritas a mano, porque `@extend` no cruza de hoja: los tokens --flow-* de
    `_tokens.scss` (que visten al flujo de reserva) y `.ic-card` en club-info.scss. Si tocás una de
