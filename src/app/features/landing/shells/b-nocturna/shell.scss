@@ -92,9 +92,11 @@
 
 /* La nav flota sobre el foco primario, que es la zona más clara del telón: el fondo pasa de
    `--surface` a `--paper` (más oscuro y más opaco, 72%) para que la marca no compita con la luz de
-   atrás, y el `blur` tenga siempre algo que difuminar aunque la página esté scrolleada arriba de
-   todo. El borde baja de 45% a 10% de blanco: sobre el telón nocturno un blanco fuerte deja de
-   leerse como reflejo del vidrio y pasa a ser un trazo plateado (misma corrección que el borde de
+   atrás. Ojo con el `blur`: scrolleada arriba de todo, detrás de la nav no hay más que el degradado
+   —que ya es suave— así que el blur no aporta nada y la barra se despega del fondo sólo por tono,
+   por ese 72% de papel. Recién cuando el panel de reserva pasa por debajo el blur hace su trabajo.
+   El borde baja de 45% a 10% de blanco: sobre el telón nocturno un blanco fuerte deja de leerse
+   como reflejo del vidrio y pasa a ser un trazo plateado (misma corrección que el borde de
    `.ic-card` en club-info.scss). */
 .b-nav {
   position: sticky; top: 0; z-index: 20;
@@ -142,7 +144,8 @@
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }
 /* El vidrio de las tarjetas de info vive en club-info.scss (`:host-context(.tpl-b)`). */
 /* Mismo motivo que el borde de la nav: 40% de blanco sobre el telón nocturno es un trazo plateado,
-   no un hairline. Baja a 10%, que es el valor con el que se rebordea todo el vidrio de B. */
+   no un hairline. Baja a 10%, igual que la nav (el vidrio se rebordea con 12% y su brillo especular
+   interno con 10%: estas dos líneas no son vidrio, son separadores, y van con el valor más bajo). */
 .b-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
   border-top: 1px solid color-mix(in srgb, #fff 10%, transparent);
   color: var(--ink-faint); }
