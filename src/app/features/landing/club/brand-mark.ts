@@ -37,6 +37,16 @@ import { ClubStore } from '../club.store';
     :host-context(.b-brandline) .tpl-mark { width: 30px; height: 30px; }
     /* El logo cede ancho: el nombre del club va al lado siempre, también en mobile. */
     :host-context(.b-brandline) .tpl-logo img { height: 32px; max-width: 120px; }
+    /* B es la plantilla oscura y acá NO va ningún ajuste de color. Medido, no supuesto:
+       - El logo del CLUB no se toca nunca: es su marca, y el club eligió el fondo oscuro al elegir
+         la plantilla.
+       - El fallback (\`logo-padelhub.png\`, la rama @else de arriba) tampoco hace falta tocarlo: no
+         es tinta oscura como se creía, es el teal de plataforma (#008b9e) sobre alfa transparente,
+         y contra el vidrio de \`.b-nav\` da entre 3,9:1 y 4,9:1 según el color del club (medido con
+         los cuatro extremos: teal 4,40 · fucsia 4,65 · negro 4,92 · amarillo 3,92). Los cuatro
+         pasan el umbral 3:1 de objeto gráfico (WCAG 1.4.11): el logo no desaparece.
+       - Invertirlo sería peor: \`invert(1) brightness(1.6)\` lleva ese teal a un salmón
+         rgb(255,178,147). Eso no es el logo de Padel Hub en oscuro, es otro logo. */
 
     :host-context(.c-brandline) .tpl-mark { width: 30px; height: 30px; }
     /* El logo cede ancho: el nombre va al lado siempre, y en el rail de 280px hay que repartir. */

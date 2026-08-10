@@ -30,22 +30,31 @@
    volver global la hoja. Deuda reconocida del plan: se reemplaza por tokens en el Plan 2.
    =================================================================== */
 
-/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio. Las declaraciones están escritas a mano
-   porque la misma receta la declara `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los
-   que se pinta el flujo de reserva) y `@extend` no cruza de hoja. Antes las compartía el placeholder
-   `%b-glass` de landing.scss; después fue la regla `.tpl-b .booking-flow` de booking-flow.scss, que
-   el Task 10 reemplazó por esos tokens. La obligación de sincronía es en los dos sentidos: si tocás
-   esta copia, tocá la otra (y al revés). El `border-radius` sí difiere a propósito: 20px la tarjeta,
-   28px el panel del flujo. */
+/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio, y desde que B es la plantilla OSCURA del
+   producto el vidrio también lo es: sube la opacidad del fondo (el papel de atrás ya no aporta luz),
+   y el borde y el brillo especular bajan de 60% a 12% y 10% de blanco — sobre el negro, un blanco
+   fuerte deja de leerse como reflejo y pasa a ser un trazo plateado. La sombra deja de teñirse con
+   `--court`: sobre fondo oscuro una sombra de color aclara en vez de asentar, así que es negra.
+
+   Las declaraciones están escritas a mano porque la misma receta la declara
+   `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los que se pinta el flujo de reserva) y
+   `@extend` no cruza de hoja. **Las dos copias están hoy DESINCRONIZADAS a propósito**: esta ya pasó
+   a la receta oscura y la de `_tokens.scss` sigue con la clara (`--surface 58%`, borde `#fff 60%`,
+   `saturate(1.6)`, sombra teñida). Es deuda acotada: el Task 7 del plan extrae un `@mixin`
+   `vidrio-nocturno($radio)` con exactamente estos valores y lo consume desde los dos lados — cuando
+   eso pase, este comentario se borra entero. Mientras tanto, si tocás una copia, tocá la otra.
+   El `border-radius` sí difiere a propósito: 20px la tarjeta, 28px el panel del flujo. */
 :host-context(.tpl-b) .ic-card {
-  background: color-mix(in srgb, var(--surface) 58%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
-  border: 1px solid color-mix(in srgb, #fff 60%, transparent);
-  box-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, #fff 12%, transparent);
   border-radius: 20px;
+  box-shadow: 0 20px 50px -28px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
 }
-:host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 16%, transparent); }
+/* La pastilla del icono es una veladura del color del club: sobre el vidrio oscuro un 16% se pierde
+   contra la tarjeta, así que sube a 26% para que el icono siga teniendo su propio bloque. */
+:host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 26%, transparent); }
 /* `--court-deep` es el color del club OSCURECIDO: sobre el vidrio nocturno se apaga (≈2.4:1 con el
    teal de plataforma). Acá el link va al revés, aclarando el color hacia la tinta de la cáscara, y
    el hover termina de encenderlo. Misma receta que `--flow-soft-ink-accent` en b-nocturna/_tokens. */
