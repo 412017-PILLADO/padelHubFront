@@ -23,25 +23,12 @@ export interface Plantilla {
 
 /** Tinta oscura del sistema (matchea --ink en styles.scss). */
 const INK_OSCURA = '#11162b';
-/**
- * Tinta clara de la plantilla oscura. Hoy no la usa nadie a propósito: es el valor que le toca a la
- * B cuando su cáscara se vuelva oscura de verdad en el Plan 2 (ver el comentario de B más abajo).
- * Se deja escrita y no se borra porque el par oscura/clara es el contrato que lee `decidirTinta()`,
- * y reponerla a mano el día del cambio es justo el paso que alguien se saltea.
- */
+/** Tinta clara de la plantilla oscura (matchea el `--ink` que declara `b-nocturna/shell.scss`). */
 const INK_CLARA = '#eef2f8';
 
 export const PLANTILLAS: Readonly<Record<CodigoPlantilla, Plantilla>> = {
   A: { codigo: 'A', nombre: 'Afiche',   descripcion: 'Editorial, marca grande',   esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Archivo', 'Hanken Grotesk', 'Space Mono'], claseShell: 'poster' },
-  // `esquema: 'dark'` es la intención de diseño de la B; `inkHex` es lo que HOY pinta su cáscara, y
-  // hoy la B todavía no es oscura: `shells/b-nocturna/shell.scss` hace `background: var(--paper);
-  // color: var(--ink)` y no pisa `--ink` en ningún lado, así que renderiza con la tinta oscura del
-  // sistema. Declararla clara acá le daría a decidirTinta() una premisa falsa y un club con primario
-  // CLARO terminaría con texto blanco sobre fondo claro (#FFD400 cae de 8.31:1 a 1.43:1) en chips,
-  // slots seleccionados y los botones de seña. Cuando la cáscara de la B se vuelva oscura de verdad
-  // en el Plan 2, esto vuelve a INK_CLARA — el test "el inkHex de la plantilla %s es la tinta con la
-  // que pinta su cáscara" de plantillas.spec.ts salta el día que pase y avisa.
-  B: { codigo: 'B', nombre: 'Nocturna', descripcion: 'Oscura, luz de cancha',     esquema: 'dark',  inkHex: INK_OSCURA, fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-b' },
+  B: { codigo: 'B', nombre: 'Nocturna', descripcion: 'Oscura, luz de cancha',     esquema: 'dark',  inkHex: INK_CLARA,  fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-b' },
   C: { codigo: 'C', nombre: 'Tarjeta',  descripcion: 'Tipo app, para el pulgar',  esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Outfit', 'Inter'],                          claseShell: 'tpl-c' },
   D: { codigo: 'D', nombre: 'Cancha',   descripcion: 'Líneas y tablero',          esquema: 'light', inkHex: INK_OSCURA, fuentes: ['IBM Plex Sans', 'IBM Plex Mono'],           claseShell: 'tpl-d' },
   E: { codigo: 'E', nombre: 'Diurna',   descripcion: 'Clara, vidrio sobre color', esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-e' },

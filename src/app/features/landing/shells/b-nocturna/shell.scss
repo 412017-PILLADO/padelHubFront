@@ -9,22 +9,23 @@
    panel, que antes vivía en booking-flow.scss como `.tpl-b .booking-flow`). */
 @use 'tokens';
 
-/* El fondo es el decorado de la plantilla (pedido del owner): un degradé armado con los DOS colores
-   del club — primario arriba-izquierda, secundario arriba-derecha (cae al primario si el club no
-   eligió uno) — más una diagonal suave que los cruza de punta a punta y un halo abajo. Es el telón
-   que hace legible al vidrio: sin color detrás, los paneles frosted no se distinguen del papel. */
+/* Capa 2 · la única plantilla oscura del producto (spec §6). El fondo NO es negro neutro: es el
+   color del club oscurecido, así un club rojo se siente cálido y uno teal, frío — el white-label se
+   lee incluso en dark. La capa 2 nunca declara --court (spec §5.1): sólo lo consume. */
 :host {
-  min-height: 100svh; display: flex; flex-direction: column; color: var(--ink);
-  background:
-    radial-gradient(62% 52% at 10% -6%, color-mix(in srgb, var(--court) 42%, transparent), transparent 70%),
-    radial-gradient(56% 46% at 94% 8%, color-mix(in srgb, var(--court-2, var(--court-deep)) 38%, transparent), transparent 72%),
-    radial-gradient(80% 62% at 50% 110%, color-mix(in srgb, var(--court-2, var(--court)) 26%, transparent), transparent 70%),
-    linear-gradient(152deg,
-      color-mix(in srgb, var(--court) 16%, transparent) 0%,
-      transparent 46%,
-      color-mix(in srgb, var(--court-2, var(--court)) 18%, transparent) 100%),
-    var(--paper);
-  background-attachment: fixed;
+  --paper: #{color-mix(in srgb, var(--court) 13%, #07090f)};
+  --surface: #{color-mix(in srgb, var(--court) 10%, #121826)};
+  --ink: #eef2f8;
+  --ink-dim: #b7c0d4;
+  --ink-faint: #8b95ab;
+  --line: #{color-mix(in srgb, #fff 14%, transparent)};
+  --line-strong: #{color-mix(in srgb, #fff 24%, transparent)};
+
+  color-scheme: dark;
+
+  min-height: 100svh; display: flex; flex-direction: column;
+  color: var(--ink);
+  background: var(--paper);
 }
 /* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) tiene
    hoy dos copias escritas a mano, porque `@extend` no cruza de hoja: los tokens --flow-* de
