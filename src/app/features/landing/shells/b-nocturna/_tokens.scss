@@ -10,15 +10,22 @@
    En la B el flujo es uno de los paneles de vidrio: los valores de acá son la MISMA receta que
    `:host-context(.tpl-b) .ic-card` en club/club-info.scss (el otro consumidor del vidrio). Están
    escritos a mano en las dos hojas porque `@extend` no cruza de hoja; si tocás una, tocá la otra.
+   El Task 4 dejó las dos copias desincronizadas por un rato (pasó `.ic-card` a la receta oscura y
+   tenía prohibido tocar este archivo): acá se cierra esa deuda y vuelven a ser el mismo vidrio. El
+   `--flow-radius` es lo único que difiere a propósito — 28px el panel del flujo, 20px la tarjeta.
    =================================================================== */
 :host {
-  /* Vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno. */
-  --flow-surface: color-mix(in srgb, var(--surface) 58%, transparent);
-  --flow-border: 1px solid color-mix(in srgb, #fff 60%, transparent);
+  /* Vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno, en su versión
+     NOCTURNA. Sube la opacidad del fondo (el papel de atrás ya no aporta luz) y el borde y el
+     brillo especular bajan a 12% y 10% de blanco: sobre el telón oscuro un blanco fuerte deja de
+     leerse como reflejo y pasa a ser un trazo plateado. La sombra deja de teñirse con `--court`
+     —sobre fondo oscuro una sombra de color aclara en vez de asentar— y es negra. */
+  --flow-surface: color-mix(in srgb, var(--surface) 72%, transparent);
+  --flow-border: 1px solid color-mix(in srgb, #fff 12%, transparent);
   --flow-radius: 28px;
-  --flow-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --flow-backdrop: blur(22px) saturate(1.6);
+  --flow-shadow: 0 20px 50px -28px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  --flow-backdrop: blur(22px) saturate(1.4);
 
   /* El panel crece con su contenido y scrollea el documento: recortarlo le comería el vidrio. */
   --flow-overflow: visible;

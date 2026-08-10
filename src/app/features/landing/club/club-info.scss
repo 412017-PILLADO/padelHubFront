@@ -38,11 +38,11 @@
 
    Las declaraciones están escritas a mano porque la misma receta la declara
    `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los que se pinta el flujo de reserva) y
-   `@extend` no cruza de hoja. **Las dos copias están hoy DESINCRONIZADAS a propósito**: esta ya pasó
-   a la receta oscura y la de `_tokens.scss` sigue con la clara (`--surface 58%`, borde `#fff 60%`,
-   `saturate(1.6)`, sombra teñida). Es deuda acotada: el Task 7 del plan extrae un `@mixin`
+   `@extend` no cruza de hoja. Las dos copias estuvieron desincronizadas mientras esta pasaba a la
+   receta oscura sola; el Task 5 bajó los mismos cinco valores a `_tokens.scss` y hoy son idénticas.
+   Si tocás una, tocá la otra. Sigue siendo duplicación: el Task 7 del plan extrae un `@mixin`
    `vidrio-nocturno($radio)` con exactamente estos valores y lo consume desde los dos lados — cuando
-   eso pase, este comentario se borra entero. Mientras tanto, si tocás una copia, tocá la otra.
+   eso pase, este comentario se borra entero.
    El `border-radius` sí difiere a propósito: 20px la tarjeta, 28px el panel del flujo. */
 :host-context(.tpl-b) .ic-card {
   background: color-mix(in srgb, var(--surface) 72%, transparent);

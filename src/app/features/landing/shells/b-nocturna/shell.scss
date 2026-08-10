@@ -32,7 +32,22 @@
   min-height: 100svh; display: flex; flex-direction: column;
   font-family: var(--body);
   color: var(--ink);
-  background: var(--paper);
+
+  /* El club de noche bajo reflectores (spec §6). Dos focos arriba —el primario a la izquierda, el
+     secundario a la derecha (cae al primario si el club no eligió uno)— y un resplandor bajo que
+     levanta el pie del fondo. `--paper` (el color del club oscurecido) es la masa teñida; los
+     radiales son la luz. `fixed` hace que la luz no scrollee con el contenido: el telón se queda
+     quieto y el contenido pasa por delante. Además ancla los porcentajes al viewport en vez de al
+     alto del documento, así los focos entran por el borde de arriba de la pantalla en cualquier
+     página (con `scroll` un documento largo los estiraría hasta volverlos una veladura plana).
+     iOS Safari ignora `fixed` en elementos que no son la raíz: ahí los radiales scrollean con el
+     contenido, que es degradación aceptable — el telón sigue estando. */
+  background:
+    radial-gradient(70% 55% at 12% -10%, color-mix(in srgb, var(--court) 55%, transparent), transparent 68%),
+    radial-gradient(60% 48% at 90% -4%, color-mix(in srgb, var(--court-2, var(--court)) 42%, transparent), transparent 70%),
+    radial-gradient(90% 60% at 50% 112%, color-mix(in srgb, var(--court-2, var(--court)) 22%, transparent), transparent 72%),
+    var(--paper);
+  background-attachment: fixed;
 }
 /* La `.display` de plataforma (styles.scss) está escrita para **Archivo**, que es variable en dos
    ejes, y le pide los dos: `font-stretch: 125%` (eje `wdth`) y `font-weight: 800` (eje `wght`).
@@ -71,13 +86,19 @@
    `_tokens.scss` (que visten al flujo de reserva) y `.ic-card` en club-info.scss. Si tocás una de
    las dos, tocá la otra. */
 
+/* La nav flota sobre el foco primario, que es la zona más clara del telón: el fondo pasa de
+   `--surface` a `--paper` (más oscuro y más opaco, 72%) para que la marca no compita con la luz de
+   atrás, y el `blur` tenga siempre algo que difuminar aunque la página esté scrolleada arriba de
+   todo. El borde baja de 45% a 10% de blanco: sobre el telón nocturno un blanco fuerte deja de
+   leerse como reflejo del vidrio y pasa a ser un trazo plateado (misma corrección que el borde de
+   `.ic-card` en club-info.scss). */
 .b-nav {
   position: sticky; top: 0; z-index: 20;
   display: flex; align-items: center; gap: 16px;
   padding: 13px clamp(16px, 5vw, 40px);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5); backdrop-filter: blur(18px) saturate(1.5);
-  border-bottom: 1px solid color-mix(in srgb, #fff 45%, transparent);
+  background: color-mix(in srgb, var(--paper) 72%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4);
+  border-bottom: 1px solid color-mix(in srgb, #fff 10%, transparent);
 }
 .b-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* Lo que B le ajusta al tamaño de la marca vive en brand-mark.ts (`:host-context(.b-brandline)`). */
@@ -104,8 +125,10 @@
 .b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }
 /* El vidrio de las tarjetas de info vive en club-info.scss (`:host-context(.tpl-b)`). */
+/* Mismo motivo que el borde de la nav: 40% de blanco sobre el telón nocturno es un trazo plateado,
+   no un hairline. Baja a 10%, que es el valor con el que se rebordea todo el vidrio de B. */
 .b-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
-  border-top: 1px solid color-mix(in srgb, #fff 40%, transparent);
+  border-top: 1px solid color-mix(in srgb, #fff 10%, transparent);
   color: var(--ink-faint); }
 
 /* Mobile (M-mobile-plantillas, feedback owner): arranca directo en la reserva. El héroe (marca
