@@ -16,7 +16,7 @@
 - Todo componente nuevo: `standalone: true` + `ChangeDetectionStrategy.OnPush`.
 - **SSR:** la landing se renderiza en server (`RenderMode.Server`). Nada de `window`/`localStorage`/`document` global sin guardar con `isPlatformBrowser`; el `DOCUMENT` va **inyectado**, nunca el global.
 - **A esta altura sí cambian pixels, y sólo los de B.** La regla que reemplaza al "0 px" del Plan 1: **las plantillas A y C no se mueven ni un pixel**. Cualquier diferencia en A o C es una regresión. B cambia por completo y se juzga a ojo contra la spec.
-- **Prohibido tocar los specs e2e existentes** salvo donde este plan lo indique explícitamente (Task 8). Si un spec falla, se arregla el código.
+- **Prohibido tocar los specs e2e existentes** salvo donde este plan lo indique explícitamente (Task 9). Si un spec falla, se arregla el código.
 - **Las tres capas de tokens no se pisan** (spec §5.1): la capa 3 (tenant, inline en `<html>`) nunca declara superficie ni tinta; la capa 2 (la cáscara) nunca declara `--court`. Si te encontrás queriendo escribir `--court` en `b-nocturna/`, pará: estás rompiendo el invariante.
 - **Ningún shell pone texto de párrafo sobre `--court` crudo** (spec §10). Sobre el acento van sólo textos grandes o bold, que se rigen por el umbral 3:1. Para bloques con texto corrido, `--court-deep` o una superficie propia.
 - **Responsive obligatorio: 360 · 390 · 768 · 1280.** Mobile primero.
@@ -49,7 +49,7 @@ Hay un test que ya está esperando este momento: `plantillas.spec.ts:145` lee la
 - Modify: `src/app/core/landing/plantillas.ts:44`
 
 **Interfaces:**
-- Produces: la cáscara de B declara, en `:host`, la capa 2 completa de superficie/tinta/línea. Los consumidores son el propio shell, `booking-flow.scss` (vía los tokens `--flow-*` del Task 5), `club-info.scss` y `landing-footer.scss`.
+- Produces: la cáscara de B declara, en `:host`, la capa 2 completa de superficie/tinta/línea. Los consumidores son el propio shell, `booking-flow.scss` (vía los tokens `--flow-*` del Task 6), `club-info.scss` y `landing-footer.scss`.
 
 - [ ] **Step 1: Correr el test que va a fallar y ver que HOY pasa**
 
@@ -163,7 +163,246 @@ git commit -m "feat(plantilla-b): la capa oscura y la tinta clara del registry"
 
 ---
 
-### Task 2: El par tipográfico de B — la primera vez que `cargarFuentes()` se enchufa
+### Task 2: El color del club en una cáscara oscura
+
+> **Este task se agregó después del Task 1**, con lo que su review encontró. No estaba en el plan
+> original y su motivo está documentado en `.superpowers/sdd/progress-b.md`.
+
+El Task 1 destapó que la capa oscura rompe tres supuestos del sistema de color, y los tres son la
+misma raíz: **la capa 3 (el color del tenant) deriva sus variantes contra blanco y negro fijos, sin
+saber sobre qué superficie va a caer.** Mientras las tres plantillas eran claras eso funcionaba.
+
+Va antes del decorado y de la firma a propósito: esos dos se juzgan **a ojo**, y revisarlos sobre una
+pantalla con manchones blancos y un bloque de seña ilegible desperdicia justamente las revisiones que
+los validan.
+
+**Files:**
+- Modify: `src/app/core/branding/tenant-colors.ts`
+- Modify: `src/app/core/branding/tenant-colors.spec.ts`
+- Modify: `src/app/features/landing/shells/b-nocturna/_tokens.scss`
+- Modify: `src/app/features/landing/booking/booking-flow.scss`
+
+**Interfaces:**
+- Produces: dos tokens nuevos del contrato `--flow-*`, que **toda cáscara futura debe declarar**:
+  ```scss
+  --flow-soft-surface   // superficie de los bloques suaves (seña, precio, íconos): `--court-soft` en
+                        // las claras, una superficie propia en las oscuras
+  --flow-soft-ink       // tinta sobre esos bloques
+  ```
+
+- [ ] **Step 1: Escribir el test que falla — la tinta sobre el acento no depende de la cáscara**
+
+El hallazgo de fondo: `inkOnAccent()` elige entre blanco y **la tinta de la cáscara**. En B las dos
+son claras (`#fff` L=1.0 contra `#eef2f8` L≈0.87), así que **gana blanco para cualquier color de
+club** y toda la maquinaria de contraste queda desactivada. Con `#FFD400` eso da 1.36:1.
+
+El fondo sobre el que cae ese texto es **el acento**, no la superficie de la cáscara. Así que el par
+de candidatos tiene que ser siempre {blanco, tinta oscura}, sin importar si el shell es claro u
+oscuro.
+
+En `src/app/core/branding/tenant-colors.spec.ts`, agregar:
+
+```ts
+  /**
+   * El texto sobre el color del club cae sobre EL ACENTO, no sobre la superficie de la cáscara. Así
+   * que los dos candidatos tienen que ser siempre blanco y una tinta oscura, aunque la cáscara sea
+   * oscura: en una cáscara oscura, `--ink` es claro y ofrecerlo como candidato deja a un club de
+   * primario claro sin ninguna opción legible (con #FFD400 daba 1.36:1).
+   */
+  it('sobre un acento claro elige tinta oscura aunque la cáscara sea oscura', () => {
+    const enCascaraOscura = decidirTinta('#FFD400', INK_CLARA);
+    expect(enCascaraOscura.usaBlanco).toBe(false);
+    expect(enCascaraOscura.ratio).toBeGreaterThanOrEqual(4.5);
+  });
+```
+
+`INK_CLARA` ya está declarada arriba en ese spec como `'#eef2f8'`.
+
+- [ ] **Step 2: Correr y verificar que falla**
+
+```bash
+npm test -- --filter tenant-colors
+```
+
+> **El flag es `--filter`, no `-t`.** El builder es `@angular/build:unit-test`, que no acepta `-t`.
+
+Esperado: FAIL — `expected true to be false`, porque hoy con `INK_CLARA` gana blanco.
+
+- [ ] **Step 3: Hacer que el segundo candidato sea siempre oscuro**
+
+En `tenant-colors.ts`, `decidirTinta()` recibe `inkHex` y lo usa como segundo candidato. El cambio es
+que **el candidato oscuro no sale de la cáscara**: sale de la constante que ya existe.
+
+Reemplazar el cuerpo de `decidirTinta` para que compare blanco contra `DARK_INK_HEX` siempre, y
+dejar `inkHex` únicamente como el valor que se devuelve cuando gana el candidato oscuro **y** ese
+valor es efectivamente oscuro. Concretamente:
+
+```ts
+/**
+ * Elige la tinta legible sobre un fondo del color del club, evaluando el PEOR de los dos extremos
+ * del gradiente (el color base y `--court-deep`, 18% más oscuro).
+ *
+ * Los dos candidatos son SIEMPRE blanco y la tinta oscura del sistema, sin importar el esquema de la
+ * cáscara: el texto cae sobre el acento, no sobre la superficie. En una cáscara oscura ofrecer su
+ * `--ink` (claro) como candidato dejaba a un club de primario claro sin ninguna opción legible.
+ */
+export function decidirTinta(fondoHex: string, _inkHex: string = DARK_INK_HEX): DecisionTinta {
+  const rgb = hexToRgb(fondoHex);
+  const ink = hexToRgb(DARK_INK_HEX);
+  if (!rgb || !ink) return { usaBlanco: true, ratio: 0 };
+  const deep: [number, number, number] = [rgb[0] * 0.82, rgb[1] * 0.82, rgb[2] * 0.82];
+  const luminancias = [relativeLuminance(rgb), relativeLuminance(deep)];
+  const peorContraste = (lTinta: number) =>
+    Math.min(...luminancias.map((lFondo) => contrastRatio(lFondo, lTinta)));
+  const conBlanco = peorContraste(1);
+  const conInk = peorContraste(relativeLuminance(ink));
+  return conBlanco >= conInk
+    ? { usaBlanco: true, ratio: conBlanco }
+    : { usaBlanco: false, ratio: conInk };
+}
+```
+
+**Y el CSS que devuelve `inkOnAccent` deja de ser `var(--ink)`**, que en B es claro. Pasa a ser el
+hex oscuro literal:
+
+```ts
+/** Texto legible sobre el color del club, listo para CSS. `#fff` si el color no es parseable. */
+export function inkOnAccent(hex: string | null | undefined, inkHex: string = DARK_INK_HEX): string {
+  if (!hex || !hexToRgb(hex)) return '#fff';
+  return decidirTinta(hex, inkHex).usaBlanco ? '#fff' : DARK_INK_HEX;
+}
+```
+
+> **Ojo con el parámetro que queda sin usar.** Si `_inkHex` deja de tener sentido, **sacalo de las dos
+> firmas y de sus llamadores** en vez de dejarlo como decoración: `applyTenantColors` lo recibe y lo
+> pasa, y `club.store.ts` lo calcula desde el registry. Si lo sacás, sacá también el campo `inkHex`
+> del registry **sólo si no queda ningún otro consumidor** — hay un test que lo pinea contra la hoja
+> de cada cáscara (`plantillas.spec.ts`), así que fijate si sigue teniendo sentido antes de borrarlo.
+> **Decidilo vos y explicá la decisión en el reporte.** Las dos salidas son defendibles; lo que no es
+> defendible es dejar un parámetro que finge influir y no influye.
+
+- [ ] **Step 4: Correr y verificar que pasa**
+
+```bash
+npm test
+```
+
+Esperado: PASS. **Ojo:** si sacaste `inkHex` del registry, el test de `plantillas.spec.ts` que lo
+pinea contra la hoja de cada cáscara desaparece con él — eso está bien si el campo se fue, pero
+**no** borres el test dejando el campo.
+
+- [ ] **Step 5: Sacar los bloques casi-blancos del panel oscuro**
+
+`--court-soft` la calcula la capa 3 como `color-mix(in srgb, c 12%, #fff)` — **casi blanco para
+cualquier color de club**. Dentro del panel oscuro de B eso son manchones. Hay cuatro:
+
+- `booking-flow.scss:381` `.sena-box` — y encima `.sena-text` (`:391`) pinta con `--ink-dim`, que
+  ahora es `#b7c0d4`: **≈1.7:1, para todos los clubes**, no sólo los de primario claro.
+- `booking-flow.scss:101` `.step-price`
+- `booking-flow.scss:285` `.any-ic`
+- `booking-flow.scss:346` `.check-ring`
+
+Tokenizarlos con el valor de hoy como fallback, igual que los nueve del contrato:
+
+```scss
+.sena-box { background: var(--flow-soft-surface, var(--court-soft)); }
+.sena-text { color: var(--flow-soft-ink, var(--ink-dim)); }
+.step-price { background: var(--flow-soft-surface, var(--court-soft)); }
+.any-ic { background: var(--flow-soft-surface, var(--court-soft)); }
+.check-ring { background: var(--flow-soft-surface, var(--court-soft)); }
+```
+
+> Los selectores y las propiedades exactas salen de leer esas cuatro reglas: puede que alguna use
+> `--court-soft` en `border` o en `box-shadow` en vez de `background`. **Tokenizá lo que realmente
+> haya**, no lo que dice este snippet. Y documentá los dos tokens nuevos en el header del contrato,
+> junto a los nueve que ya están.
+
+- [ ] **Step 6: Declarar los dos tokens en las tres cáscaras**
+
+En `a-afiche/_tokens.scss` y `c-tarjeta/_tokens.scss` (que son claras, así que conservan el valor de
+hoy):
+
+```scss
+  /* Bloques suaves (seña, precio, íconos): el lavado del color del club sobre papel claro. */
+  --flow-soft-surface: var(--court-soft);
+  --flow-soft-ink: var(--ink-dim);
+```
+
+En `b-nocturna/_tokens.scss`, una superficie propia en vez del lavado casi-blanco:
+
+```scss
+  /* `--court-soft` es `color-mix(c 12%, #fff)`: casi blanco para cualquier club, y dentro del panel
+     oscuro queda un manchón con texto ilegible (≈1.7:1). En la nocturna los bloques suaves son una
+     veladura del color sobre la propia superficie oscura. */
+  --flow-soft-surface: color-mix(in srgb, var(--court) 18%, var(--surface));
+  --flow-soft-ink: var(--ink-dim);
+```
+
+- [ ] **Step 7: Sacar `--court-deep` de los textos sobre superficie oscura**
+
+`--court-deep` es el color del club **oscurecido**: sobre la superficie oscura de B desaparece. Dos
+lugares, los dos fuera de la cáscara:
+
+- `club-info.scss:20` — `.ic-link` (los links de WhatsApp e Instagram), ≈2.4:1 con el teal default.
+- `landing-footer.scss:36,38,40` — es el color de **hover**, así que los links del pie se vuelven
+  *menos* legibles al pasar el mouse.
+
+El pie ya se separa en el Task 4, que le da a B su propio bloque; **si estás haciendo este task antes
+que el 4, arreglá acá sólo `club-info.scss`** y dejá el pie para allá, para no tocar dos veces el
+mismo archivo. Para `.ic-link`, sobre fondo oscuro:
+
+```scss
+:host-context(.tpl-b) .ic-link { color: color-mix(in srgb, var(--court) 55%, var(--ink)); }
+:host-context(.tpl-b) .ic-link:hover { color: var(--ink); }
+```
+
+Y arreglá el comentario obsoleto de `landing-footer.scss:34`, que dice
+`"── PLANTILLAS B y C · sobre fondo claro (héroe / rail) ──"`: B ya no está sobre fondo claro, y ése
+es justo el comentario que va a leer quien toque el hover.
+
+- [ ] **Step 8: Verificar el contraste sobre los cuatro colores extremos**
+
+Con la config stubeada en `plantilla: 'B'` — **no** con `?plantilla=B`, que se aplica después de
+`applyBranding` y termina midiendo la tinta de la A (lo descubrió el Task 1).
+
+Medí, para `#FFD400`, `#FF2D95`, `#111111` y `#0a8a99`: el chip de duración seleccionado, el horario
+seleccionado, el bloque de seña y el texto adentro.
+
+Esperado: **los cuatro ≥4.5:1 en el chip y el slot** (con la tinta oscura ganando en amarillo), y el
+bloque de seña legible en los cuatro. Si el amarillo sigue por debajo, el Step 3 no aplicó.
+
+- [ ] **Step 9: Verificar que A y C no se movieron**
+
+Este task toca `tenant-colors.ts`, que usan **las tres** plantillas. Es el de mayor riesgo de
+regresión del plan.
+
+```bash
+npm run build
+npx playwright test e2e
+node .superpowers/sdd/capturar-offline-pie.mjs .superpowers/sdd/b2-after
+git stash push -- src/app
+node .superpowers/sdd/capturar-offline-pie.mjs .superpowers/sdd/b2-before
+git stash pop
+node .superpowers/sdd/diff-capturas.mjs .superpowers/sdd/b2-before .superpowers/sdd/b2-after
+```
+
+Esperado: **20 passed**, y **A y C en 0 px**. `preview.spec.ts:35` ("el color de preview deriva la
+tinta legible del afiche") es el que valida que A no cambió de tinta: si falla, cambiaste el
+comportamiento de las claras y no sólo el de la oscura.
+
+> El fixture del harness usa un color oscuro, así que en A y C `decidirTinta` ya elegía blanco antes
+> y después. Si A o C se mueven, es por los tokens del Step 6, no por el Step 3.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add src/app/core/branding/ src/app/features/landing/
+git commit -m "fix(branding): la tinta sobre el acento no depende del esquema de la cascara"
+```
+
+---
+
+### Task 3: El par tipográfico de B — la primera vez que `cargarFuentes()` se enchufa
 
 El Plan 1 dejó `fuentes.ts` escrito, testeado y **deliberadamente sin llamar**, porque ninguna hoja referenciaba las familias del registry. B es la primera cáscara que sí las va a usar, así que acá se enciende.
 
@@ -319,7 +558,7 @@ git commit -m "feat(plantilla-b): par tipografico propio inyectado por SSR"
 
 ---
 
-### Task 3: Las reglas de B que viven fuera de su cáscara
+### Task 4: Las reglas de B que viven fuera de su cáscara
 
 Tres archivos estilan a B desde afuera, y los tres asumen fondo claro. Este task los pasa a oscuro. **Es el que más riesgo tiene de romper C**, porque el footer comparte reglas entre las dos.
 
@@ -384,7 +623,7 @@ Dejar las de C tal cual y darle a B las suyas:
 :host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 26%, transparent); }
 ```
 
-Y actualizar el comentario de sincronía de las líneas 32-38: apunta a `shells/b-nocturna/_tokens.scss`, y las dos copias ahora son **oscuras**. Si el Task 5 unifica la receta en un mixin, este comentario se borra — anotalo.
+Y actualizar el comentario de sincronía de las líneas 32-38: apunta a `shells/b-nocturna/_tokens.scss`, y las dos copias ahora son **oscuras**. Si el Task 7 unifica la receta en un mixin, este comentario se borra — anotalo.
 
 - [ ] **Step 3: Revisar `brand-mark` sobre fondo oscuro**
 
@@ -425,7 +664,7 @@ git commit -m "feat(plantilla-b): la info, el pie y la marca en version oscura"
 
 ---
 
-### Task 4: El decorado nocturno — reflectores sobre el club
+### Task 5: El decorado nocturno — reflectores sobre el club
 
 Acá B deja de ser "la clara con gradientes" y pasa a ser la de noche. El fondo plano del Task 1 se convierte en el telón con luz.
 
@@ -527,7 +766,7 @@ git commit -m "feat(plantilla-b): el telon nocturno con los dos reflectores del 
 
 ---
 
-### Task 5: La firma — el horario elegido prende como luz de cancha
+### Task 6: La firma — el horario elegido prende como luz de cancha
 
 La firma de B según la spec §6. Tiene una dificultad de arquitectura que hay que resolver bien: **el efecto vive dentro del flujo de reserva, que no tiene identidad visual propia**. La solución no es que B alcance al flujo con un selector — eso es exactamente lo que el Plan 1 desarmó. Es **extender el contrato `--flow-*`** con los tokens que el estado seleccionado necesita.
 
@@ -663,9 +902,9 @@ git commit -m "feat(plantilla-b): el horario elegido prende como luz de cancha"
 
 ---
 
-### Task 6: El vidrio de B, con una sola fuente de verdad
+### Task 7: El vidrio de B, con una sola fuente de verdad
 
-Deuda que el Plan 1 dejó anotada y que este plan hereda empeorada: la receta del vidrio está escrita a mano en **dos** hojas (`b-nocturna/_tokens.scss` y `club/club-info.scss`), sincronizadas sólo por comentarios, y el Task 3 acaba de tocar las dos. `@extend` no cruza de hoja, pero un `@mixin` en un partial compartido sí, y no cuesta ninguna dependencia.
+Deuda que el Plan 1 dejó anotada y que este plan hereda empeorada: la receta del vidrio está escrita a mano en **dos** hojas (`b-nocturna/_tokens.scss` y `club/club-info.scss`), sincronizadas sólo por comentarios, y el Task 4 acaba de tocar las dos. `@extend` no cruza de hoja, pero un `@mixin` en un partial compartido sí, y no cuesta ninguna dependencia.
 
 **Files:**
 - Create: `src/app/features/landing/shells/b-nocturna/_vidrio.scss`
@@ -703,7 +942,7 @@ Crear `src/app/features/landing/shells/b-nocturna/_vidrio.scss`:
 
 - [ ] **Step 2: Consumirlo desde las tarjetas de info**
 
-En `club/club-info.scss`, reemplazar el bloque `:host-context(.tpl-b) .ic-card { … }` que dejó el Task 3 por:
+En `club/club-info.scss`, reemplazar el bloque `:host-context(.tpl-b) .ic-card { … }` que dejó el Task 4 por:
 
 ```scss
 @use '../shells/b-nocturna/vidrio' as vidrio;
@@ -750,9 +989,25 @@ git commit -m "refactor(plantilla-b): el vidrio nocturno en un solo lugar"
 
 ---
 
-### Task 7: Contraste y accesibilidad de la plantilla oscura
+### Task 8: Contraste y accesibilidad de la plantilla oscura
 
 B es la primera superficie oscura del producto. Este task la audita antes de que la vea un club.
+
+> **Ampliado después del Task 1**, con dos hallazgos de su review que el Task 2 no cubre:
+>
+> - **El datepicker de PrimeNG no se pone oscuro.** `color-scheme: dark` gobierna los widgets del
+>   navegador, nunca los tokens de un tema JS. Se llega desde el chip "Otra fecha". Si lo oscurecés,
+>   **tenés que dar vuelta `--p-primary-contrast-color` (`tenant-colors.ts:93`) en el mismo cambio** o
+>   el día seleccionado queda invertido. Ojo: `tenant-colors.ts:89-92` documenta que los componentes
+>   de PrimeNG se pintan sobre superficies claras del sistema en las tres plantillas, con una nota de
+>   "no la arregles" — o sea que esto **contradice una decisión anotada**. Si al mirarlo te parece que
+>   la decisión sigue en pie para B, dejalo y explicá por qué; lo que no vale es no mirarlo.
+> - **Con un club casi negro el acento desaparece contra la superficie oscura.** No es sólo el chip
+>   seleccionado y los numeritos de paso: también el logo de respaldo en la nav de B
+>   (`brand-mark.ts:30`, `color: var(--court)`). La raíz es que la capa 3 deriva las variantes del
+>   acento contra blanco y negro fijos, sin saber sobre qué superficie caen
+>   (`tenant-colors.ts:135-136`). **Auditá acento-contra-superficie, no sólo tinta-contra-acento**,
+>   que es lo que arregló el Task 2.
 
 **Files:**
 - Create: `src/app/features/landing/shells/b-nocturna/contraste.spec.ts`
@@ -863,7 +1118,7 @@ git commit -m "test(plantilla-b): pinea el contraste de la capa oscura"
 
 ---
 
-### Task 8: La puerta de la fase — e2e y revisión visual en los cuatro anchos
+### Task 9: La puerta de la fase — e2e y revisión visual en los cuatro anchos
 
 La spec §11 fija la puerta de cada cáscara: *reserva completa e2e en su tenant + revisión visual en los 4 anchos*. El e2e ya existe (`plantillas.spec.ts` reserva en `costapadel`); lo que falta es la evidencia de que B es **oscura**, que hoy ningún test afirma.
 
@@ -953,7 +1208,7 @@ Abrí las cuatro y verificá, en cada una:
 3. La nav de arriba tiene vidrio con algo detrás que difuminar.
 4. En 360 y 390 el héroe está oculto y se arranca directo en la reserva.
 5. Ningún texto queda ilegible: ni sobre el fondo, ni sobre el vidrio, ni sobre el color del club.
-6. Anton no se ve deformada (si se ve estirada, el `font-stretch` del Task 2 no está aplicando).
+6. Anton no se ve deformada (si se ve estirada, el `font-stretch` del Task 3 no está aplicando).
 
 - [ ] **Step 5: Verificar que A y C no se movieron en todo el plan**
 
@@ -1000,12 +1255,12 @@ Con los 8 tasks hechos: B es la plantilla oscura que la spec describe, con su pa
 - `npx playwright test e2e` → 20 passed, con la aserción nueva de oscuridad en B.
 - `npm test` verde, incluido el test de contraste de la capa oscura y el de `inkHex` (que ahora exige `INK_CLARA` para B).
 - `npm run build` verde, sin warnings de budget.
-- Las cuatro capturas de B en 360 · 390 · 768 · 1280, revisadas contra la lista del Task 8 Step 4.
+- Las cuatro capturas de B en 360 · 390 · 768 · 1280, revisadas contra la lista del Task 9 Step 4.
 - Comparación de A y C contra el commit previo al Task 1 → 0 px.
 
 **Lo que B le deja resuelto a E:** E reusa el mismo par tipográfico (spec §6), así que `cargarFuentes` ya está probado y la URL de esas tres familias ya está verificada. E es clara, así que **no** hereda la capa oscura — pero sí hereda los dos tokens nuevos del contrato (`--flow-slot-sel-shadow`, `--flow-chip-sel-shadow`), que va a declarar en `none` o con su propio valor.
 
 **Deuda que este plan deja anotada:**
-- El `:host ::ng-deep .display` del Task 2 es la segunda excepción a la regla de encapsulación del contrato (la primera es `.politica-link`). Si una tercera cáscara necesita lo mismo, conviene un token `--flow-display-stretch` en vez de acumular excepciones.
+- El `:host ::ng-deep .display` del Task 3 es la segunda excepción a la regla de encapsulación del contrato (la primera es `.politica-link`). Si una tercera cáscara necesita lo mismo, conviene un token `--flow-display-stretch` en vez de acumular excepciones.
 - La spec §10 pide "un solo par tipográfico por landing" y hoy siguen viajando dos (el de plataforma desde `index.html` más el de B). Se cierra cuando las cinco cáscaras declaren las suyas; la medición que justifica no hacerlo antes está en `.superpowers/sdd/progress.md`.
 - La carrera de `loadAvailability()` (`.superpowers/sdd/debug-plantillas-flake.md`) sigue abierta y es la causa del e2e intermitente.
