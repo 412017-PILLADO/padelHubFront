@@ -710,6 +710,24 @@ La nav (`.b-nav`, líneas 34-41) sigue con el vidrio claro: `--surface 60%` y bo
 }
 ```
 
+**Y sincronizá el vidrio, que quedó partido en el Task 4.** Ese task oscureció `.ic-card` en
+`club-info.scss` pero **no** tocó los tokens `--flow-*` de `_tokens.scss`, porque su brief se lo
+prohibía explícitamente. Resultado visible hoy: el panel del flujo conserva el reborde plateado de la
+versión clara y las tarjetas de info ya no. Son cinco valores; traelos a la misma receta oscura que
+quedó en `club-info.scss`:
+
+```scss
+  --flow-surface: color-mix(in srgb, var(--surface) 72%, transparent);
+  --flow-border: 1px solid color-mix(in srgb, #fff 12%, transparent);
+  --flow-shadow: 0 20px 50px -28px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+  --flow-backdrop: blur(22px) saturate(1.4);
+```
+
+`--flow-radius: 28px` no cambia (las tarjetas usan 20px a propósito). **Copiá los valores reales de
+`club-info.scss`, no estos**, que son de memoria: el Task 7 va a exigir que las dos copias sean
+idénticas para poder unificarlas en un mixin.
+
 Y el borde del pie (línea 67), por el mismo motivo:
 
 ```scss
