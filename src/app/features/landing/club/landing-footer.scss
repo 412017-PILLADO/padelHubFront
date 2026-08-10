@@ -31,7 +31,12 @@
 :host(.pb-foot) .politica-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-family: inherit; }
 :host(.pb-foot) .politica-link:hover { color: var(--ink-on-accent, #fff); }
 
-/* ── PLANTILLAS B y C · sobre fondo claro (héroe / rail) ── */
+/* ── PLANTILLAS B y C · el pie va sobre el fondo de la cáscara, no sobre el color del club ──
+   Ojo si venís a tocar el hover: la C sigue siendo clara, pero la B ya NO — es la plantilla oscura
+   del producto. Sobre su fondo, `--court-deep` (el color del club OSCURECIDO) contrasta MENOS que
+   el `--ink-dim` del estado normal, así que hoy los links de la B se apagan al pasar el mouse. Se
+   arregla cuando la B se lleve su propio bloque de pie: no le pongas un parche acá adentro, que
+   este bloque lo comparte con la C. */
 :host(.b-foot) a, :host(.c-foot) a { color: var(--ink-dim); text-decoration: none; }
 :host(.b-foot) a:hover, :host(.c-foot) a:hover { color: var(--court-deep); }
 :host(.b-foot) .arrep-link, :host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; }

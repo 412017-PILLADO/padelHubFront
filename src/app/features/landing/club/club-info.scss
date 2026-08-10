@@ -46,6 +46,11 @@
   border-radius: 20px;
 }
 :host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 16%, transparent); }
+/* `--court-deep` es el color del club OSCURECIDO: sobre el vidrio nocturno se apaga (≈2.4:1 con el
+   teal de plataforma). Acá el link va al revés, aclarando el color hacia la tinta de la cáscara, y
+   el hover termina de encenderlo. Misma receta que `--flow-soft-ink-strong` en b-nocturna/_tokens. */
+:host-context(.tpl-b) .ic-link { color: color-mix(in srgb, var(--court) 55%, var(--ink)); }
+:host-context(.tpl-b) .ic-link:hover { color: var(--ink); }
 
 /* PLANTILLA C · tarjeta plana, esquinas más chicas. */
 :host-context(.tpl-c) .ic-card { border-radius: 14px; }

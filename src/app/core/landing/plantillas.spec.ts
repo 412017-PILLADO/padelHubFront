@@ -31,6 +31,15 @@ function declaracionCss(css: string, prop: string): string | null {
   return hits.length ? hits[hits.length - 1][1].trim() : null;
 }
 
+/**
+ * ¿Es clara esta tinta? Promedio de canales sobre el medio del rango: alcanza y sobra para separar
+ * `#11162b` de `#eef2f8` sin traer acá la fórmula WCAG (que vive en core/branding y se testea allá).
+ */
+function esClara(hex: string): boolean {
+  const num = parseInt(hex.trim().replace('#', ''), 16);
+  return (((num >> 16) & 255) + ((num >> 8) & 255) + (num & 255)) / 3 > 127;
+}
+
 /** Carpeta de la cáscara de cada código con shell, para ir a leer su hoja real. */
 const DIR_SHELL: Readonly<Record<string, string>> = {
   A: 'a-afiche',
@@ -46,7 +55,6 @@ describe('registry de plantillas', () => {
       expect(p.nombre.length).toBeGreaterThan(0);
       expect(p.fuentes.length).toBeGreaterThan(0);
       expect(['light', 'dark']).toContain(p.esquema);
-      expect(p.inkHex).toMatch(/^#[0-9a-f]{6}$/i);
     }
   });
 
@@ -129,21 +137,21 @@ describe('registry de plantillas', () => {
   });
 
   /**
-   * El `inkHex` del registry NO es una preferencia estética: `ClubStore.applyBranding()` se lo pasa
-   * a `applyTenantColors()`, que con él decide si el texto sobre el color del club va blanco o va
-   * `var(--ink)`. O sea que tiene que ser la tinta que la cáscara PINTA hoy, no la que va a pintar.
+   * El `esquema` del registry NO es una etiqueta decorativa: es la única afirmación que el catálogo
+   * hace sobre la colorimetría de una cáscara, y la galería del panel la muestra. Tiene que decir lo
+   * que la cáscara PINTA hoy, no lo que va a pintar.
    *
-   * Mentirle es un bug de contraste, no un detalle: con la B declarada clara mientras su hoja sigue
-   * en `color: var(--ink)`, un club con primario claro (#FFD400) pasaba de 8.31:1 a 1.43:1 —
-   * blanco sobre amarillo— en chips, slots seleccionados y los botones de seña.
+   * Por eso el test no compara contra una constante: va a leer la hoja de cada cáscara y mide la
+   * luminancia de su `--ink`. Tinta clara ⇒ la cáscara es oscura, y al revés. Si la hoja no declara
+   * `--ink`, la cáscara hereda la tinta global de styles.scss (y entonces es clara, como la
+   * plataforma). El día que alguien vuelva la B a fondo claro sin tocar el registry, esto salta.
    *
-   * Por eso el test no compara contra una constante: va a leer la hoja de cada cáscara. Si la hoja
-   * no declara `--ink`, la cáscara hereda la tinta global de styles.scss. El día que
-   * `b-nocturna/shell.scss` se vuelva oscura de verdad y declare la suya, este test falla y le
-   * recuerda a alguien que hay que volver `PLANTILLAS.B.inkHex` a INK_CLARA.
+   * (Antes este test pineaba un campo `inkHex` del registry, que viajaba hasta `decidirTinta()` para
+   * elegir el texto sobre el color del club. Ese campo se fue: ese texto cae sobre el acento, no
+   * sobre la superficie, así que la cáscara no tenía nada que decidir ahí — ver tenant-colors.ts.)
    */
   it.each(CODIGOS_CON_SHELL)(
-    'el inkHex de la plantilla %s es la tinta con la que pinta su cáscara',
+    'el esquema de la plantilla %s coincide con la tinta que pinta su cáscara',
     (codigo) => {
       const tintaGlobal = declaracionCss(leerFuente('src/styles.scss'), '--ink');
       expect(tintaGlobal).not.toBeNull(); // si styles.scss dejó de declararla, este test miente
@@ -151,7 +159,7 @@ describe('registry de plantillas', () => {
       const hoja = leerFuente(`src/app/features/landing/shells/${DIR_SHELL[codigo]}/shell.scss`);
       const tintaQuePinta = declaracionCss(hoja, '--ink') ?? tintaGlobal!;
 
-      expect(PLANTILLAS[codigo].inkHex.toLowerCase()).toBe(tintaQuePinta.toLowerCase());
+      expect(PLANTILLAS[codigo].esquema).toBe(esClara(tintaQuePinta) ? 'dark' : 'light');
     }
   );
 });

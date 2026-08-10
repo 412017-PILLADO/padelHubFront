@@ -4,7 +4,7 @@
    El flujo NO tiene identidad visual propia: la caja que lo contiene se pinta con los tokens
    `--flow-*` que declara la cáscara de cada plantilla (shells/<x>/_tokens.scss). Esta hoja es el
    único consumidor del contrato y el que lo define; toda cáscara nueva tiene que declarar los
-   nueve tokens:
+   doce tokens:
 
      --flow-surface         fondo del contenedor
      --flow-border          borde del contenedor (shorthand completo, o `none`)
@@ -18,6 +18,18 @@
      --flow-padding-mobile  padding del contenedor en <900px
      --flow-marca-display   `display` del nombre del club en el encabezado: `none` cuando la
                             plantilla ya muestra la marca en otro lado de la misma pantalla.
+
+   Y los tres de los BLOQUES SUAVES (el precio del turno, el ícono de "cualquiera disponible", el
+   anillo del check de éxito y el aviso de seña): manchitas del color del club que se apoyan sobre
+   la superficie del flujo. Existen porque la capa 3 deriva `--court-soft` como
+   `color-mix(in srgb, c 12%, #fff)` — casi blanco para cualquier club, o sea que asume papel claro
+   debajo — y en una cáscara oscura eso son manchones con el texto adentro ilegible (≈1.7:1):
+
+     --flow-soft-surface    fondo de esos bloques: `--court-soft` en las claras, una veladura del
+                            color sobre la propia superficie en las oscuras
+     --flow-soft-ink        tinta corriente sobre esos bloques
+     --flow-soft-ink-strong tinta enfática (el color del club) sobre esos bloques: el título del
+                            aviso de seña y el precio del turno
 
    Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
    se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
@@ -92,13 +104,14 @@
 .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
 .step-num { color: var(--court); font-size: 0.95rem; font-weight: 700; }
 .step-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
-/* Precio del turno (M2), junto al selector de horario cuando el club lo muestra. */
+/* Precio del turno (M2), junto al selector de horario cuando el club lo muestra. Bloque suave: la
+   cáscara decide sobre qué se apoya y con qué tinta (ver el contrato arriba). */
 .step-price {
   margin-left: auto;
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--court-deep);
-  background: var(--court-soft);
+  color: var(--flow-soft-ink-strong, var(--court-deep));
+  background: var(--flow-soft-surface, var(--court-soft));
   padding: 3px 10px;
   border-radius: 999px;
   white-space: nowrap;
@@ -282,7 +295,7 @@
 /* "Cualquiera disponible" */
 .ccard.any { background: var(--surface); box-shadow: inset 0 0 0 1.6px color-mix(in srgb, var(--court) 45%, transparent), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
 .ccard.any .cc-in { background: none; justify-content: center; align-items: center; text-align: center; gap: 9px; color: var(--ink); }
-.any-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--court-soft); color: var(--court); }
+.any-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--flow-soft-surface, var(--court-soft)); color: var(--court); }
 .any-ic svg { width: 22px; height: 22px; }
 .ccard.any .cc-name { font-size: 1.05rem; text-align: center; }
 .any-sub { font-size: 0.82rem; color: var(--ink-dim); }
@@ -343,7 +356,7 @@
   width: 62px; height: 62px;
   display: grid; place-items: center;
   border-radius: 50%;
-  background: var(--court-soft);
+  background: var(--flow-soft-surface, var(--court-soft));
   color: var(--court);
   margin-bottom: 2px;
 }
@@ -377,18 +390,19 @@
 }
 .ghost-btn:hover { border-color: var(--court); color: var(--court-deep); }
 
-/* Aviso de seña pendiente en la pantalla de éxito */
+/* Aviso de seña pendiente en la pantalla de éxito. El bloque suave más grande del flujo (y el único
+   con un párrafo adentro), así que es el que más depende de que la cáscara diga sobre qué se apoya. */
 .sena-box {
   width: 100%; max-width: 340px;
-  background: var(--court-soft);
+  background: var(--flow-soft-surface, var(--court-soft));
   border: 1px solid var(--court);
   border-radius: var(--r-lg);
   padding: 14px 16px;
   margin: 0 0 12px;
   text-align: left;
 }
-.sena-title { font-weight: 700; color: var(--court-deep); margin-bottom: 5px; }
-.sena-text { font-size: 0.9rem; color: var(--ink-dim); line-height: 1.4; margin: 0; }
+.sena-title { font-weight: 700; color: var(--flow-soft-ink-strong, var(--court-deep)); margin-bottom: 5px; }
+.sena-text { font-size: 0.9rem; color: var(--flow-soft-ink, var(--ink-dim)); line-height: 1.4; margin: 0; }
 
 /* Botón "Pagar seña con Mercado Pago" + divisor hacia el alias por transferencia */
 .sena-pay {
@@ -461,9 +475,10 @@
   .form { max-width: none; }
 }
 
-/* Política de cancelación dentro del bloque de seña del éxito (fondo claro), como un link más chico
-   debajo de las acciones. El resto de `.politica-link` lo sigue poniendo landing.scss. */
-.sena-politica { display: block; margin-top: 10px; color: var(--ink-dim); }
+/* Política de cancelación dentro del bloque de seña del éxito, como un link más chico debajo de las
+   acciones: va con la tinta del bloque suave, igual que `.sena-text`. El resto de `.politica-link`
+   lo sigue poniendo landing.scss. */
+.sena-politica { display: block; margin-top: 10px; color: var(--flow-soft-ink, var(--ink-dim)); }
 
 @media (max-width: 899px) {
   /* Canchas: 2 columnas centradas a 390px (2x2 con 4 opciones); mismo fix de auto-fit que en

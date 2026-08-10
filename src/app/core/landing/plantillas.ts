@@ -13,25 +13,26 @@ export interface Plantilla {
   readonly codigo: CodigoPlantilla;
   readonly nombre: string;
   readonly descripcion: string;
+  /**
+   * Claro u oscuro. Es la única afirmación del registry sobre la colorimetría de la cáscara, y está
+   * pineada contra la tinta que la hoja realmente declara (ver plantillas.spec.ts).
+   *
+   * Ya NO existe un `inkHex` al lado: la tinta del shell llegó a viajar hasta `decidirTinta()` para
+   * elegir el texto sobre el color del club, y eso estaba mal — ese texto cae sobre el acento, no
+   * sobre la superficie, así que la capa 2 no tiene nada que decidir ahí (ver tenant-colors.ts).
+   */
   readonly esquema: 'light' | 'dark';
-  /** Tinta base del shell. La usa decidirTinta() para elegir texto legible sobre el color del club. */
-  readonly inkHex: string;
   readonly fuentes: readonly string[];
   /** Clase que la cáscara pone en su host. Pineada contra los shells reales en landing.spec.ts. */
   readonly claseShell: string;
 }
 
-/** Tinta oscura del sistema (matchea --ink en styles.scss). */
-const INK_OSCURA = '#11162b';
-/** Tinta clara de la plantilla oscura (matchea el `--ink` que declara `b-nocturna/shell.scss`). */
-const INK_CLARA = '#eef2f8';
-
 export const PLANTILLAS: Readonly<Record<CodigoPlantilla, Plantilla>> = {
-  A: { codigo: 'A', nombre: 'Afiche',   descripcion: 'Editorial, marca grande',   esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Archivo', 'Hanken Grotesk', 'Space Mono'], claseShell: 'poster' },
-  B: { codigo: 'B', nombre: 'Nocturna', descripcion: 'Oscura, luz de cancha',     esquema: 'dark',  inkHex: INK_CLARA,  fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-b' },
-  C: { codigo: 'C', nombre: 'Tarjeta',  descripcion: 'Tipo app, para el pulgar',  esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Outfit', 'Inter'],                          claseShell: 'tpl-c' },
-  D: { codigo: 'D', nombre: 'Cancha',   descripcion: 'Líneas y tablero',          esquema: 'light', inkHex: INK_OSCURA, fuentes: ['IBM Plex Sans', 'IBM Plex Mono'],           claseShell: 'tpl-d' },
-  E: { codigo: 'E', nombre: 'Diurna',   descripcion: 'Clara, vidrio sobre color', esquema: 'light', inkHex: INK_OSCURA, fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-e' },
+  A: { codigo: 'A', nombre: 'Afiche',   descripcion: 'Editorial, marca grande',   esquema: 'light', fuentes: ['Archivo', 'Hanken Grotesk', 'Space Mono'], claseShell: 'poster' },
+  B: { codigo: 'B', nombre: 'Nocturna', descripcion: 'Oscura, luz de cancha',     esquema: 'dark',  fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-b' },
+  C: { codigo: 'C', nombre: 'Tarjeta',  descripcion: 'Tipo app, para el pulgar',  esquema: 'light', fuentes: ['Outfit', 'Inter'],                          claseShell: 'tpl-c' },
+  D: { codigo: 'D', nombre: 'Cancha',   descripcion: 'Líneas y tablero',          esquema: 'light', fuentes: ['IBM Plex Sans', 'IBM Plex Mono'],           claseShell: 'tpl-d' },
+  E: { codigo: 'E', nombre: 'Diurna',   descripcion: 'Clara, vidrio sobre color', esquema: 'light', fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-e' },
 };
 
 export const CODIGOS_PLANTILLA: readonly CodigoPlantilla[] =

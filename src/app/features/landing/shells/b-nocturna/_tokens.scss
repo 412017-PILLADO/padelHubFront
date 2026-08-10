@@ -2,10 +2,10 @@
    CONTRATO --flow-* · PLANTILLA B (liquid glass)
 
    Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
-   NO tiene identidad visual propia: lee estos nueve valores (ver el encabezado de
+   NO tiene identidad visual propia: lee estos doce valores (ver el encabezado de
    booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
 
-   Toda cáscara nueva tiene que declarar los nueve.
+   Toda cáscara nueva tiene que declarar los doce.
 
    En la B el flujo es uno de los paneles de vidrio: los valores de acá son la MISMA receta que
    `:host-context(.tpl-b) .ic-card` en club/club-info.scss (el otro consumidor del vidrio). Están
@@ -29,4 +29,14 @@
 
   /* El nombre ya está en la nav (y en el héroe, en desktop): en el encabezado de la reserva sobra. */
   --flow-marca-display: none;
+
+  /* Bloques suaves. `--court-soft` (capa 3) es `color-mix(c 12%, #fff)`: casi blanco para cualquier
+     club, porque se derivó asumiendo papel claro debajo. Dentro del panel oscuro eso queda un
+     manchón con el texto adentro ilegible (≈1.7:1 el párrafo de la seña). Acá los bloques suaves
+     son una veladura del color sobre la propia superficie oscura, y la tinta la del sistema.
+     La enfática no puede ser `--court-deep` (el color OSCURECIDO desaparece sobre fondo oscuro):
+     es el color del club aclarado hacia la tinta, la misma receta que `.ic-link` en club-info.scss. */
+  --flow-soft-surface: color-mix(in srgb, var(--court) 18%, var(--surface));
+  --flow-soft-ink: var(--ink-dim);
+  --flow-soft-ink-strong: color-mix(in srgb, var(--court) 55%, var(--ink));
 }
