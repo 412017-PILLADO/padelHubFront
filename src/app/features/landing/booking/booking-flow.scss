@@ -28,8 +28,10 @@
      --flow-soft-surface    fondo de esos bloques: `--court-soft` en las claras, una veladura del
                             color sobre la propia superficie en las oscuras
      --flow-soft-ink        tinta corriente sobre esos bloques
-     --flow-soft-ink-strong tinta enfática (el color del club) sobre esos bloques: el título del
-                            aviso de seña y el precio del turno
+     --flow-soft-ink-accent tinta de acento sobre esos bloques —el color del club, no una tinta más
+                            pesada: en las claras vale `--court-deep` (un TONO), y por eso el nombre
+                            dice "accent" y no "strong". Lo usan el título del aviso de seña y el
+                            precio del turno.
 
    Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
    se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
@@ -110,7 +112,7 @@
   margin-left: auto;
   font-size: 0.8rem;
   font-weight: 700;
-  color: var(--flow-soft-ink-strong, var(--court-deep));
+  color: var(--flow-soft-ink-accent, var(--court-deep));
   background: var(--flow-soft-surface, var(--court-soft));
   padding: 3px 10px;
   border-radius: 999px;
@@ -401,7 +403,7 @@
   margin: 0 0 12px;
   text-align: left;
 }
-.sena-title { font-weight: 700; color: var(--flow-soft-ink-strong, var(--court-deep)); margin-bottom: 5px; }
+.sena-title { font-weight: 700; color: var(--flow-soft-ink-accent, var(--court-deep)); margin-bottom: 5px; }
 .sena-text { font-size: 0.9rem; color: var(--flow-soft-ink, var(--ink-dim)); line-height: 1.4; margin: 0; }
 
 /* Botón "Pagar seña con Mercado Pago" + divisor hacia el alias por transferencia */

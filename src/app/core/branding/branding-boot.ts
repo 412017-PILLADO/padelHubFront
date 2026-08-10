@@ -7,26 +7,33 @@
  */
 
 /** Una clave por club Y plantilla: namespacing preventivo, no una corrección de un bug observado hoy.
- *  Se anticipa a que la tinta legible de este camino (panel/login) empiece a variar por plantilla,
- *  como ya varía en ClubStore.applyBranding para la landing (ver decidirTinta() en ./tenant-colors).
- *  Hoy ningún caller de este módulo pasa una plantilla real: los tres cachean bajo 'A' fijo (ver
- *  PLANTILLA_PANEL en branding.service.ts) porque `BrandingService.apply()` calcula siempre con la
- *  tinta default, sin importar la plantilla del tenant. El día que eso cambie, esta clave ya está
- *  lista para separar los buckets sin tocar este archivo de nuevo. */
+ *  Hoy el segundo componente es **constante por construcción**, no "constante por ahora": lo que se
+ *  cachea es lo que devuelve `applyTenantColors()`, que sale sólo del color del club y no recibe
+ *  ningún valor de la cáscara (ver ./tenant-colors) — o sea que no hay nada que pueda hacer variar la
+ *  clave. Los callers lo reflejan: los tres pasan 'A' fijo (ver PLANTILLA_PANEL en
+ *  branding.service.ts y el initializer de app.config.ts). Un solo bucket, siempre. El parámetro
+ *  queda por si algún día el caché guarda algo que sí dependa de la plantilla: ese día se separan los
+ *  buckets sin tocar este archivo. */
 export const brandingCacheKey = (slug: string, plantilla: string) =>
   `padel_branding_${slug}_${plantilla}`;
 
 /*
- * OJO Plan 2 — ventana de tinta incorrecta conocida (preexistente, no la introduce este módulo): la
- * landing es RenderMode.Server y `ClubStore.applyBranding` corre en el server, así que el HTML
- * servido ya trae `--ink-on-accent` correcto para la plantilla del tenant. Pero `app.config.ts` llama
- * a `aplicarMarcaCacheada()` en TODO arranque de la app, sin mirar la ruta — así que al hidratar en
- * el cliente pisa esas variables con las cacheadas acá por el panel/login, calculadas con la tinta
- * default (no la de la plantilla real). Para un tenant en plantilla oscura eso es tinta incorrecta
- * hasta que `ClubStore.applyBranding` vuelve a correr en el cliente. Alcanza sólo a quien entró al
- * panel de SU club en el mismo navegador (los únicos que escriben esta clave, ver PLANTILLA_PANEL) y
- * después visita su propia landing pública. Un solo bucket antes de este task, el mismo bucket
- * renombrado a `_A` ahora: no es una regresión de este cambio.
+ * CERRADA — "ventana de tinta incorrecta" (Plan 2). Se documenta acá porque los documentos del plan
+ * la describen como abierta y hay que poder reconciliarlos, NO porque siga viva.
+ *
+ * Qué era: `app.config.ts` llama a `aplicarMarcaCacheada()` en TODO arranque, sin mirar la ruta, así
+ * que al hidratar la landing pisaba el `--ink-on-accent` que el SSR ya había escrito (la landing es
+ * RenderMode.Server) con el cacheado acá por el panel/login. Como ese valor se calculaba con la tinta
+ * default y no con la de la plantilla del tenant, en una cáscara oscura era tinta incorrecta hasta
+ * que `ClubStore.applyBranding` volvía a correr en el cliente.
+ *
+ * Qué la cerró: el Task B2 sacó la tinta de la cáscara de `decidirTinta`/`inkOnAccent`/
+ * `applyTenantColors`. `--ink-on-accent` ya no depende de la plantilla —el texto cae sobre el acento,
+ * no sobre la superficie— así que el valor cacheado y el que calcula la landing son el MISMO para un
+ * mismo color de club, y pisar uno con el otro es un no-op. Verificado además que ninguna hoja
+ * DECLARA `--ink-on-accent`: la única declaración del repo es el `#fff` de base en styles.scss; las
+ * cáscaras sólo lo consumen con `var(...)`. No queda ningún camino por el que la plantilla pueda
+ * llegar a ese token.
  */
 
 /** Variables CSS ya resueltas + el logo, tal como quedaron la última vez que se aplicó la marca. */

@@ -7,14 +7,15 @@ import { guardarMarcaCacheada, leerMarcaCacheada } from './branding-boot';
 import { applyTenantColors } from './tenant-colors';
 
 /**
- * Plantilla bajo la que este archivo cachea la marca del panel/login. El panel es client-render:
- * hasta que la API contesta no sabemos cuál es la plantilla real del tenant (ver
- * core/landing/plantillas.ts), así que cacheamos siempre bajo la default del sistema. Es inofensivo
- * hoy: acá la tinta NO varía por plantilla (eso sólo lo hace `ClubStore.applyBranding`, para la
- * landing pública, en base al esquema claro/oscuro del shell) — así que todas las lecturas y
- * escrituras de este archivo caen siempre en el mismo bucket, sin pisar ni ser pisadas por el de
- * ninguna otra plantilla. Si el panel alguna vez empieza a variar la tinta por plantilla, esta
- * constante es lo único que hay que tocar acá.
+ * Plantilla bajo la que este archivo cachea la marca del panel/login. `brandingCacheKey` pide una
+ * plantilla (ver ./branding-boot) y acá no hay ninguna real que pasarle: el panel es client-render,
+ * así que hasta que la API contesta no sabemos cuál es la del tenant (ver core/landing/plantillas.ts).
+ * Da igual, porque **nada de lo que se cachea depende de la plantilla**: lo cacheado es lo que
+ * devuelve `applyTenantColors()`, que deriva todo del color del club y NO recibe ningún valor de la
+ * cáscara (ver ./tenant-colors). Con la constante, todas las lecturas y escrituras de este archivo
+ * caen en el mismo bucket, que además es el que lee el arranque (`app.config.ts`, también con 'A').
+ * Si algún día el caché guardara algo que sí varía por plantilla, esta constante es lo único que hay
+ * que tocar acá.
  */
 const PLANTILLA_PANEL = 'A';
 
@@ -29,8 +30,8 @@ const PLANTILLA_PANEL = 'A';
  * - Login (`apply`): datos ya cargados de `/public/config` (resuelto por subdominio).
  *
  * La landing pública NO pasa por acá: `ClubStore.applyBranding()` llama derecho a
- * `applyTenantColors()` con la tinta de su plantilla. Por eso `PLANTILLA_PANEL` puede ser una
- * constante — este archivo sólo pinta panel y login, y ninguno de los dos varía la tinta.
+ * `applyTenantColors()`. Los dos caminos la llaman igual —la función no acepta nada de la plantilla—
+ * así que para un mismo color de club los tokens de marca salen idénticos vengan de donde vengan.
  */
 @Injectable({ providedIn: 'root' })
 export class BrandingService {

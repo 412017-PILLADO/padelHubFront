@@ -34,6 +34,11 @@ function declaracionCss(css: string, prop: string): string | null {
 /**
  * ¿Es clara esta tinta? Promedio de canales sobre el medio del rango: alcanza y sobra para separar
  * `#11162b` de `#eef2f8` sin traer acá la fórmula WCAG (que vive en core/branding y se testea allá).
+ *
+ * Sólo entiende `#rrggbb`. Con cualquier otra forma (`rgb(...)`, `#eef`, un `color-mix()`) el
+ * `parseInt` da NaN y toda comparación con NaN es false — o sea que devolvería 'oscura' calladita.
+ * Por eso quien la llama afirma primero la FORMA (ver el `toMatch` más abajo): un tripwire que puede
+ * pasar en falso no vigila nada.
  */
 function esClara(hex: string): boolean {
   const num = parseInt(hex.trim().replace('#', ''), 16);
@@ -159,6 +164,11 @@ describe('registry de plantillas', () => {
       const hoja = leerFuente(`src/app/features/landing/shells/${DIR_SHELL[codigo]}/shell.scss`);
       const tintaQuePinta = declaracionCss(hoja, '--ink') ?? tintaGlobal!;
 
+      // La forma ANTES de la luminancia: `esClara()` sólo lee `#rrggbb` y con cualquier otra cosa
+      // devuelve false por NaN, lo que dejaría este test verde por la rama equivocada. Si mañana una
+      // cáscara declara `--ink: rgb(238,242,248)`, `#eef` o un `color-mix()`, queremos que ESTO falle
+      // y no que el tripwire se apague en silencio.
+      expect(tintaQuePinta).toMatch(/^#[0-9a-f]{6}$/i);
       expect(PLANTILLAS[codigo].esquema).toBe(esClara(tintaQuePinta) ? 'dark' : 'light');
     }
   );
