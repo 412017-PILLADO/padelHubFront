@@ -63,6 +63,33 @@ for (const { slug, tpl, shell } of PLANTILLAS) {
     await expect(page.locator(`[data-tpl="${tpl}"]`)).toBeVisible({ timeout: 15_000 });
     await expect(page.locator(shell)).toBeVisible();
 
+    // B es la única plantilla oscura (spec §6): el fondo del shell tiene que ser oscuro de verdad,
+    // no el papel claro de plataforma. Se mide la luminancia del color computado en vez de comparar
+    // contra un hex, porque `--paper` se tiñe con el color del club y cambia por tenant.
+    //
+    // El color NO se parsea del string: `--paper` es un `color-mix(in srgb, …)` y Chromium lo
+    // serializa como `color(srgb 0.043 0.066 0.181)` —floats 0..1, no `rgb()` de enteros—, así que
+    // sacarle los dígitos a mano lee "0437647" como si fuera un canal. Se le pasa el color computado
+    // al canvas y se deja que el propio navegador lo baje a bytes sRGB, sea cual sea la sintaxis.
+    // La base blanca no es decorativa: un fondo transparente (B sin capa oscura) o un color que el
+    // canvas no supiera parsear quedarían en negro sobre canvas vacío y PASARÍAN el test por
+    // accidente; compuestos sobre blanco dan ~1.0 y lo hacen fallar, que es lo correcto.
+    if (tpl === 'B') {
+      const luminancia = await page.locator(shell).evaluate((el) => {
+        const bg = getComputedStyle(el).backgroundColor;
+        const canvas = document.createElement('canvas');
+        canvas.width = canvas.height = 1;
+        const ctx = canvas.getContext('2d')!;
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, 1, 1);
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, 1, 1);
+        const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+      });
+      expect(luminancia).toBeLessThan(0.2);
+    }
+
     await reservar(page, `${tpl}${String(Date.now()).slice(-4)}`);
   });
 }
