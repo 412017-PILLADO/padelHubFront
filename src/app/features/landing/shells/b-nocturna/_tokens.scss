@@ -67,4 +67,22 @@
   --flow-soft-surface: color-mix(in srgb, var(--court) 18%, var(--surface));
   --flow-soft-ink: var(--ink-dim);
   --flow-soft-ink-accent: color-mix(in srgb, var(--court) 55%, var(--ink));
+
+  /* El acento como TRAZO (tinta/ícono y línea/borde). El color del club CRUDO, sobre la superficie
+     oscura, colapsa cuando el club es casi negro: medido con `#111111`, el anillo del check daba
+     1,05:1, los numeritos de paso 1,02, los bordes de la caja de seña 1,06 — y el peor, el hover de
+     un chip, BORRABA el único límite visible del control (3,33:1 → 1,02:1). No fallaba en señalar:
+     borraba. La raíz es que la capa 3 deriva las variantes del acento contra blanco y negro fijos,
+     sin saber sobre qué superficie caen; mientras todas las plantillas fueron claras eso alcanzaba.
+
+     La receta es la que la casa ya usa tres veces (`--flow-soft-ink-accent` acá arriba, `.ic-link`
+     en club-info.scss y el hover del pie): mezclar hacia la TINTA, que le agrega luz al club oscuro
+     sin lavar al brillante. Es mezcla y no transparencia porque el alfa no puede cambiarle el signo
+     al contraste: si el color es más oscuro que la superficie, ninguna opacidad lo hace más claro.
+
+     Los dos arrancan con el mismo valor A PROPÓSITO: existen separados porque las dos familias van a
+     divergir cuando alguna plantilla lo necesite (una línea de 1px puede pedir más peso que una
+     tinta sobre la misma superficie), no porque hoy difieran. */
+  --flow-accent-ink: color-mix(in srgb, var(--court) 55%, var(--ink));
+  --flow-accent-line: color-mix(in srgb, var(--court) 55%, var(--ink));
 }
