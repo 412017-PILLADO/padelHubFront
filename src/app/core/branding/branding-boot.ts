@@ -27,7 +27,7 @@ export const brandingCacheKey = (slug: string, plantilla: string) =>
  * default y no con la de la plantilla del tenant, en una cáscara oscura era tinta incorrecta hasta
  * que `ClubStore.applyBranding` volvía a correr en el cliente.
  *
- * Qué la cerró: el Task B2 sacó la tinta de la cáscara de `decidirTinta`/`inkOnAccent`/
+ * Qué la cerró: la tinta de la cáscara salió de `decidirTinta`/`inkOnAccent`/
  * `applyTenantColors`. `--ink-on-accent` ya no depende de la plantilla —el texto cae sobre el acento,
  * no sobre la superficie— así que el valor cacheado y el que calcula la landing son el MISMO para un
  * mismo color de club, y pisar uno con el otro es un no-op. Verificado además que ninguna hoja

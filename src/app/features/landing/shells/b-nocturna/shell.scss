@@ -1,9 +1,18 @@
 /* ===================================================================
-   PLANTILLA B · Liquid Glass — paneles frosted translúcidos sobre una malla de luz teñida por el
-   color del tenant. El color es luz ambiente, no bloques; la identidad es el vidrio, no el tono.
+   PLANTILLA B · el club de noche bajo reflectores — la ÚNICA plantilla oscura del producto
+   (spec §6). El color del club entra dos veces y de dos maneras: como MASA teñida (`--paper` y
+   `--surface` son ese color mezclado contra una base casi negra, así un club rojo se siente cálido
+   y uno teal, frío) y como LUZ (los dos focos de arriba y el resplandor de abajo del telón). El
+   vidrio de los paneles es uno de los elementos de esa noche —la receta vive en `_vidrio.scss`—,
+   no su identidad: lo que define a B es la oscuridad teñida y la luz que la atraviesa.
 
-   Salió tal cual del bloque `.tpl-b` de landing.scss: `.tpl-b` era el div que envolvía la
-   plantilla y ahora es el host de esta cáscara, así que esas reglas pasan a `:host`.
+   De ahí salen las decisiones del resto del archivo: tinta clara con su propia escalera, un par
+   tipográfico propio (Anton · Inter Tight · JetBrains Mono), la firma del horario encendido y un
+   anillo de foco que se aclara en vez de usar el color crudo. Todo lo que dependa de contraste
+   está medido, y los umbrales los vigila `contraste.spec.ts`.
+
+   Salió del bloque `.tpl-b` de landing.scss: `.tpl-b` era el div que envolvía la plantilla y ahora
+   es el host de esta cáscara, así que esas reglas pasaron a `:host`.
    =================================================================== */
 /* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva (incluido el vidrio del
    panel, que antes vivía en booking-flow.scss como `.tpl-b .booking-flow`). */
@@ -90,7 +99,7 @@
   font-weight: 400;        /* Archivo: eje wght. Anton es una sola cara → negrita sintética. */
   /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible, y sobre el telón oscuro
      todavía más (el texto claro sobre fondo oscuro "engorda" ópticamente y cierra los blancos
-     internos). Desde el Task 5 esto alcanza TAMBIÉN al título del héroe: `.b-title` empata en
+     internos). Esto alcanza TAMBIÉN al título del héroe: `.b-title` empata en
      especificidad con esta regla y está más abajo en la hoja, así que le ganaba con su propio
      `letter-spacing` — se le borró la declaración justamente para que no haya dos trackings de
      display en la misma cáscara. Si alguna regla de más abajo vuelve a declarar `letter-spacing`,
@@ -142,8 +151,18 @@
    El detalle que importa para el próximo que toque esto: el empate es de ESPECIFICIDAD —
    `[nghost] :focus-visible` (0,2,0) contra `.p-datepicker-select-month:focus-visible` (0,2,0)— y lo
    resuelve el ORDEN, porque el tema de PrimeNG se inyecta en el `<head>` en runtime, después de los
-   estilos de componente. Si una versión de PrimeNG dejara de declarar su propio foco, esta regla
-   pasaría a ganar y aparecerían esos 1,26:1. Si eso pasa, la salida no es `:not(.cal *)` —un
+   estilos de componente. O sea que esto NO se apoya en una garantía del lenguaje: se apoya en cómo
+   se cargan hoy los estilos de una librería que no es nuestra. Hay dos maneras de darlo vuelta:
+
+     1. que una versión de PrimeNG deje de declarar su propio `:focus-visible`;
+     2. **`cssLayer: true` en `providePrimeNG`** (`app.config.ts`, hoy sin esa opción). Es un
+        renglón que se agrega por un motivo que no tiene nada que ver con esto —domar la
+        especificidad de PrimeNG contra el CSS de la app es la razón de siempre— y como una regla
+        EN capa pierde contra una regla SIN capa, el orden deja de importar: esta regla pasa a
+        ganar adentro de `.cal`. Por eso hay un test que afirma que la opción sigue sin estar
+        (`app.config.spec.ts`), y su mensaje de error apunta acá.
+
+   En cualquiera de los dos casos aparecen esos 1,26:1. Si pasa, la salida no es `:not(.cal *)` —un
    `:not()` complejo no soportado invalida la regla ENTERA y B se queda sin anillo en ningún lado—
    sino una regla propia para `.cal :focus-visible` que vuelva a oscurecer el anillo sobre blanco. */
 :host ::ng-deep :focus-visible {
@@ -184,13 +203,18 @@
 /* Sin el chip de logo (era el segundo del mismo logo en la misma pantalla): el héroe es el nombre
    grande + la bajada. La marca gráfica queda solo en la nav. */
 .b-hero { text-align: center; padding: clamp(20px, 2.6vw, 36px) clamp(16px, 5vw, 40px) clamp(14px, 2vw, 20px); }
-/* Retocado contra el telón (Task 5), por dos medidas concretas a 1280:
+/* Retocado contra el telón, por dos medidas concretas:
    · TAMAÑO — el techo era 2.1rem, exactamente el mismo que el de `.flow-head strong` del panel
-     (`clamp(1.4rem, 2.6vw, 2.1rem)`), así que arriba de ~1224px el título del héroe medía 33.6px y
-     el encabezado del flujo 33.3px: empatados, el héroe dejaba de tener rango sobre una sección
-     interna del panel. Sube SÓLO el techo (mínimo y pendiente intactos), que es donde estaba el
-     empate y donde sobra alto: a 1280 el panel arranca 8px más abajo, muy por encima del fold de
-     1440×900 que el owner pidió cuidar. Debajo de 900px nada de esto se ve: el héroe está oculto.
+     (`clamp(1.4rem, 2.6vw, 2.1rem)`). El del héroe engranaba a ~988px (3.4vw = 33.6px) y el del
+     panel a ~1292px (2.6vw = 33.6px): de ahí para arriba los dos medían 33.6px EXACTOS y el héroe
+     dejaba de tener rango sobre una sección interna del panel. Debajo de ese empate la diferencia
+     ya era testimonial — a 1224px, 33.6px contra 31.8px. Sube SÓLO el techo (mínimo y pendiente
+     intactos), que es donde estaba el empate y donde sobra alto; el nuevo techo de 2.6rem engrana
+     a ~1224px y de ahí para arriba el héroe mide 41.6px contra los 33.6px del panel (por debajo de
+     ese ancho ya le ganaba por pendiente: 3.4vw contra 2.6vw). A 1280 el panel arranca 8px más
+     abajo, muy por encima del fold
+     de 1440×900 que el owner pidió cuidar. Debajo de 900px nada de esto se ve: el héroe está
+     oculto.
    · TRACKING — el `-0.02em` venía de cuando el display era Archivo (expandida). Anton ya es muy
      condensada de fábrica y encima el texto claro sobre fondo oscuro "engorda" ópticamente, así que
      el negativo cerraba los contrapunzones. Se borra la declaración en vez de reescribirla: sin
@@ -211,10 +235,27 @@
 /* El vidrio de las tarjetas de info vive en club-info.scss (`:host-context(.tpl-b)`). */
 /* Mismo motivo que el borde de la nav: 40% de blanco sobre el telón nocturno es un trazo plateado,
    no un hairline. Baja a 10%, igual que la nav (el vidrio se rebordea con 12% y su brillo especular
-   interno con 10%: estas dos líneas no son vidrio, son separadores, y van con el valor más bajo). */
+   interno con 10%: estas dos líneas no son vidrio, son separadores, y van con el valor más bajo).
+
+   El pie es la ÚNICA parte de B que no se apoya en `--paper` pelado: cae justo sobre el resplandor
+   de abajo del telón, que lo aclara, y cuánto depende del secundario del club. `contraste.spec.ts`
+   no puede ver esto (mide superficies fijas, no pixeles del degradado), así que se midió con el
+   navegador — pie abajo de todo a 1280×800, peor pixel del rectángulo del ©:
+
+     primario   secundario   `--ink-faint`   `--ink-dim`
+     #2747ff    #ffffff          5,26:1
+     #0a8a99    #ffffff          4,99:1
+     #f0b429    #ffffff          4,48:1   ← ya no llega
+     #ffffff    #f0b429          4,24:1   ←
+     #ffffff    #ffffff          3,94:1   ←        6,33:1
+
+   O sea: `--ink-faint` está pineado en 4,56:1 contra la superficie fija más clara de B, pero el
+   resplandor se come esos centésimos y con un club claro el © cae por debajo de AA (4.5). El pie
+   pasa entonces a `--ink-dim`, que en el peor caso medido da 6,33:1. No se pierde jerarquía: los
+   links del pie ya eran `--ink-dim` y el © se distingue de ellos por tamaño, mono y subrayado. */
 .b-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
   border-top: 1px solid color-mix(in srgb, #fff 10%, transparent);
-  color: var(--ink-faint); }
+  color: var(--ink-dim); }
 
 /* Mobile (M-mobile-plantillas, feedback owner): arranca directo en la reserva. El héroe (marca
    grande + título + tagline + CTAs) es redundante con la card de reserva que está en la misma

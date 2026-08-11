@@ -38,8 +38,11 @@
    documenta el porqué de cada valor. Acá sólo se elige el radio, que es lo único que las tarjetas
    difieren a propósito del panel del flujo: 20px contra 28px, porque son mucho más chicas. */
 :host-context(.tpl-b) .ic-card { @include vidrio.vidrio-nocturno(20px); }
-/* La pastilla del icono es una veladura del color del club: sobre el vidrio oscuro un 16% se pierde
-   contra la tarjeta, así que sube a 26% para que el icono siga teniendo su propio bloque. */
+/* La pastilla del icono es una veladura del color del club: sobre el vidrio de la tarjeta un 16%
+   apenas se despega (1,21:1 con el teal de plataforma, 1,00:1 con un club casi negro). Sube a 26%,
+   que con esos mismos clubes da 1,39:1 y 1,01:1, para que el icono siga teniendo su propio bloque.
+   No llega a 3:1 con ningún club y no tiene por qué: es decoración detrás del icono, no un control
+   (WCAG 1.4.11 pide 3:1 para lo segundo). */
 :host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 26%, transparent); }
 /* `--court-deep` es el color del club OSCURECIDO: sobre el vidrio nocturno se apaga (≈2.4:1 con el
    teal de plataforma). Acá el link va al revés, aclarando el color hacia la tinta de la cáscara, y

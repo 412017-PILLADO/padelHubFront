@@ -17,7 +17,7 @@ import { resolve } from 'node:path';
  * 1. **El acento contra la superficie.** `--court` es del club, no de la cáscara. Con un club casi
  *    negro las reglas que usan `var(--court)` CRUDO dentro del panel (el numerito del paso, el
  *    ícono del check de éxito, el borde del aviso de seña) caen a ~1,05:1. Está medido y anotado en
- *    el reporte del Task 8; arreglarlas pide un token nuevo del contrato `--flow-*`, que toca las
+ *    el reporte de la auditoría; arreglarlas pide un token nuevo del contrato `--flow-*`, que toca las
  *    tres cáscaras y no entra en un audit. Lo que SÍ se pinea acá es el anillo de foco: es la única
  *    de ese grupo que vive en la capa de B y por lo tanto se puede arreglar y proteger desde adentro.
  * 2. **El pie sobre el resplandor inferior.** El telón levanta el fondo del pie por encima de
@@ -36,11 +36,16 @@ const DIR = 'src/app/features/landing/shells/b-nocturna';
  *
  * Los comentarios se borran porque en estas hojas la prosa cita los mismos tokens que el parser
  * busca (`--line-strong`, `--court`…) y un docblock no puede poder cambiar lo que el test mide.
+ *
+ * ORDEN: primero se borran los `/* *\/` y RECIÉN AHÍ se busca un `//`. Al revés —como estaba— un
+ * `//` escrito DENTRO de un comentario de bloque (o una `url(//host/…)`) abortaba el módulo entero
+ * y con él los 16 tests. El `//` es Sass idiomático en este repo (booking-flow.scss lo usa), así
+ * que la guardia tiene que hablar sólo del código que el parser realmente va a leer.
  */
 function leerHoja(archivo: string): string {
-  const css = readFileSync(resolve(process.cwd(), DIR, archivo), 'utf8');
+  const css = readFileSync(resolve(process.cwd(), DIR, archivo), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   if (/(^|[^:])\/\//.test(css)) throw new Error(`${archivo} tiene comentarios //: el parser sólo saca /* */`);
-  return css.replace(/\/\*[\s\S]*?\*\//g, '');
+  return css;
 }
 const HOJA_SHELL = leerHoja('shell.scss');
 const HOJA_TOKENS = leerHoja('_tokens.scss');
@@ -64,9 +69,14 @@ function hexDe(css: string, prop: string): string {
 /**
  * Parsea `color-mix(in srgb, <A> <pct>%, <B>)`. El `(.+)\)` es GOLOSO a propósito: el segundo
  * término puede ser un `var(--surface)` con su propio paréntesis.
+ *
+ * La bandera `s` no es decorativa: `declaracion()` devuelve todo hasta el `;`, o sea que un valor
+ * partido en dos renglones —que es estilo de la casa, `_tokens.scss` los escribe así— llega acá con
+ * un salto de línea adentro. Sin `s`, el `.` no lo cruza y el módulo TIRA por un reformateo que no
+ * cambió ni un pixel.
  */
 function colorMix(decl: string | null, dondeDice: string): { a: string; pct: number; b: string } {
-  const m = decl && /color-mix\(\s*in\s+srgb\s*,\s*(.+?)\s+([\d.]+)%\s*,\s*(.+)\)/.exec(decl);
+  const m = decl && /color-mix\(\s*in\s+srgb\s*,\s*(.+?)\s+([\d.]+)%\s*,\s*(.+)\)/s.exec(decl);
   if (!m) throw new Error(`${dondeDice} ya no es un color-mix(in srgb, A pct%, B): ${decl}`);
   return { a: m[1].trim(), pct: Number(m[2]) / 100, b: m[3].trim() };
 }
@@ -85,10 +95,20 @@ const LINE_STRONG = colorMix(declaracion(HOJA_SHELL, '--line-strong'), 'shell.sc
 const VIDRIO = colorMix(declaracion(HOJA_VIDRIO, '\\$superficie'), '_vidrio.scss · $superficie');
 /** El bloque suave: `--flow-soft-surface: color-mix(in srgb, var(--court) N%, var(--surface))`. */
 const SUAVE = colorMix(declaracion(HOJA_TOKENS, '--flow-soft-surface'), '_tokens.scss · --flow-soft-surface');
-/** El anillo de foco: `outline: 2px solid color-mix(in srgb, var(--court) N%, #fff)`. */
+/**
+ * El anillo de foco: `outline: 2px solid color-mix(in srgb, var(--court) N%, #fff)`.
+ *
+ * El selector va ANCLADO a `:host ::ng-deep :focus-visible` y no a un `:focus-visible` suelto. La
+ * razón: la salida documentada en shell.scss —para cuando el empate con el foco propio de PrimeNG
+ * se dé vuelta— es una regla dedicada `.cal :focus-visible` que vuelve a oscurecer el anillo sobre
+ * el panel blanco del datepicker. Un regex sin anclar toma el PRIMER bloque que matchee: si esa
+ * regla se escribiera más arriba en la hoja, este spec pasaría a medir el anillo del calendario
+ * contra las superficies oscuras de B y seguiría verde. Es el único de los parsers de este archivo
+ * que podía fallar en SILENCIO en vez de tirar.
+ */
 const ANILLO = colorMix(
-  /:focus-visible\s*\{[^}]*?outline\s*:\s*([^;]+);/.exec(HOJA_SHELL)?.[1] ?? null,
-  'shell.scss · el outline del :focus-visible',
+  /:host\s+::ng-deep\s+:focus-visible\s*\{[^}]*?outline\s*:\s*([^;]+);/.exec(HOJA_SHELL)?.[1] ?? null,
+  'shell.scss · el outline del `:host ::ng-deep :focus-visible`',
 );
 
 /**

@@ -399,7 +399,12 @@
   font-weight: 600;
   transition: border-color 0.15s ease, color 0.15s ease;
 }
-.ghost-btn:hover { border-color: var(--court); color: var(--court-deep); }
+/* El hover NO puede ser `--court-deep` crudo: en una cáscara oscura el color del club OSCURECIDO se
+   apaga contra el fondo (≈2,4:1 con el teal de plataforma) y el botón se APAGA al pasar el mouse.
+   Es el mismo caso ya corregido en el pie (landing-footer.scss) y en `.ic-link` (club-info.scss), y
+   se resuelve con el token que el contrato ya tiene: A y C lo declaran como `var(--court-deep)`
+   —o sea, exactamente lo que había—, y B lo declara aclarado hacia su tinta. Sin token nuevo. */
+.ghost-btn:hover { border-color: var(--court); color: var(--flow-soft-ink-accent, var(--court-deep)); }
 
 /* Aviso de seña pendiente en la pantalla de éxito. El bloque suave más grande del flujo (y el único
    con un párrafo adentro), así que es el que más depende de que la cáscara diga sobre qué se apoya. */
