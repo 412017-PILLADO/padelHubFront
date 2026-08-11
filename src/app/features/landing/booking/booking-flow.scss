@@ -3,8 +3,12 @@
 
    El flujo NO tiene identidad visual propia: la caja que lo contiene se pinta con los tokens
    `--flow-*` que declara la cáscara de cada plantilla (shells/<x>/_tokens.scss). Esta hoja es el
-   único consumidor del contrato y el que lo define; toda cáscara nueva tiene que declarar los
-   catorce tokens:
+   único consumidor del contrato y el que lo define: los tokens del contrato son EXACTAMENTE los que
+   esta hoja lee con `var(--flow-…)`, y `booking/contrato-flow.spec.ts` verifica que cada cáscara los
+   declare todos (y que ninguna declare uno que acá no se consuma). Por eso no hay un numeral escrito
+   acá: el número se cuenta solo y el que manda es el test.
+
+   Los tokens de la caja del contenedor:
 
      --flow-surface         fondo del contenedor
      --flow-border          borde del contenedor (shorthand completo, o `none`)
