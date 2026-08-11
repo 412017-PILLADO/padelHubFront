@@ -123,7 +123,29 @@
    que son otros componentes (el flujo, las tarjetas de info, el pie). Acotada con `:host`, así que
    no se escapa de B, y no nombra ninguna plantilla adentro del subárbol del flujo. Los dos modales
    (arrepentimiento y política) y la pill del preview cuelgan de `<app-landing>`, NO de esta cáscara:
-   no los alcanza, y está bien — se pintan sobre superficies claras. */
+   no los alcanza, y está bien — se pintan sobre superficies claras.
+
+   OJO · HAY UNA ISLA CLARA QUE SÍ ESTÁ ADENTRO, y para ella aclarar hacia el blanco sería lo
+   contrario de lo correcto: el popover del calendario. `booking-flow.html:52-53` monta el
+   `<p-datepicker [inline]>` DENTRO de `.cal.open` (sin `appendTo="body"`), o sea colgando de esta
+   cáscara, y su panel es blanco puro — los componentes de PrimeNG se pintan sobre superficies claras
+   del sistema en las tres plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre
+   blanco, este anillo mediría 2,25:1 con teal, 2,30 con fucsia y 1,26 con amarillo: tres de cinco
+   clubes por debajo de 3:1.
+
+   NO PASA, y está medido, no supuesto: las cuatro paradas de teclado del popover (las dos flechas de
+   mes y los selectores de mes y de año) conservan el `:focus-visible` PROPIO de PrimeNG, `1px solid`
+   con su `--p-focus-ring-color` — 6,22:1 las flechas, 4,90 / 3,65 / 1,61 / 17,96 / 1,24 los
+   selectores según el club. Las celdas de día no son focusables (la grilla no entra al orden de
+   tabulación), así que no hay una quinta parada.
+
+   El detalle que importa para el próximo que toque esto: el empate es de ESPECIFICIDAD —
+   `[nghost] :focus-visible` (0,2,0) contra `.p-datepicker-select-month:focus-visible` (0,2,0)— y lo
+   resuelve el ORDEN, porque el tema de PrimeNG se inyecta en el `<head>` en runtime, después de los
+   estilos de componente. Si una versión de PrimeNG dejara de declarar su propio foco, esta regla
+   pasaría a ganar y aparecerían esos 1,26:1. Si eso pasa, la salida no es `:not(.cal *)` —un
+   `:not()` complejo no soportado invalida la regla ENTERA y B se queda sin anillo en ningún lado—
+   sino una regla propia para `.cal :focus-visible` que vuelva a oscurecer el anillo sobre blanco. */
 :host ::ng-deep :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--court) 60%, #fff);
   outline-offset: 2px;

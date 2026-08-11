@@ -1,9 +1,16 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 /**
  * B es la única plantilla oscura del producto (spec §6). Sus tokens de tinta son fijos —no dependen
  * del color del club—, así que su contraste se puede pinear acá sin browser.
  *
- * Los valores tienen que coincidir con los que declara `shell.scss`. Si alguien los cambia sin
- * mirar el contraste, este test lo frena.
+ * **Los valores NO están copiados a mano: se leen de las hojas.** Una versión anterior de este
+ * archivo los tenía duplicados, y entonces revertir `--ink-faint` en `shell.scss` dejaba los 16
+ * tests en verde — o sea que el tripwire no vigilaba nada, que es el único defecto que un tripwire
+ * no puede tener. Ahora las tres hojas (`shell.scss`, `_tokens.scss`, `_vidrio.scss`) son la fuente:
+ * si alguien baja un token, el número que entra a la fórmula baja con él y el umbral falla.
+ * Es el mismo patrón con el que `core/landing/plantillas.spec.ts` pinea el registry contra las hojas.
  *
  * DOS COSAS QUE ESTE ARCHIVO NO PUEDE PROBAR, para que nadie lo lea como cobertura completa:
  *
@@ -18,17 +25,71 @@
  *    aritmética de tokens (números en el reporte).
  */
 
-// ── Las tintas y las recetas de superficie que declara shell.scss ────────────
-const INK = '#eef2f8';
-const INK_DIM = '#b7c0d4';
-const INK_FAINT = '#8d97ad';
-/** Las bases oscuras de `--paper` y `--surface`, antes de mezclarles el color del club. */
-const BASE_PAPER = '#07090f';
-const BASE_SURFACE = '#121826';
-/** Alfa del vidrio del panel: `--surface` al 72% sobre el papel (ver `_vidrio.scss`). */
-const ALFA_VIDRIO = 0.72;
-/** % de blanco de `--line-strong`, el borde que identifica chips, horarios y `.ghost-btn`. */
-const LINE_STRONG_PCT = 0.36;
+// ── Lectura de las hojas ─────────────────────────────────────────────────────
+const DIR = 'src/app/features/landing/shells/b-nocturna';
+
+/**
+ * Lee una hoja del repo y le saca los comentarios. La ruta va desde la raíz del proyecto y NO
+ * relativa a este spec: el builder bundlea los specs a un temporal antes de correrlos, así que
+ * `import.meta.url` apunta al bundle y no al árbol de fuentes. Si algún día el runner cambia de cwd,
+ * esto TIRA (ENOENT) en vez de quedarse verde en silencio, que es lo que se quiere de un tripwire.
+ *
+ * Los comentarios se borran porque en estas hojas la prosa cita los mismos tokens que el parser
+ * busca (`--line-strong`, `--court`…) y un docblock no puede poder cambiar lo que el test mide.
+ */
+function leerHoja(archivo: string): string {
+  const css = readFileSync(resolve(process.cwd(), DIR, archivo), 'utf8');
+  if (/(^|[^:])\/\//.test(css)) throw new Error(`${archivo} tiene comentarios //: el parser sólo saca /* */`);
+  return css.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+const HOJA_SHELL = leerHoja('shell.scss');
+const HOJA_TOKENS = leerHoja('_tokens.scss');
+const HOJA_VIDRIO = leerHoja('_vidrio.scss');
+
+/** Último valor declarado para una propiedad, o `null`. El `\\s*:` es lo que evita que `--ink`
+ *  matchee `--ink-dim`, y que los `var(--ink)` (uso, no declaración) cuenten. */
+function declaracion(css: string, prop: string): string | null {
+  const hits = [...css.matchAll(new RegExp(`${prop}\\s*:\\s*([^;}]+)`, 'g'))];
+  return hits.length ? hits[hits.length - 1][1].trim() : null;
+}
+
+/** Un `#rrggbb` declarado en la hoja. Tira si la hoja cambió de forma: un `rgb()`, un `#eef` o un
+ *  `color-mix()` darían NaN más adelante y el test pasaría en silencio. */
+function hexDe(css: string, prop: string): string {
+  const v = declaracion(css, prop);
+  if (!v || !/^#[0-9a-f]{6}$/i.test(v)) throw new Error(`${prop} no es un #rrggbb literal: ${v}`);
+  return v;
+}
+
+/**
+ * Parsea `color-mix(in srgb, <A> <pct>%, <B>)`. El `(.+)\)` es GOLOSO a propósito: el segundo
+ * término puede ser un `var(--surface)` con su propio paréntesis.
+ */
+function colorMix(decl: string | null, dondeDice: string): { a: string; pct: number; b: string } {
+  const m = decl && /color-mix\(\s*in\s+srgb\s*,\s*(.+?)\s+([\d.]+)%\s*,\s*(.+)\)/.exec(decl);
+  if (!m) throw new Error(`${dondeDice} ya no es un color-mix(in srgb, A pct%, B): ${decl}`);
+  return { a: m[1].trim(), pct: Number(m[2]) / 100, b: m[3].trim() };
+}
+
+// ── Las tintas y las recetas de superficie, leídas de las hojas ──────────────
+const INK = hexDe(HOJA_SHELL, '--ink');
+const INK_DIM = hexDe(HOJA_SHELL, '--ink-dim');
+const INK_FAINT = hexDe(HOJA_SHELL, '--ink-faint');
+/** `--paper: color-mix(in srgb, var(--court) N%, <base oscura>)`. */
+const PAPER = colorMix(declaracion(HOJA_SHELL, '--paper'), 'shell.scss · --paper');
+/** `--surface`, misma forma. */
+const SURFACE = colorMix(declaracion(HOJA_SHELL, '--surface'), 'shell.scss · --surface');
+/** `--line-strong: color-mix(in srgb, #fff N%, transparent)`, el borde de chips y horarios. */
+const LINE_STRONG = colorMix(declaracion(HOJA_SHELL, '--line-strong'), 'shell.scss · --line-strong');
+/** El vidrio del panel: `$superficie: color-mix(in srgb, var(--surface) N%, transparent)`. */
+const VIDRIO = colorMix(declaracion(HOJA_VIDRIO, '\\$superficie'), '_vidrio.scss · $superficie');
+/** El bloque suave: `--flow-soft-surface: color-mix(in srgb, var(--court) N%, var(--surface))`. */
+const SUAVE = colorMix(declaracion(HOJA_TOKENS, '--flow-soft-surface'), '_tokens.scss · --flow-soft-surface');
+/** El anillo de foco: `outline: 2px solid color-mix(in srgb, var(--court) N%, #fff)`. */
+const ANILLO = colorMix(
+  /:focus-visible\s*\{[^}]*?outline\s*:\s*([^;]+);/.exec(HOJA_SHELL)?.[1] ?? null,
+  'shell.scss · el outline del :focus-visible',
+);
 
 /**
  * El peor club para el contraste es el más CLARO, porque es el que más aclara las superficies:
@@ -40,8 +101,12 @@ const CLUB_PEOR = '#ffffff';
 // ── Aritmética WCAG ──────────────────────────────────────────────────────────
 type Rgb = [number, number, number];
 
+/** `#rgb` o `#rrggbb` a canales. Las hojas escriben las dos formas (`#fff` y `#07090f`). */
 function rgb(hex: string): Rgb {
-  const n = parseInt(hex.slice(1), 16);
+  const c = hex.trim().replace('#', '');
+  const full = c.length === 3 ? c.split('').map((x) => x + x).join('') : c;
+  if (!/^[0-9a-f]{6}$/i.test(full)) throw new Error(`no es un hex parseable: ${hex}`);
+  const n = parseInt(full, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 function canal(c: number): number {
@@ -62,16 +127,15 @@ function mezcla(a: Rgb, pct: number, b: Rgb): Rgb {
 /** `a` con opacidad `alfa` compuesto sobre `b`. Sobre sRGB opaco es la misma cuenta que `mezcla`. */
 const sobre = mezcla;
 
-/** Las superficies de B para un color de club dado, tal como las deriva `shell.scss`. */
+/** Las superficies de B para un color de club dado, con las recetas leídas de las hojas. */
 function superficiesDe(club: string): Record<string, Rgb> {
-  const paper = mezcla(rgb(club), 0.13, rgb(BASE_PAPER));
-  const surface = mezcla(rgb(club), 0.1, rgb(BASE_SURFACE));
+  const paper = mezcla(rgb(club), PAPER.pct, rgb(PAPER.b));
+  const surface = mezcla(rgb(club), SURFACE.pct, rgb(SURFACE.b));
   return {
     '--paper (el telón)': paper,
     '--surface (chips, horarios, recap)': surface,
-    'el vidrio del panel de reserva': sobre(surface, ALFA_VIDRIO, paper),
-    // `--flow-soft-surface` de `_tokens.scss`: el color del club al 18% sobre `--surface`.
-    'el bloque suave (seña, check, precio)': mezcla(rgb(club), 0.18, surface),
+    'el vidrio del panel de reserva': sobre(surface, VIDRIO.pct, paper),
+    'el bloque suave (seña, check, precio)': mezcla(rgb(club), SUAVE.pct, surface),
   };
 }
 
@@ -120,10 +184,40 @@ describe('plantilla B · contraste de la capa oscura', () => {
     // Sus rellenos son `--surface`, que contra el vidrio del panel da ~1,02:1 — el borde de 1px es
     // el único límite visible del control (WCAG 1.4.11). Al 24% daba 2,17:1.
     const fallan = Object.entries(PEOR)
-      .map(([nombre, fondo]) => [nombre, contraste(sobre([255, 255, 255], LINE_STRONG_PCT, fondo), fondo)] as const)
+      .map(([nombre, fondo]) => [nombre, contraste(sobre(rgb(LINE_STRONG.a), LINE_STRONG.pct, fondo), fondo)] as const)
       .filter(([, ratio]) => ratio < 3)
       .map(([nombre, ratio]) => `${nombre}: ${ratio.toFixed(2)}:1`);
     expect(fallan).toEqual([]);
+  });
+});
+
+/**
+ * Las siete recetas que este archivo le lee a las hojas. Si una cambia de FORMA (deja de ser un
+ * `color-mix(in srgb, …)`, o `--ink` pasa a `rgb()`), los parsers de arriba tiran al cargar el
+ * módulo — ruidoso, que es lo correcto. Este describe cubre el otro caso: que la forma siga siendo
+ * la misma pero el término contra el que se mezcla deje de ser el que las fórmulas suponen.
+ */
+describe('plantilla B · el spec sigue leyendo las hojas que cree leer', () => {
+  it('`--paper` y `--surface` mezclan el color del club contra una base oscura literal', () => {
+    // Las fórmulas de acá asumen que el club entra como primer término y la base es un hex opaco.
+    expect([PAPER.a, SURFACE.a]).toEqual(['var(--court)', 'var(--court)']);
+    expect([PAPER.b, SURFACE.b].every((b) => /^#[0-9a-f]{6}$/i.test(b))).toBe(true);
+  });
+
+  it('el vidrio del panel es `--surface` con alfa sobre el papel', () => {
+    expect([VIDRIO.a, VIDRIO.b]).toEqual(['var(--surface)', 'transparent']);
+  });
+
+  it('el bloque suave es el color del club sobre `--surface`', () => {
+    expect([SUAVE.a, SUAVE.b]).toEqual(['var(--court)', 'var(--surface)']);
+  });
+
+  it('`--line-strong` y el anillo de foco se mezclan hacia el blanco', () => {
+    // Si algún día se mezclaran hacia otra cosa, los dos tests de umbral seguirían pasando con el
+    // número equivocado: `sobre(rgb(LINE_STRONG.a), …)` y `mezcla(…, blanco)` estarían mintiendo.
+    expect(LINE_STRONG.a.toLowerCase()).toBe('#fff');
+    expect([ANILLO.a, ANILLO.b.toLowerCase()]).toEqual(['var(--court)', '#fff']);
+    expect(LINE_STRONG.b).toBe('transparent');
   });
 });
 
@@ -141,8 +235,8 @@ describe('plantilla B · el anillo de foco sobrevive a cualquier color de club',
     ['casi negro', '#111111'],
     ['casi blanco', '#ffffff'],
   ];
-  /** `color-mix(in srgb, var(--court) 60%, #fff)`, tal cual lo declara shell.scss. */
-  const anilloDe = (club: string) => mezcla(rgb(club), 0.6, [255, 255, 255]);
+  /** El `outline` del `:focus-visible` de shell.scss, con su % y su segundo término leídos de ahí. */
+  const anilloDe = (club: string) => mezcla(rgb(club), ANILLO.pct, rgb(ANILLO.b));
   const peorRatio = (tinta: Rgb, club: string) =>
     Math.min(...Object.values(superficiesDe(club)).map((f) => contraste(tinta, f)));
 
