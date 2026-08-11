@@ -45,6 +45,13 @@
 :host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
 :host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
 :host(.c-foot) .politica-link:hover { color: var(--court-deep); }
+/* El © es lo ÚNICO del pie de C que se quedaba con el `--ink-faint` que `.c-foot` (shell.scss) le
+   pone a todo el pie: los links ya lo pisan con `--ink-dim` acá arriba. Y `--ink-faint` sobre el
+   papel de C da 2,43:1 medido en el navegador — abajo de AA a CUALQUIER ancho, no sólo en mobile
+   (donde el `opacity` de más abajo lo hundía hasta 1,65:1). Pasa a `--ink-dim`, que da 5,73:1: el
+   mismo camino que ya había tomado el pie de la B (ver `.b-foot` en b-nocturna/shell.scss). La
+   jerarquía contra los links no la da el color sino el tamaño (0,7rem) y la mono. */
+:host(.c-foot) .cr { color: var(--ink-dim); }
 
 /* B es la plantilla oscura: el hover sube de `--ink-dim` a la tinta PLENA, que es lo que hace de
    "encendido" en esta cáscara (mismo criterio que `.ic-link` en club-info.scss y que
@@ -103,10 +110,16 @@
     justify-content: center;
     width: 100%;
   }
+  /* Acá vivía `opacity: 0.6`, que es lo que dejaba al © abajo de AA en las TRES plantillas (medido
+     a 390px sobre los tenants reales: A 3,21:1 · B 4,09:1 · C 1,65:1). La opacidad no es una tinta:
+     multiplica el contraste que el color ya tenía, así que hunde por igual a la A sobre el afiche
+     del club, a la B sobre el telón y a la C sobre el papel, y no se puede medir sin componerla a
+     mano contra el fondo. Secundario no es ilegible: la jerarquía contra los links la siguen dando
+     el tamaño (0,7rem contra 0,78rem) y la mono, y el color lo pone cada plantilla allá arriba —
+     que es donde se puede medir. Es el mismo criterio con el que ya se veía el © en desktop. */
   .foot-copy {
     order: 2;
     font-size: 0.7rem;
-    opacity: 0.6;
   }
   .foot-links > *:not(:first-child) {
     position: relative;
