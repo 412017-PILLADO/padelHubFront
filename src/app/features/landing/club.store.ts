@@ -132,7 +132,7 @@ export class ClubStore {
     const params = new URLSearchParams(location.search);
 
     // El `find` valida y tipa de una: nada de castear a CodigoPlantilla lo que vino en la URL. Se
-    // acepta sólo lo que tiene cáscara: forzar D o E mostraría la A con el selector sin activa.
+    // acepta sólo lo que tiene cáscara: forzar D mostraría la A con el selector sin activa.
     const tpl = (params.get('plantilla') ?? '').trim().toUpperCase();
     const validTpl = CODIGOS_CON_SHELL.find((c) => c === tpl) ?? null;
 

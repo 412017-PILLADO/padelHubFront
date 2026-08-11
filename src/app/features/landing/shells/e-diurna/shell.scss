@@ -1,0 +1,68 @@
+/* ===================================================================
+   PLANTILLA E · Diurna — la hermana clara de B (spec §6): vidrio apoyado sobre el campo de color.
+   Comparte con B el par tipográfico y la idea del panel translúcido; cambia la hora del día.
+
+   ESTADO: esta hoja es el andamio. Hoy sólo apila campo → panel → info → pie con aire razonable,
+   sobre las superficies claras de plataforma. El campo de color es el Task 6 y el vidrio a caballo
+   de su borde —la firma de E— el Task 7. Se ve sin terminar a propósito.
+   =================================================================== */
+/* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
+@use 'tokens';
+
+/* Capa 2 · la cáscara consume `--court` (capa 3) pero NUNCA lo declara (spec §5.1). */
+:host {
+  display: flex; flex-direction: column; min-height: 100svh;
+  background: var(--paper);
+  color: var(--ink);
+
+  /* Mismo trío que B (spec §6): Anton para display, Inter Tight para texto, JetBrains Mono para
+     datos. El <link> a Google Fonts lo pide el constructor de shell.ts (también en SSR), y como es
+     la misma URL que la de B las dos cáscaras comparten un solo <link>. */
+  --display: 'Anton', system-ui, sans-serif;
+  --body: 'Inter Tight', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Lo que la `.display` de plataforma (styles.scss) le pide a la familia, acá dicho para Anton —
+     mismos valores que B, por el mismo motivo. Los dos primeros son EJES de Archivo y Anton no
+     tiene ninguno (una sola cara, `wght@400`), así que pedirlos hace que el navegador los SINTETICE
+     y engorde una tipografía que ya viene condensada. El tercero es tracking: Anton viene muy
+     apretada y un pelo de aire la hace legible.
+     Van acá y no en un `::ng-deep .display`: los tokens BAJAN POR HERENCIA a todo el subárbol de la
+     cáscara, incluido el `<app-booking-flow>`, sin que esta hoja nombre el DOM de otro componente. */
+  --display-stretch: normal;
+  --display-weight: 400;
+  --display-tracking: 0.01em;
+
+  font-family: var(--body);
+}
+
+/* El campo de color: hoy una banda sobre `--surface` con la marca y el título. En el Task 6 pasa a
+   ser el bloque de color saturado del club, que es lo que le da el nombre a la plantilla. */
+.e-campo {
+  padding: clamp(18px, 4vw, 34px) clamp(16px, 5vw, 40px) clamp(22px, 4vw, 40px);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+.e-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* Una sola línea: el nombre largo se recorta (como en B, no baja de renglón como en C). */
+.e-brandname { min-width: 0; font-size: 1.12rem; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Sin `letter-spacing` propio: el que vale es el `--display-tracking` del `:host`, así E tiene un
+   solo tracking de display. Declararlo acá le ganaría al token y lo partiría en dos. */
+.e-title { margin-top: clamp(10px, 2vw, 18px); font-size: clamp(1.9rem, 6vw, 3.4rem);
+  line-height: 1.02; color: var(--ink); }
+
+/* UN solo panel (contrato §6.1). Hoy es un contenedor de layout pelado; el vidrio llega en el 7. */
+.e-panel { width: 100%; max-width: 880px; margin: 0 auto;
+  padding: clamp(16px, 3vw, 28px) clamp(12px, 4vw, 24px) 0; }
+.e-book { scroll-margin-top: 16px; }
+/* Lo que E le pinta al flujo lo declara `_tokens.scss` como tokens --flow-*: ninguna regla de esta
+   cáscara apunta al DOM del `<app-booking-flow>`. */
+
+.e-info { width: 100%; max-width: 1000px; margin: 0 auto;
+  padding: clamp(24px, 4vw, 44px) clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+  scroll-margin-top: 16px; }
+
+.e-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
+  border-top: 1px solid var(--line); color: var(--ink-dim); }

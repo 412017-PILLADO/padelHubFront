@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { DIR_SHELL } from '../../../core/landing/plantillas';
+
 /**
  * El contrato `--flow-*` en prosa no lo hacía cumplir nada: `booking-flow.scss` y los `_tokens.scss`
  * decían "toda cáscara nueva tiene que declarar los catorce" y el numeral estaba mantenido a mano en
@@ -74,7 +76,14 @@ function tokensQueDeclara(dirShell: string): string[] {
   return [...encontrados].sort();
 }
 
-const SHELLS = ['a-afiche', 'b-nocturna', 'c-tarjeta'];
+/**
+ * Las cáscaras a verificar SALEN DEL REGISTRY (`DIR_SHELL`), no de una lista de acá. Escrita a mano,
+ * una cáscara nueva que nadie se acordaba de agregar quedaba sin verificar con la suite ENTERA en
+ * verde — y como los fallbacks del flujo son los valores de la A, esa cáscara no se rompía: se veía
+ * como la A. O sea, exactamente el modo de falla que este spec existe para matar, escondido en la
+ * lista del propio spec. Ahora dar de alta una cáscara en el dispatcher la mete acá sola.
+ */
+const SHELLS = Object.values(DIR_SHELL);
 
 describe('contrato --flow-*', () => {
   it('el flujo consume al menos un token (si esto falla, el parser se rompió)', () => {

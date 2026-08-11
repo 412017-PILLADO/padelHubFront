@@ -105,7 +105,7 @@ function montarLanding(plantilla: string): HTMLElement {
  * El host de la landing publica el código de la cáscara que realmente se dibuja, no el que eligió
  * el club. Importa porque `landing.scss` engancha el layout por atributo:
  * `:host([data-tpl='A']) { height: 100svh; overflow: hidden }` es lo que clava el viewport del
- * afiche. El back ya acepta los cinco códigos pero D y E no tienen cáscara hasta el Plan 2: si un
+ * afiche. El back ya acepta los cinco códigos pero D todavía no tiene cáscara: si un
  * tenant en D publicara `data-tpl="D"` y se dibujara la A, la A quedaría con su `height: 100svh`
  * adentro de un host sin clamp ni `overflow: hidden`, o sea con doble scroll.
  */
@@ -116,6 +116,7 @@ describe('Landing — plantilla y cáscara', () => {
     expect(host.querySelector('app-shell-a')).not.toBeNull();
     expect(host.querySelector('app-shell-b')).toBeNull();
     expect(host.querySelector('app-shell-c')).toBeNull();
+    expect(host.querySelector('app-shell-e')).toBeNull();
     // Lo que hace que las reglas de la A enganchen:
     expect(host.getAttribute('data-tpl')).toBe('A');
     expect(host.querySelector('app-shell-a')!.classList).toContain(PLANTILLAS.A.claseShell);

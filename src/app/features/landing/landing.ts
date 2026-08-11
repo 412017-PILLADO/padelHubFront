@@ -22,6 +22,7 @@ import { BookingStore } from './booking/booking.store';
 import { ShellAComponent } from './shells/a-afiche/shell';
 import { ShellBComponent } from './shells/b-nocturna/shell';
 import { ShellCComponent } from './shells/c-tarjeta/shell';
+import { ShellEComponent } from './shells/e-diurna/shell';
 
 const ES_TRANSLATION = {
   firstDayOfWeek: 1,
@@ -42,7 +43,7 @@ const ES_TRANSLATION = {
 
 /**
  * Dispatcher de la landing: elige la cáscara de la plantilla del club (ver shells/) y se queda con
- * lo que es transversal a las tres — el toast, los defs SVG compartidos, los dos modales
+ * lo que es transversal a todas — el toast, los defs SVG compartidos, los dos modales
  * (arrepentimiento y política) y el selector flotante del preview de venta.
  *
  * Qué plantillas existen, cuál es la default y cuáles tienen cáscara lo decide el registry
@@ -67,6 +68,7 @@ const ES_TRANSLATION = {
     ShellAComponent,
     ShellBComponent,
     ShellCComponent,
+    ShellEComponent,
   ],
   providers: [MessageService, ClubStore, BookingStore],
   templateUrl: './landing.html',
@@ -79,7 +81,7 @@ export class Landing {
 
   /**
    * La cáscara que se dibuja: manda el `@switch` del template Y el `data-tpl` del host, que tienen
-   * que coincidir sí o sí. Un tenant en una plantilla que todavía no tiene cáscara (D o E, que el
+   * que coincidir sí o sí. Un tenant en una plantilla que todavía no tiene cáscara (D, que el
    * back ya acepta) se dibuja con la A **y publica `data-tpl="A"`**: si publicara su propio código,
    * el `:host([data-tpl='A'])` de `landing.scss` no engancharía y el afiche quedaría sin su clamp
    * de viewport, con doble scroll. Ver `shellDePlantilla()`.
