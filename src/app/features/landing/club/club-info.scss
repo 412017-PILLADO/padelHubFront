@@ -1,3 +1,6 @@
+/* La receta del vidrio nocturno con la que B viste estas tarjetas — ver el bloque de B más abajo. */
+@use '../shells/b-nocturna/vidrio';
+
 /* Las tarjetas son items de la grilla de la cáscara (.b-info / .c-info): el host no puede meter una
    caja en el medio — ver el comentario de club-info.ts. */
 :host { display: contents; }
@@ -30,28 +33,11 @@
    volver global la hoja. Deuda reconocida del plan: se reemplaza por tokens en el Plan 2.
    =================================================================== */
 
-/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio, y desde que B es la plantilla OSCURA del
-   producto el vidrio también lo es: sube la opacidad del fondo (el papel de atrás ya no aporta luz),
-   y el borde y el brillo especular bajan de 60% a 12% y 10% de blanco — sobre el negro, un blanco
-   fuerte deja de leerse como reflejo y pasa a ser un trazo plateado. La sombra deja de teñirse con
-   `--court`: sobre fondo oscuro una sombra de color aclara en vez de asentar, así que es negra.
-
-   Las declaraciones están escritas a mano porque la misma receta la declara
-   `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los que se pinta el flujo de reserva) y
-   `@extend` no cruza de hoja. Las dos copias estuvieron desincronizadas mientras esta pasaba a la
-   receta oscura sola; el Task 5 bajó los mismos cinco valores a `_tokens.scss` y hoy son idénticas.
-   Si tocás una, tocá la otra. Sigue siendo duplicación: el Task 7 del plan extrae un `@mixin`
-   `vidrio-nocturno($radio)` con exactamente estos valores y lo consume desde los dos lados — cuando
-   eso pase, este comentario se borra entero.
-   El `border-radius` sí difiere a propósito: 20px la tarjeta, 28px el panel del flujo. */
-:host-context(.tpl-b) .ic-card {
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.4); backdrop-filter: blur(22px) saturate(1.4);
-  border: 1px solid color-mix(in srgb, #fff 12%, transparent);
-  border-radius: 20px;
-  box-shadow: 0 20px 50px -28px rgba(0, 0, 0, 0.7),
-    inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
-}
+/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio nocturno, el mismo que viste al flujo de
+   reserva. La receta no se escribe acá: vive una sola vez en `shells/b-nocturna/_vidrio.scss`, que
+   documenta el porqué de cada valor. Acá sólo se elige el radio, que es lo único que las tarjetas
+   difieren a propósito del panel del flujo: 20px contra 28px, porque son mucho más chicas. */
+:host-context(.tpl-b) .ic-card { @include vidrio.vidrio-nocturno(20px); }
 /* La pastilla del icono es una veladura del color del club: sobre el vidrio oscuro un 16% se pierde
    contra la tarjeta, así que sube a 26% para que el icono siga teniendo su propio bloque. */
 :host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 26%, transparent); }

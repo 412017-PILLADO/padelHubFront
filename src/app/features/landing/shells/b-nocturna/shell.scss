@@ -85,10 +85,10 @@
   letter-spacing: 0.01em;
 }
 
-/* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) tiene
-   hoy dos copias escritas a mano, porque `@extend` no cruza de hoja: los tokens --flow-* de
-   `_tokens.scss` (que visten al flujo de reserva) y `.ic-card` en club-info.scss. Si tocás una de
-   las dos, tocá la otra. */
+/* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) se
+   escribe en un solo lugar: el mixin `vidrio-nocturno` de `_vidrio.scss`. Sus dos consumidores son
+   los tokens --flow-* de `_tokens.scss` (que visten al flujo de reserva) y `.ic-card` en
+   club-info.scss; `@extend` no cruzaba de hoja, un `@mixin` sí. */
 
 /* La nav flota sobre el foco primario, que es la zona más clara del telón: el fondo pasa de
    `--surface` a `--paper` (más oscuro y más opaco, 72%) para que la marca no compita con la luz de
