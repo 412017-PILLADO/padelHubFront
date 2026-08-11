@@ -4,7 +4,7 @@
    El flujo NO tiene identidad visual propia: la caja que lo contiene se pinta con los tokens
    `--flow-*` que declara la cáscara de cada plantilla (shells/<x>/_tokens.scss). Esta hoja es el
    único consumidor del contrato y el que lo define; toda cáscara nueva tiene que declarar los
-   doce tokens:
+   catorce tokens:
 
      --flow-surface         fondo del contenedor
      --flow-border          borde del contenedor (shorthand completo, o `none`)
@@ -18,6 +18,9 @@
      --flow-padding-mobile  padding del contenedor en <900px
      --flow-marca-display   `display` del nombre del club en el encabezado: `none` cuando la
                             plantilla ya muestra la marca en otro lado de la misma pantalla.
+     --flow-slot-sel-shadow sombra del horario seleccionado. `none` en las plantillas claras; en la
+                            nocturna es el halo que hace que el horario "prenda" como luz de cancha.
+     --flow-chip-sel-shadow ídem para los chips de duración y día.
 
    Y los tres de los BLOQUES SUAVES (el precio del turno, el ícono de "cualquiera disponible", el
    anillo del check de éxito y el aviso de seña): manchitas del color del club que se apoyan sobre
@@ -140,6 +143,7 @@
   background: var(--court);
   border-color: var(--court);
   color: var(--ink-on-accent, #fff);
+  box-shadow: var(--flow-chip-sel-shadow, none);
 }
 .chip .c-label { font-weight: 700; font-size: 1rem; }
 .chip .c-date { font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
@@ -188,7 +192,12 @@
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }
 .slot:hover:not(:disabled) { border-color: var(--court); transform: translateY(-1px); }
-.slot[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
+.slot[aria-pressed='true'] {
+  background: var(--court);
+  border-color: var(--court);
+  color: var(--ink-on-accent, #fff);
+  box-shadow: var(--flow-slot-sel-shadow, none);
+}
 .slot:disabled {
   color: var(--ink-faint);
   text-decoration: line-through;

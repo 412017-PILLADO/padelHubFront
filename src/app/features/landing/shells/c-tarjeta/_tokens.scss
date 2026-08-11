@@ -2,10 +2,10 @@
    CONTRATO --flow-* · PLANTILLA C (minimalista)
 
    Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
-   NO tiene identidad visual propia: lee estos doce valores (ver el encabezado de
+   NO tiene identidad visual propia: lee estos catorce valores (ver el encabezado de
    booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
 
-   Toda cáscara nueva tiene que declarar los doce.
+   Toda cáscara nueva tiene que declarar los catorce.
 
    En la C el flujo va a sangre dentro de `.c-book`, sin caja propia: el aire y el ancho máximo los
    pone la cáscara (ver shell.scss), no el flujo — por eso el padding es 0 en los dos breakpoints.
@@ -28,6 +28,11 @@
   /* El nombre ya vive junto al logo en el rail: en el encabezado de la reserva sería la misma marca
      dos veces (solo en C — A y B lo resuelven distinto, ahí la marca está en el afiche/héroe). */
   --flow-marca-display: none;
+
+  /* El estado seleccionado se marca sólo con el color del club: sin halo. El halo es la firma de la
+     nocturna y sobre papel claro se vería sucio. */
+  --flow-slot-sel-shadow: none;
+  --flow-chip-sel-shadow: none;
 
   /* Bloques suaves (seña, precio, íconos): el lavado del color del club sobre papel claro. */
   --flow-soft-surface: var(--court-soft);
