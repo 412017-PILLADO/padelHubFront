@@ -17,9 +17,22 @@
   --surface: #{color-mix(in srgb, var(--court) 10%, #121826)};
   --ink: #eef2f8;
   --ink-dim: #b7c0d4;
-  --ink-faint: #8b95ab;
+  /* Auditado en `contraste.spec.ts`. El peor fondo que puede dar esta cáscara es con un club casi
+     blanco: `--surface` se va a #2a2f3c y ahí el #8b95ab original daba 4,45:1 — a dos centésimas de
+     AA para texto chico, y `--ink-faint` no lleva sólo captions: también `.step-hint`, que es un
+     <p> de texto corrido. Se subió el token (no se bajó el umbral): dos puntos por canal, invisible
+     a ojo, 4,56:1 en la peor superficie fija. */
+  --ink-faint: #8d97ad;
+  /* `--line` es decoración (separadores de paso, bordes del recap, marco del calendario): no lleva
+     umbral de contraste. */
   --line: #{color-mix(in srgb, #fff 14%, transparent)};
-  --line-strong: #{color-mix(in srgb, #fff 24%, transparent)};
+  /* `--line-strong` sí lo lleva, y por una razón medida: el relleno de chips y horarios es
+     `--surface`, que contra el vidrio del panel da 1,02:1 — o sea que NO se distinguen por relleno y
+     lo único que dice "esto es un control" es este borde de 1px (WCAG 1.4.11, 3:1). Al 24% daba
+     2,06:1 con los cinco clubes extremos; 36% es el mínimo que llega a 3:1 en las tres superficies
+     de B (peor caso 3,11:1). No confundir con los hairlines de la nav y del pie, que son
+     separadores y siguen al 10%. */
+  --line-strong: #{color-mix(in srgb, #fff 36%, transparent)};
 
   color-scheme: dark;
 
@@ -83,6 +96,37 @@
      display en la misma cáscara. Si alguna regla de más abajo vuelve a declarar `letter-spacing`,
      va a ganar: es un empate resuelto por orden, no por especificidad. */
   letter-spacing: 0.01em;
+}
+
+/* El anillo de foco de plataforma (`styles.scss:131`) es `2px solid var(--court)`: el color del club
+   CRUDO. Sobre papel claro eso siempre se ve; sobre el telón nocturno no. Medido con los cinco
+   clubes extremos, contra la peor de las cuatro superficies de B (papel, superficie, vidrio del
+   panel y bloque suave):
+
+     club            anillo `--court`   anillo de acá
+     casi negro #111        1,02:1          3,62:1   ← de invisible a legible
+     teal    #0a8a99        3,13:1          5,73:1
+     fucsia  #FF2D95        3,78:1          5,70:1
+     amarillo #FFD400       6,33:1          7,19:1
+     casi blanco #fff       7,52:1          7,52:1
+
+   Con un club casi negro el anillo no es tenue: es un halo NEGRO alrededor del control, que se lee
+   como un agujero y no como foco. Es la falla de accesibilidad más cara de la cáscara (WCAG 2.4.7 y
+   1.4.11), porque el recorrido por teclado es el único que no tiene plan B.
+
+   El acento se aclara hacia el blanco en vez de reemplazarse: el anillo sigue siendo del color del
+   club (fucsia da rosa, teal da celeste), sólo que subido hasta donde la superficie oscura lo deja
+   ver. Un anillo blanco fijo habría sido más simple y habría borrado la marca.
+
+   TERCERA excepción de encapsulación del producto, después de `.politica-link` (landing.scss) y del
+   `.display` de acá arriba: el foco lo declara una hoja GLOBAL y hay que pisarlo en descendientes
+   que son otros componentes (el flujo, las tarjetas de info, el pie). Acotada con `:host`, así que
+   no se escapa de B, y no nombra ninguna plantilla adentro del subárbol del flujo. Los dos modales
+   (arrepentimiento y política) y la pill del preview cuelgan de `<app-landing>`, NO de esta cáscara:
+   no los alcanza, y está bien — se pintan sobre superficies claras. */
+:host ::ng-deep :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--court) 60%, #fff);
+  outline-offset: 2px;
 }
 
 /* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) se
