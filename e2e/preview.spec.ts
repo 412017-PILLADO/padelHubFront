@@ -2,7 +2,8 @@ import { test, expect } from '@playwright/test';
 
 /**
  * Preview de plantillas por query params (herramienta de venta, ver landing.ts:
- * previewPlantilla/previewColor). `?plantilla=A|B|C` pisa visualmente la plantilla del tenant sin
+ * previewPlantilla/previewColor). `?plantilla=` con uno de los códigos que tienen cáscara
+ * (`CODIGOS_CON_SHELL`) pisa visualmente la plantilla del tenant sin
  * persistir nada y muestra un selector flotante (.tpl-pill) para cambiar de diseño en vivo.
  */
 test('los query params de preview fuerzan plantilla y muestran el selector', async ({ page }) => {

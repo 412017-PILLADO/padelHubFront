@@ -96,7 +96,7 @@ describe('registry de plantillas', () => {
    * Ojo con "simplificar" los ejes a `wght@400;500;600;700;800` para todas las familias: Archivo es
    * variable con eje de ANCHO además del de peso, y `.display { font-stretch: 125% }` en
    * styles.scss vive de eso. Pidiendo sólo `wght`, Google devuelve `font-stretch: 100%` y el
-   * display de las tres plantillas adelgaza.
+   * display de toda plantilla que viva del trío de plataforma adelgaza.
    */
   it('la URL del trío de plataforma es, textual, la del <link> de index.html', () => {
     const html = leerFuente('src/index.html');

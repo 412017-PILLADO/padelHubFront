@@ -121,7 +121,8 @@ export class ClubStore {
   }
 
   /**
-   * Preview de venta: `?plantilla=A|B|C` y `?color=%23RRGGBB` pisan visualmente el tenant sin
+   * Preview de venta: `?plantilla=` (uno de `CODIGOS_CON_SHELL`) y `?color=%23RRGGBB` pisan
+   * visualmente el tenant sin
    * persistir nada. Solo en browser (en SSR no hay location) y solo se lee una vez al iniciar.
    * Aplica `previewColor` directo (ver constructor); devuelve la plantilla validada (o null) para
    * que el constructor decida CUÁNDO aplicarla. Después de este arranque, el selector flotante
@@ -149,7 +150,8 @@ export class ClubStore {
     return validTpl;
   }
 
-  /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
+  /** Click en el selector flotante (un botón por código de `CODIGOS_CON_SHELL`): cambia el preview
+   *  en vivo y actualiza el query param
    *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
   setPreviewPlantilla(tpl: CodigoPlantilla): void {
     this.previewPlantilla.set(tpl);

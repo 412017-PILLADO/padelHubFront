@@ -10,7 +10,7 @@
 }
 
 /* Solo la plantilla A (poster) clava el viewport y scrollea internamente la columna derecha;
-   B y C usan scroll de documento normal. Vive acá y no en la cáscara de la A porque el elemento
+   las demás usan scroll de documento normal. Vive acá y no en la cáscara de la A porque el elemento
    que lleva el `data-tpl` (y el que hay que fijar) es el host de la landing, no el de la cáscara.
    El `height: 100svh` de la cáscara misma sí se mudó, a shells/a-afiche/shell.scss. */
 @media (min-width: 900px) {

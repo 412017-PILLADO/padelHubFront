@@ -130,7 +130,8 @@ export function urlFuentes(fuentes: readonly string[]): string {
 
 /**
  * Familias del sistema de diseño de plataforma: las que declaran `--display`/`--body`/`--mono` en
- * styles.scss y de las que viven marketing, el panel y las tres plantillas de landing. Hoy
+ * styles.scss y de las que viven marketing, el panel y las plantillas de landing que no declaran
+ * un par tipográfico propio (hoy A, C y D; B y E sí lo declaran, en su `:host`). Hoy
  * coinciden con las de la plantilla A, pero se listan aparte a propósito: si la A cambia de
  * tipografía en el rediseño, la plataforma no tiene por qué seguirla.
  *

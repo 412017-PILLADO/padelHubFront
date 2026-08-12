@@ -17,8 +17,8 @@ import { resolve } from 'node:path';
  * 1. **El acento contra la superficie.** `--court` es del club, no de la cáscara. Con un club casi
  *    negro las reglas que usan `var(--court)` CRUDO dentro del panel (el numerito del paso, el
  *    ícono del check de éxito, el borde del aviso de seña) caen a ~1,05:1. Está medido y anotado en
- *    el reporte de la auditoría; arreglarlas pide un token nuevo del contrato `--flow-*`, que toca las
- *    tres cáscaras y no entra en un audit. Lo que SÍ se pinea acá es el anillo de foco: es la única
+ *    el reporte de la auditoría; arreglarlas pide un token nuevo del contrato `--flow-*`, que toca
+ *    todas las cáscaras y no entra en un audit. Lo que SÍ se pinea acá es el anillo de foco: es la única
  *    de ese grupo que vive en la capa de B y por lo tanto se puede arreglar y proteger desde adentro.
  * 2. **El pie sobre el resplandor inferior.** El telón levanta el fondo del pie por encima de
  *    `--paper`, y cuánto depende del secundario del club. Eso se mide con pixeles reales, no con

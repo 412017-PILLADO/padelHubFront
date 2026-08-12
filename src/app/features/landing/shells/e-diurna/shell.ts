@@ -14,9 +14,10 @@ import { LandingFooterComponent } from '../../club/landing-footer';
  * marca y el título, y UN solo panel debajo con el flujo de reserva — un panel y no varias cards es
  * la primera línea del contrato §6.1, que la separa de C.
  *
- * Hoy sólo EXISTE: renderiza, es alcanzable desde el dispatcher y declara su contrato `--flow-*`.
- * El campo de color llega en el Task 6 y el vidrio a caballo de su borde (la firma) en el Task 7,
- * así que por ahora se ve sin terminar a propósito.
+ * El campo de arriba lleva el primario del club CRUDO con el secundario como luz radial, y el panel
+ * se le monta a caballo del borde de abajo (`--e-solape` en shell.scss): esa franja de vidrio sobre
+ * color es la firma de la plantilla. El vidrio no lo pinta la cáscara — lo declara `_tokens.scss`
+ * como tokens `--flow-*` que el `<app-booking-flow>` consume.
  *
  * Los dos modales son transversales a las plantillas y viven en `Landing`: la cáscara solo avisa
  * que hay que abrirlos — mismo contrato que ya usan `<app-booking-flow>` y `<app-landing-footer>`.

@@ -16,7 +16,7 @@ import { LandingFooterComponent } from '../../club/landing-footer';
  * selector `.tpl-*` desde que se lo viste con los tokens `--flow-*` que declara `_tokens.scss` de
  * esta cáscara.
  *
- * Los dos modales son transversales a las 3 plantillas y viven en `Landing`: la cáscara solo avisa
+ * Los dos modales son transversales a las plantillas y viven en `Landing`: la cáscara solo avisa
  * que hay que abrirlos — mismo contrato que ya usan `<app-booking-flow>` y `<app-landing-footer>`.
  *
  * No provee `ClubStore`: lo toma del injector de `Landing`, que es quien lo declara.

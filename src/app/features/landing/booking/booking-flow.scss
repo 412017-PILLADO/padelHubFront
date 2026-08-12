@@ -56,7 +56,7 @@
                             bordes del aviso de seña, el contorno de la cancha elegida y el anillo
                             de la card "cualquiera disponible".
 
-   Son dos y no uno A PROPÓSITO: hoy arrancan con el mismo valor en las tres cáscaras, y están
+   Son dos y no uno A PROPÓSITO: hoy arrancan con el mismo valor en todas las cáscaras, y están
    separados porque las dos familias van a divergir cuando alguna plantilla lo necesite —una línea
    de 1px puede pedir más peso que una tinta sobre la misma superficie—, no porque hoy difieran.
 
@@ -89,7 +89,8 @@
   min-height: 0;
   padding: var(--flow-padding, clamp(20px, 3vw, 40px));
   /* Con `auto` (plantilla A) la columna derecha ENTERA scrollea (título + selectores + horario +
-     cancha + datos) y el afiche izquierdo queda fijo; con `visible` (B y C) scrollea el documento. */
+     cancha + datos) y el afiche izquierdo queda fijo; con `visible` (B, C y E) scrollea el
+     documento. */
   overflow-y: var(--flow-overflow, auto);
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
@@ -245,7 +246,7 @@
   /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio.
      justify-content:center (feedback owner post-desktop): el grid quedaba pegado a la izquierda
      dejando un hueco muerto a la derecha respecto de las líneas divisorias de las otras secciones;
-     centrado se ve prolijo en las 3 plantillas sin deformar la proporción de las cards.
+     centrado se ve prolijo en todas las plantillas sin deformar la proporción de las cards.
      auto-fit (no auto-fill, feedback owner de seguimiento): con auto-fill, cuando el contenedor
      entra una 5ª track (caso de C, 920px de ancho útil) esa track queda vacía pero sigue contando
      para el centrado, corriendo las 4 cards reales hacia la izquierda. auto-fit colapsa las tracks
@@ -441,7 +442,8 @@
    apaga contra el fondo (≈2,4:1 con el teal de plataforma) y el botón se APAGA al pasar el mouse.
    Es el mismo caso ya corregido en el pie (landing-footer.scss) y en `.ic-link` (club-info.scss), y
    se resuelve con el token que el contrato ya tiene: A y C lo declaran como `var(--court-deep)`
-   —o sea, exactamente lo que había—, y B lo declara aclarado hacia su tinta. Sin token nuevo.
+   —o sea, exactamente lo que había—, y las dos cáscaras con tinta propia lo arriman a la suya (B
+   aclarando, E oscureciendo). Sin token nuevo.
    El BORDE de ese mismo hover sí quedó crudo hasta ahora y tiene el problema de `.chip:hover`: el
    fantasma sólo se distingue por su borde, así que un club casi negro lo apagaba al pasar el mouse.
    Va por `--flow-accent-line`, que es exactamente para eso. */

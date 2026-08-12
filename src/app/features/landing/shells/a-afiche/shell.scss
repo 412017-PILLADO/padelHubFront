@@ -173,7 +173,7 @@
 /* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
    mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada
    contra el ancho angosto de la columna afiche (que partía el © en 2 líneas y apilaba los links).
-   Solo toca .pb-foot (A); B y C ya se ven bien en una línea, quedan como están. El orden de los
+   Solo toca .pb-foot (A); las demás ya se ven bien en una línea, quedan como están. El orden de los
    hijos, que ya es DEL pie, se resuelve en landing-footer.scss. */
 @media (min-width: 900px) {
   .pb-foot {

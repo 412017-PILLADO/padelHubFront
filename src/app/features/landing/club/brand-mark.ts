@@ -3,11 +3,12 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { ClubStore } from '../club.store';
 
 /**
- * Marca reutilizable (logo del club o el de Padel Hub por defecto) para las plantillas B y C. La A
- * tiene su propio bloque de marca en el afiche (`.brand-logo`, otro tamaño y otra alineación).
+ * Marca reutilizable (logo del club o el de Padel Hub por defecto) para las plantillas B, C y E. La
+ * A tiene su propio bloque de marca en el afiche (`.brand-logo`, otro tamaño y otra alineación).
  *
  * Host en `display: contents`: la marca es un item del flex de la cáscara (`.b-brandline` /
- * `.c-brandline`), así que el host no puede meter una caja intermedia sin correr el logo.
+ * `.c-brandline` / `.e-brandline`), así que el host no puede meter una caja intermedia sin correr
+ * el logo.
  *
  * No provee `ClubStore`: lo toma del injector de `Landing`, que es quien lo declara.
  */

@@ -117,7 +117,7 @@
    contrario de lo correcto: el popover del calendario. `booking-flow.html:52-53` monta el
    `<p-datepicker [inline]>` DENTRO de `.cal.open` (sin `appendTo="body"`), o sea colgando de esta
    cáscara, y su panel es blanco puro — los componentes de PrimeNG se pintan sobre superficies claras
-   del sistema en las tres plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre
+   del sistema en todas las plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre
    blanco, este anillo mediría 2,25:1 con teal, 2,30 con fucsia y 1,26 con amarillo: tres de cinco
    clubes por debajo de 3:1.
 
