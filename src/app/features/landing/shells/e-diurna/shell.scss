@@ -2,9 +2,12 @@
    PLANTILLA E · Diurna — la hermana clara de B (spec §6): vidrio apoyado sobre el campo de color.
    Comparte con B el par tipográfico y la idea del panel translúcido; cambia la hora del día.
 
-   ESTADO: esta hoja es el andamio. Hoy sólo apila campo → panel → info → pie con aire razonable,
-   sobre las superficies claras de plataforma. El campo de color es el Task 6 y el vidrio a caballo
-   de su borde —la firma de E— el Task 7. Se ve sin terminar a propósito.
+   El color del club entra igual que en B —como MASA y como LUZ— pero de día: la masa es el campo
+   saturado de arriba (el primario CRUDO, sin mezclar contra nada) y la luz es el radial del
+   secundario adentro de ese campo. Es el reparto de roles que la spec §6 le fija a E.
+
+   ESTADO: falta la firma. El campo ya está y el panel ya viene reservado a caballo de su borde
+   (`--e-solape`), pero el panel todavía no es vidrio: eso es el Task 7.
    =================================================================== */
 /* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
 @use 'tokens';
@@ -33,28 +36,76 @@
   --display-weight: 400;
   --display-tracking: 0.01em;
 
+  /* Cuánto del panel se monta SOBRE el campo. Un solo número, y es la firma de E: el panel queda
+     *a caballo* del borde inferior del color (spec §6), no apoyado debajo. Se usa dos veces y
+     siempre en pareja — el campo reserva esta altura de más abajo del título y `.e-panel` la sube
+     con un margen negativo del mismo valor—, así que mover el número mueve las dos mitades juntas.
+
+     Hoy queda por DEBAJO del padding de arriba del propio flujo (`--flow-padding`, que le saca
+     entre 8 y 10 px en los cuatro anchos), y ése es el techo mientras el panel no sea vidrio: lo
+     único que se monta sobre el color crudo es AIRE. Un valor más grande metería el encabezado del
+     flujo —tinta oscura, decidida contra papel claro— sobre `--court` saturado, que con un club
+     oscuro no se lee y que el contrato de la fase prohíbe. El Task 7, que le da fondo propio al
+     panel, es el que puede subirlo: es el único renglón que hay que tocar para que el vidrio muerda
+     más color, y ahí el techo deja de existir. */
+  --e-solape: clamp(12px, 2.2vw, 28px);
+
   font-family: var(--body);
 }
 
-/* El campo de color: hoy una banda sobre `--surface` con la marca y el título. En el Task 6 pasa a
-   ser el bloque de color saturado del club, que es lo que le da el nombre a la plantilla. */
+/* EL CAMPO. El color del club a plena saturación, con el secundario como luz radial (spec §6, rol
+   del color en E). No es decorado: es lo que le da sustancia al vidrio del panel. Sobre blanco
+   plano un blur no tiene nada que difuminar —por eso la B vieja se veía lavada— así que ninguna
+   plantilla del producto usa vidrio sobre papel liso; B pone noche debajo y E pone este campo.
+
+   El primario va CRUDO, sin mezclar contra ninguna base: la masa de E es el color del club tal cual
+   lo eligió, y eso es lo que hace que el white-label se lea de lejos (un club naranja da una
+   plantilla naranja). El radial es el secundario al 55% arriba a la derecha, o sea luz que cae
+   sobre la masa y no un segundo bloque; si el club no cargó secundario cae al primario y el campo
+   queda plano a propósito, que es la degradación correcta — no inventa un segundo color.
+
+   La tinta la decide la capa 3 con `--ink-on-accent`, calculada por contraste contra el color del
+   club (core/branding/tenant-colors.ts): blanco o la tinta oscura del sistema, lo que se lea. La
+   cáscara NO decide nada acá, y no hay ningún condicional por club — con eso alcanza también para
+   un primario claro. El `#fff` es sólo el default de antes de que corra el branding. */
 .e-campo {
-  padding: clamp(18px, 4vw, 34px) clamp(16px, 5vw, 40px) clamp(22px, 4vw, 40px);
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
+  /* El aire de abajo lleva el solape sumado: es la franja de color que el panel va a morder, así
+     que el título no se le acerca aunque el panel suba. */
+  padding: clamp(18px, 4vw, 34px) clamp(16px, 5vw, 40px)
+           calc(clamp(22px, 4vw, 40px) + var(--e-solape));
+  background:
+    radial-gradient(70% 90% at 78% 8%,
+      color-mix(in srgb, var(--court-2, var(--court)) 55%, transparent), transparent 70%),
+    var(--court);
+  color: var(--ink-on-accent, #fff);
 }
 .e-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* Una sola línea: el nombre largo se recorta (como en B, no baja de renglón como en C). */
-.e-brandname { min-width: 0; font-size: 1.12rem; color: var(--ink);
+/* Ni acá ni en `.e-title` hay `color`: los dos heredan la tinta que `.e-campo` sacó de
+   `--ink-on-accent`. Poner `var(--ink)` (que es lo que decía el andamio) los ataría a la tinta de
+   la PLATAFORMA, que se calculó contra papel claro y no contra el color del club: sobre un campo
+   oscuro desaparecen. */
+.e-brandname { min-width: 0; font-size: 1.12rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Sin `letter-spacing` propio: el que vale es el `--display-tracking` del `:host`, así E tiene un
    solo tracking de display. Declararlo acá le ganaría al token y lo partiría en dos. */
 .e-title { margin-top: clamp(10px, 2vw, 18px); font-size: clamp(1.9rem, 6vw, 3.4rem);
-  line-height: 1.02; color: var(--ink); }
+  line-height: 1.02; }
 
-/* UN solo panel (contrato §6.1). Hoy es un contenedor de layout pelado; el vidrio llega en el 7. */
-.e-panel { width: 100%; max-width: 880px; margin: 0 auto;
-  padding: clamp(16px, 3vw, 28px) clamp(12px, 4vw, 24px) 0; }
+/* UN solo panel (contrato §6.1), montado A CABALLO del borde de abajo del campo: sube `--e-solape`
+   sobre el color y el resto cae sobre el papel. Es la firma de E, y por eso el panel es más angosto
+   que el campo — el color tiene que verse a los dos lados de la franja montada, si no el panel
+   parece una banda más y no algo apoyado encima.
+
+   El margen negativo se apoya en el orden del documento: el panel es hermano POSTERIOR del campo,
+   así que se pinta encima sin necesidad de `position`/`z-index`. Cuando el 7 le ponga
+   `backdrop-filter`, el vidrio va a difuminar justo esa franja de color.
+
+   Sin padding de arriba propio: el aire de adentro del panel lo pone `--flow-padding` (ver
+   `_tokens.scss`), que ya vive del lado correcto del borde del vidrio futuro. Si acá hubiera
+   padding, el solape tendría que descontarlo y serían dos números en vez de uno. */
+.e-panel { width: 100%; max-width: 880px; margin: calc(var(--e-solape) * -1) auto 0;
+  padding: 0 clamp(12px, 4vw, 24px); }
 .e-book { scroll-margin-top: 16px; }
 /* Lo que E le pinta al flujo lo declara `_tokens.scss` como tokens --flow-*: ninguna regla de esta
    cáscara apunta al DOM del `<app-booking-flow>`. */
