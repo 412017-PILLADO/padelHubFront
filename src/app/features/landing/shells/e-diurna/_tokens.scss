@@ -45,10 +45,32 @@
   --flow-slot-sel-shadow: none;
   --flow-chip-sel-shadow: none;
 
-  /* Bloques suaves (seña, precio, íconos): el lavado del color del club sobre papel claro. */
+  /* Bloques suaves (seña, precio, íconos): el lavado del color del club sobre papel claro.
+     `--court-soft` es `color-mix(--court 12%, #fff)`, o sea OPACO: el bloque no ve el vidrio que
+     tiene debajo, así que la duda que dejó abierta el Task 7 —"el 70% de alfa del panel cambia
+     sobre qué se apoya el bloque suave"— no existe. Lo que se apoya sobre el vidrio es el bloque, y
+     el bloque tapa. */
   --flow-soft-surface: var(--court-soft);
   --flow-soft-ink: var(--ink-dim);
-  --flow-soft-ink-accent: var(--court-deep);
+  /* La tinta de ACENTO sobre esos bloques (`.step-price`, `.sena-title`, `.ghost-btn:hover`) es
+     texto de 12,8-16px en bold: AA pide 4,5:1, no 3. `var(--court-deep)` —que es `--court` al 82%
+     hacia el negro, el default que E heredaba— no llega cuando el club es claro, porque el bloque
+     de abajo también se aclara con el club. Medido sobre `--court-soft` con los cinco extremos:
+
+       club              --court-deep (antes)   esta receta (ahora)
+       teal #0a8a99            4,91                   9,07
+       casi negro #111        14,90                  14,16
+       fucsia #FF2D95          4,19                   8,82
+       naranja #f89625         2,98                   7,22   ← el club real del demo
+       amarillo #FFD400        2,06                   5,78
+       casi blanco #ffffff     1,53                   4,71
+
+     La receta es LA MISMA que la de la nocturna (`b-nocturna/_tokens.scss` mezcla el club contra su
+     `--ink`); lo que cambia es que el `--ink` de cada esquema tira para el lado que hace falta —el
+     de B es claro y aclara, el de E es oscuro y oscurece—, así que las dos cáscaras dicen lo mismo:
+     "el acento, arrimado a la tinta de esta plantilla hasta que se lea".
+     El 40% es el techo: con un club casi blanco, 45% ya cae a 3,99:1. */
+  --flow-soft-ink-accent: color-mix(in srgb, var(--court) 40%, var(--ink));
 
   /* El acento como TRAZO (tinta/ícono y línea/borde). El color del club se usa crudo: sobre papel
      claro tiene contraste de sobra, incluso el club casi negro. Los dos valen lo mismo acá — están
