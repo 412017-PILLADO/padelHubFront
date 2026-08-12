@@ -298,6 +298,21 @@ export class BookingStore {
    */
   private pedidoSlots = 0;
 
+  /**
+   * true en cuanto el visitante elige un día a mano. `initDefaultDay()` calcula un DEFAULT (el
+   * primero de hoy/mañana/pasado con disponibilidad) con un forkJoin de 3 sondas que puede resolver
+   * DESPUÉS del primer click: sin esta bandera, ese default tardío le pisaba el día elegido, la
+   * grilla y `slotsLoaded`, y encima sin spinner que tape el cambio (initDefaultDay no toca
+   * `loadingSlots`). Misma regla que `duracionElegida` aplica para la duración: un default no pisa
+   * una elección explícita.
+   *
+   * Campo común y NO una lectura de `selectedDay()`: el forkJoin sale del `effect()` del
+   * constructor, así que leer un signal ahí lo volvería dependencia del effect y cada `selectDay()`
+   * lo dispararía entero de nuevo (initDefaultDay otra vez, toast de error repetido). Es la misma
+   * trampa que documenta `duracionElegida` — no convertirlo en signal ni en `computed`.
+   */
+  private diaElegido = false;
+
   constructor() {
     // El fetch de config (ClubStore.cargar()) es async: la duración default y el día inicial del
     // flujo de reserva dependen de que la config ya haya llegado (o haya fallado), así que se
@@ -338,6 +353,9 @@ export class BookingStore {
         .pipe(catchError(() => of([] as Slot[])))
     );
     forkJoin(probes$).subscribe((results) => {
+      // Llegó tarde: el visitante ya eligió día a mano mientras las sondas estaban en vuelo, y su
+      // elección gana (ver diaElegido). Lectura de un campo común, no de un signal.
+      if (this.diaElegido) return;
       const idx = results.findIndex((slots) => slots.some((s) => s.disponible));
       const chosenIdx = idx !== -1 ? idx : 0;
       this.selectedDay.set(startOfDay(candidates[chosenIdx]));
@@ -366,6 +384,7 @@ export class BookingStore {
   }
 
   selectDay(date: Date): void {
+    this.diaElegido = true;
     const day = startOfDay(date);
     this.selectedDay.set(day);
     this.calOpen.set(false);
