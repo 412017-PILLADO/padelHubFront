@@ -6,12 +6,14 @@ import { inkOnAccent } from '../../../../core/branding/tenant-colors';
 /**
  * E es la hermana CLARA de B (spec §6), así que no hereda ninguno de los problemas de la capa
  * oscura — y tiene uno que ninguna plantilla anterior tuvo: **texto sobre el color del club a plena
- * saturación**, en el campo. Este archivo pinea las tres cuentas que deciden si E se puede mostrar a
- * un club cualquiera sin mirar la pantalla:
+ * saturación**, en el campo. Este archivo pinea las cuatro cuentas que deciden si E se puede mostrar
+ * a un club cualquiera sin mirar la pantalla:
  *
  *   1. la tinta del campo (`--ink-on-accent`, que NO se calcula acá: se importa la función real);
  *   2. el anillo de foco propio de E, que es la única señal del recorrido por teclado;
- *   3. los bloques suaves del flujo (precio, seña), que son la tinta de acento sobre papel lavado.
+ *   3. los bloques suaves del flujo (precio, seña), que son la tinta de acento sobre papel lavado;
+ *   4. el pie, cuyos colores E declara en la hoja COMPARTIDA `club/landing-footer.scss` (scopeados
+ *      a `:host(.e-foot)`), que es el único valor de E que no vive en esta carpeta.
  *
  * **Los valores NO están copiados a mano: se leen de las hojas** (y de `tenant-colors.ts`). Es la
  * lección que la fase B pagó cara: una versión de `b-nocturna/contraste.spec.ts` tenía las
@@ -74,6 +76,14 @@ const HOJA_VIDRIO = leerHoja(`${DIR}/_vidrio.scss`);
 /** Los tokens de PLATAFORMA: E no declara ni `--paper` ni `--surface` ni `--ink` (spec §5.1). */
 const HOJA_PLATAFORMA = leerHoja('src/styles.scss');
 /**
+ * El pie es el único pedazo de E que se viste desde una hoja COMPARTIDA: `landing-footer.scss`
+ * tiene un bloque por cáscara y el de E es `:host(.e-foot)`. Se lee desde acá y no desde un spec
+ * del pie porque las cuentas son las de E —su papel, su tinta, sus clubes— y porque lo que este
+ * archivo tiene que atajar es justamente que el bloque DESAPAREZCA: sin él los dos botones del pie
+ * vuelven al `color: buttontext` de la UA (negro puro) y nada más en el árbol se entera.
+ */
+const HOJA_PIE = leerHoja('src/app/features/landing/club/landing-footer.scss');
+/**
  * El módulo de branding se lee SIN la guardia de `//`: es TypeScript y los tiene a montones. No es
  * una hoja de estilos, y de acá se saca una sola cosa muy específica (la receta de `--court-soft`),
  * con un regex que exige la forma completa.
@@ -121,13 +131,16 @@ const VIDRIO = colorMix(declaracion(HOJA_VIDRIO, '\\$superficie'), '_vidrio.scss
 /** La tinta de acento de los bloques suaves: `color-mix(in srgb, var(--court) N%, var(--ink))`. */
 const SUAVE_ACENTO = colorMix(
   declaracion(HOJA_TOKENS, '--flow-soft-ink-accent'), '_tokens.scss · --flow-soft-ink-accent');
-/** `--court-soft`, que NO vive en ninguna hoja: lo escribe `applyTenantColors` en el `<html>`. */
-const COURT_SOFT = (() => {
-  const m = /--court-soft'\]\s*=\s*`color-mix\(in srgb,\s*\$\{c\}\s*([\d.]+)%,\s*(#[0-9a-f]{3,6})\)`/i
+/** Un derivado del color del club que NO vive en ninguna hoja: lo escribe `applyTenantColors`. */
+function derivadoDelClub(prop: string): { pct: number; b: string } {
+  const m = new RegExp(`${prop}'\\]\\s*=\\s*\`color-mix\\(in srgb,\\s*\\$\\{c\\}\\s*([\\d.]+)%,\\s*(#[0-9a-f]{3,6})\\)\``, 'i')
     .exec(FUENTE_BRANDING);
-  if (!m) throw new Error('tenant-colors.ts ya no deriva --court-soft con un color-mix literal');
+  if (!m) throw new Error(`tenant-colors.ts ya no deriva ${prop} con un color-mix literal`);
   return { pct: Number(m[1]) / 100, b: m[2] };
-})();
+}
+const COURT_SOFT = derivadoDelClub('--court-soft');
+/** `--court-deep` sólo entra al tripwire del hover del pie: es la receta de la C, que en E no da. */
+const COURT_DEEP = derivadoDelClub('--court-deep');
 
 /**
  * El anillo de foco: `outline: 2px solid color-mix(in srgb, var(--court) N%, #000)`.
@@ -160,6 +173,22 @@ function pxDe(css: string, regla: string, dondeDice: string): number {
 }
 const PX_MARCA = pxDe(HOJA_SHELL, '\\.e-brandname', 'shell.scss · .e-brandname');
 const PX_TITULO = pxDe(HOJA_SHELL, '\\.e-title', 'shell.scss · .e-title');
+
+/**
+ * Una declaración de una regla del pie de E. El selector va ANCLADO a `:host(.e-foot)` por el mismo
+ * motivo que el extractor del `:focus-visible`: `landing-footer.scss` tiene cuatro bloques con las
+ * mismas propiedades y un regex suelto mediría el de otra plantilla en silencio.
+ *
+ * TIRA si la regla no está, que es el caso que este spec vino a atajar: un pie de E sin bloque no
+ * es un pie con los colores flojos, es un pie con los dos botones en negro puro.
+ */
+function reglaDelPie(selector: string, prop: string): string {
+  const bloque = new RegExp(`:host\\(\\.e-foot\\)\\s+${selector}\\s*\\{([^}]*)\\}`).exec(HOJA_PIE)?.[1];
+  if (bloque == null) throw new Error(`landing-footer.scss no tiene la regla \`:host(.e-foot) ${selector}\``);
+  const valor = declaracion(bloque, prop);
+  if (!valor) throw new Error(`\`:host(.e-foot) ${selector}\` ya no declara ${prop}`);
+  return valor;
+}
 
 /**
  * Los cinco extremos con los que se juzga el white-label. Los cuatro primeros son los del plan; el
@@ -337,6 +366,65 @@ describe('plantilla E · los bloques suaves del flujo', () => {
 });
 
 /**
+ * El pie de E. Es la única superficie de E cuyos colores no viven en esta carpeta: el pie es un
+ * componente compartido y cada cáscara lo viste desde `landing-footer.scss` con un bloque
+ * `:host(.X-foot)`. Cae sobre `--paper` —`.e-foot` no declara fondo y el `:host` de la cáscara es
+ * `background: var(--paper)`—, así que el club no mueve el fondo: mueve el HOVER.
+ *
+ * Todo el pie es texto chico (0,78rem = 12,48 px, y el © baja a 0,7rem en mobile), así que el
+ * umbral es 4,5 en los dos estados y a los dos anchos.
+ */
+describe('plantilla E · el pie', () => {
+  const PAPEL = rgb(PAPER);
+  /** El estado normal de los tres links y del ©: `--ink-dim` sin opacidad de por medio. */
+  const NORMAL = contraste(rgb(INK_DIM), PAPEL);
+  const HOVER = colorMix(reglaDelPie('\\.arrep-link:hover', 'color'),
+    'landing-footer.scss · el hover del `:host(.e-foot) .arrep-link`');
+  const hoverDe = (club: string) => mezcla(rgb(club), HOVER.pct, rgb(INK));
+
+  it('los dos botones del pie declaran color propio: sin regla la UA los pinta NEGRO', () => {
+    // `.arrep-link` y `.politica-link` son `<button>`, y `color: buttontext` va SOBRE el elemento:
+    // le gana al `--ink-dim` que `.e-foot` les pasa por herencia. Es lo que pasaba antes de que
+    // este bloque existiera — medido a 360 y 1280 con los seis clubes: `rgb(0,0,0)`.
+    expect(reglaDelPie('\\.arrep-link', 'color')).toBe('var(--ink-dim)');
+    expect(reglaDelPie('\\.politica-link', 'color')).toBe('var(--ink-dim)');
+    // El `<a>` del panel sí hereda, pero sin esta regla se queda sin hover.
+    expect(reglaDelPie('a', 'color')).toBe('var(--ink-dim)');
+  });
+
+  it('el pie de E apaga la `opacity` heredada, porque compuesta deja al link abajo de AA', () => {
+    // La opacidad no es una tinta: se compone contra el papel y multiplica el contraste que el
+    // color ya tenía. Con el 0,85 que traen las reglas base, `--ink-dim` cae de 5,73 a 4,13 — que
+    // es exactamente donde está hoy el `.arrep-link` de la C, y el motivo por el que este bloque
+    // no puede ser una copia del de la C.
+    expect(reglaDelPie('\\.arrep-link', 'opacity')).toBe('1');
+    expect(reglaDelPie('\\.politica-link', 'opacity')).toBe('1');
+    expect(contraste(sobre(rgb(INK_DIM), 0.85, PAPEL), PAPEL)).toBeLessThan(4.5);
+    expect(NORMAL).toBeGreaterThanOrEqual(4.5);
+  });
+
+  for (const [nombre, club] of CLUBES) {
+    it(`con un club ${nombre} el hover del pie pasa AA y SUBE contra el estado normal`, () => {
+      expect(porDebajoDe(4.5, hoverDe(club), { [`--paper con ${club}`]: PAPEL })).toEqual([]);
+      // La lección que la B dejó escrita en `landing-footer.scss`: un hover que contrasta menos que
+      // el estado normal apaga el link al pasar el mouse. Acá es el casi blanco el que ata el
+      // techo del 30% (a 32% ya empata), no AA.
+      expect(contraste(hoverDe(club), PAPEL)).toBeGreaterThan(NORMAL);
+    });
+  }
+
+  it('el hover arrima el club a la tinta de E, y `--court-deep` no serviría', () => {
+    // Misma receta que `--flow-soft-ink-accent`: el acento arrimado a la tinta de la plantilla
+    // hasta que se lea. Y el tripwire al revés: si el club OSCURECIDO (que es lo que usa la C, la
+    // otra cáscara clara) pasara AA con los cinco, este bloque se quedaría sin motivo.
+    expect([HOVER.a, HOVER.b]).toEqual(['var(--court)', 'var(--ink)']);
+    const conCourtDeep = CLUBES.map(([, club]) =>
+      contraste(mezcla(rgb(club), COURT_DEEP.pct, rgb(COURT_DEEP.b)), PAPEL));
+    expect(Math.min(...conCourtDeep)).toBeLessThan(4.5);
+  });
+});
+
+/**
  * Las seis recetas que este archivo lee. Si una cambia de FORMA (deja de ser un `color-mix(in
  * srgb, …)`, o `--paper` pasa a `rgb()`), los parsers de arriba tiran al cargar el módulo —
  * ruidoso, que es lo correcto. Este describe cubre el otro caso: que la forma siga siendo la misma
@@ -376,5 +464,12 @@ describe('plantilla E · el spec sigue leyendo las hojas que cree leer', () => {
 
   it('el `font-size: 16px` del `:root` es lo que convierte los rem a px', () => {
     expect(REM).toBe(16);
+  });
+
+  it('el pie de E cae sobre `--paper`, que es el fondo contra el que se mide', () => {
+    // Dos mitades: la cáscara pone `--paper` de fondo y `.e-foot` no lo pisa. Si alguna de las dos
+    // cambiara, las cuentas del pie estarían midiendo un fondo que no se pinta.
+    expect(HOJA_SHELL).toMatch(/:host\s*\{[^}]*background:\s*var\(--paper\)/);
+    expect(declaracion(/\.e-foot\s*\{([^}]*)\}/.exec(HOJA_SHELL)?.[1] ?? '', 'background')).toBeNull();
   });
 });
