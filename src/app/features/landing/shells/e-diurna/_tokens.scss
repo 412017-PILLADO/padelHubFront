@@ -7,27 +7,32 @@
 
    Toda cáscara tiene que declarar todos los tokens que el flujo consume; el número no se escribe acá
    porque sería una segunda fuente de verdad: `booking/contrato-flow.spec.ts` lee los `var(--flow-…)`
-   del flujo y verifica que esta cáscara los declare todos (E entra a esa puerta sola, por el mapa
-   `DIR_SHELL` del registry).
+   del flujo y verifica que esta cáscara los declare todos —incluidos los que entran por el
+   `@include` de acá abajo, que el spec sigue hasta `_vidrio.scss`— y que E entra a esa puerta sola,
+   por el mapa `DIR_SHELL` del registry.
 
-   ESTADO: valores claros de arranque, los mismos de A/C, para todo lo que E todavía no diferencia.
-   La cáscara de hoy sólo existe. El vidrio del panel —que va a pisar surface/border/radius/shadow/
-   backdrop— llega en el Task 7, y el campo de color debajo del que ese vidrio se apoya, en el 6.
+   En la E el flujo ES el panel: el único panel de vidrio de la plantilla (contrato §6.1, contra las
+   varias cards opacas de C), montado a caballo del borde del campo de color. La receta no se escribe
+   acá: vive una sola vez en `_vidrio.scss` y este archivo la incluye.
    =================================================================== */
+@use 'vidrio';
+
 :host {
-  /* Sin caja propia todavía: el panel de vidrio es el Task 7. */
-  --flow-surface: transparent;
-  --flow-border: none;
-  --flow-radius: 0;
-  --flow-shadow: none;
-  --flow-backdrop: none;
+  /* Los cinco tokens de vidrio (fondo translúcido + blur + borde especular + brillo del canto) los
+     emite el mixin, que es su único origen: acá sólo se elige el radio. El porqué de cada valor está
+     documentado en `_vidrio.scss`.
+
+     18px por el contrato §6.1, y es el único consumidor de la receta, así que el radio no varía
+     dentro de E: contra los 20-26px redondeados de C, este canto más cerrado es parte de lo que hace
+     que las dos no se lean como primas. */
+  @include vidrio.vidrio-diurno-tokens(18px);
 
   /* El panel crece con su contenido y scrollea el documento (como en B): recortarlo le comería el
-     vidrio cuando llegue. */
+     vidrio. */
   --flow-overflow: visible;
 
-  /* El aire lo pone el propio flujo y no `.e-panel`: cuando el panel sea vidrio, este padding es su
-     margen interior, así que ya vive del lado correcto del borde. */
+  /* El aire lo pone el propio flujo y no `.e-panel`: este padding es el margen interior del vidrio,
+     o sea que vive del lado correcto del borde. */
   --flow-padding: clamp(20px, 3vw, 40px);
   --flow-padding-mobile: clamp(20px, 5vw, 26px) clamp(14px, 5vw, 20px) 26px;
 

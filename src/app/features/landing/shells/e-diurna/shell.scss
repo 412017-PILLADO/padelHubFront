@@ -6,8 +6,10 @@
    saturado de arriba (el primario CRUDO, sin mezclar contra nada) y la luz es el radial del
    secundario adentro de ese campo. Es el reparto de roles que la spec §6 le fija a E.
 
-   ESTADO: falta la firma. El campo ya está y el panel ya viene reservado a caballo de su borde
-   (`--e-solape`), pero el panel todavía no es vidrio: eso es el Task 7.
+   LA FIRMA (spec §6): UN SOLO panel de vidrio montado a caballo del borde de abajo del campo. El
+   vidrio no se pinta desde esta hoja —la caja del panel es la del `<app-booking-flow>`, que se viste
+   con los tokens `--flow-*` de `_tokens.scss`, que a su vez los saca de `_vidrio.scss`—: lo que esta
+   hoja aporta a la firma es la GEOMETRÍA, o sea `--e-solape`.
    =================================================================== */
 /* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
 @use 'tokens';
@@ -41,14 +43,18 @@
      siempre en pareja — el campo reserva esta altura de más abajo del título y `.e-panel` la sube
      con un margen negativo del mismo valor—, así que mover el número mueve las dos mitades juntas.
 
-     Hoy queda por DEBAJO del padding de arriba del propio flujo (`--flow-padding`, que le saca
-     entre 8 y 10 px en los cuatro anchos), y ése es el techo mientras el panel no sea vidrio: lo
-     único que se monta sobre el color crudo es AIRE. Un valor más grande metería el encabezado del
-     flujo —tinta oscura, decidida contra papel claro— sobre `--court` saturado, que con un club
-     oscuro no se lee y que el contrato de la fase prohíbe. El Task 7, que le da fondo propio al
-     panel, es el que puede subirlo: es el único renglón que hay que tocar para que el vidrio muerda
-     más color, y ahí el techo deja de existir. */
-  --e-solape: clamp(12px, 2.2vw, 28px);
+     El techo que tenía mientras el panel no era vidrio (quedarse por debajo del padding de arriba
+     del flujo, para que lo único montado sobre el color crudo fuera AIRE) ya no existe: ahora el
+     panel trae su propia superficie, así que lo que se apoya sobre `--court` es el VIDRIO y la tinta
+     del encabezado del flujo cae sobre él y no sobre el color. Medido con el club casi negro —el
+     peor caso—, el vidrio sobre el campo da ≈#cacaca y el `RESERVÁ TU CANCHA.` ahí arriba pasa 10:1.
+
+     El valor es el que hace que la firma se LEA: tiene que morder más que el padding de arriba del
+     flujo (20-40 px según el ancho) para que la franja montada se vea como vidrio sobre color y no
+     como un margen, y no tanto como para empujar el flujo fuera del fold en mobile. Los tres
+     números salen de mirar los cuatro anchos: 40 px de piso (360/390), 6vw en el medio y 68 px de
+     techo (1280), donde el campo tiene alto de sobra para regalar. */
+  --e-solape: clamp(40px, 6vw, 68px);
 
   font-family: var(--body);
 }
@@ -98,12 +104,13 @@
    parece una banda más y no algo apoyado encima.
 
    El margen negativo se apoya en el orden del documento: el panel es hermano POSTERIOR del campo,
-   así que se pinta encima sin necesidad de `position`/`z-index`. Cuando el 7 le ponga
-   `backdrop-filter`, el vidrio va a difuminar justo esa franja de color.
+   así que se pinta encima sin necesidad de `position`/`z-index`. El `backdrop-filter` del vidrio
+   difumina justo esa franja de color: eso es lo que hace que la mitad montada se lea como vidrio
+   sobre color y no como un recorte del campo.
 
    Sin padding de arriba propio: el aire de adentro del panel lo pone `--flow-padding` (ver
-   `_tokens.scss`), que ya vive del lado correcto del borde del vidrio futuro. Si acá hubiera
-   padding, el solape tendría que descontarlo y serían dos números en vez de uno. */
+   `_tokens.scss`), que vive del lado correcto del borde del vidrio. Si acá hubiera padding, el
+   solape tendría que descontarlo y serían dos números en vez de uno. */
 .e-panel { width: 100%; max-width: 880px; margin: calc(var(--e-solape) * -1) auto 0;
   padding: 0 clamp(12px, 4vw, 24px); }
 .e-book { scroll-margin-top: 16px; }
