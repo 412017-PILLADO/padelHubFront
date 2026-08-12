@@ -244,6 +244,13 @@ describe('plantilla E · el texto sobre el campo de color', () => {
     // Este test existe para que nadie "arregle" el de arriba tocando la tinta: las dos candidatas
     // son blanco y la tinta oscura del sistema, y `inkOnAccent` ya elige la mejor. Si alguna vez
     // este expect falla es porque apareció una tinta mejor — y entonces el cuerpo puede bajar.
+    //
+    // Lo que se mide acá es LA TINTA ELEGIDA, no el techo físico del teal, y la diferencia importa:
+    // sobre el teal CRUDO la tinta oscura da 4,35 —mejor que los 4,11 del blanco—, pero
+    // `decidirTinta` puntúa el peor de `--court` y `--court-deep`, y ahí la oscura se cae a 3,13.
+    // El campo de E nunca pinta `--court-deep`, así que una tinta específica de superficie plana
+    // llegaría a 4,35: sigue debajo de 4,5, o sea que el arreglo por cuerpo hace falta igual.
+    // Por eso el expect es `< 4.5` y no `== 4.11`: lo que se afirma es "no alcanza", no un valor.
     const teal = rgb('#0a8a99');
     const conLaTintaElegida = contraste(rgb(inkOnAccent('#0a8a99')), teal);
     expect(conLaTintaElegida).toBeLessThan(4.5);

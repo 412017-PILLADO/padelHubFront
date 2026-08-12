@@ -135,11 +135,22 @@
 /* 1.5rem = 24px, y el 24 NO es estético: es el umbral de "texto grande" de WCAG (18pt), que es lo
    que decide contra qué se mide este renglón.
    El nombre del club cae sobre `--court` CRUDO, así que su tinta es `--ink-on-accent` y su techo lo
-   fija el matiz del club. Con el teal de plataforma (#0a8a99) ese techo es 4,11:1 —blanco da 4,11 y
-   la tinta oscura 3,16, o sea que `inkOnAccent` ya eligió la mejor de las dos y no hay nada que
-   subir del lado del color—. A 17,92px, que es lo que medía, eso es texto chico y AA pide 4,5: no
-   llegaba, y la palanca no era la cuenta sino el cuerpo. A 24px el que aplica es el 3:1 de texto
-   grande, y 4,11 lo pasa con margen. Los otros cuatro clubes medidos pasan holgado en las dos
+   fija el matiz del club. Con el teal de plataforma (#0a8a99), `--ink-on-accent` vale blanco y da
+   **4,11:1**, y no hay nada que subir del lado del color sin salirse de la capa 3.
+
+   PRECISIÓN QUE IMPORTA, porque el número invita a leerlo mal: 4,11 es el techo de LA TINTA QUE
+   `inkOnAccent` ELIGE, no el techo físico del teal. Sobre el teal crudo la tinta oscura (#11162b)
+   da **4,35**, mejor que el blanco; `decidirTinta` igual elige blanco porque puntúa el PEOR de los
+   dos extremos del gradiente —`--court` y `--court-deep`— y en el extremo oscuro la tinta oscura se
+   cae a 3,13 (blanco: 4,11 y 5,71, o sea peor caso 4,11 contra 3,13). El campo de E **nunca pinta
+   `--court-deep`**: es el primario crudo más el radial del secundario, así que una tinta calculada
+   sólo para esta superficie llegaría a 4,35. **Seguiría por debajo de 4,5**, o sea que el arreglo por
+   cuerpo hace falta igual — pero si alguien alguna vez agrega una tinta específica de superficie
+   plana, el número a superar es 4,35, no 4,11.
+
+   A 17,92px, que es lo que medía, eso es texto chico y AA pide 4,5: no llegaba, y la palanca no era
+   la cuenta sino el cuerpo. A 24px el que aplica es el 3:1 de texto grande, y 4,11 lo pasa con
+   margen. Los otros cuatro clubes medidos pasan holgado en las dos
    escalas (fucsia 5,17 · amarillo 12,50 · casi negro 18,88 · naranja 7,99): el único que obligaba
    era el teal, que es justo el color por defecto del producto.
    Bajar este número por debajo de 24 vuelve a poner el umbral en 4,5 y deja al teal afuera;
