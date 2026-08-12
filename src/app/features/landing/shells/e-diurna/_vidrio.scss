@@ -11,9 +11,14 @@
    archivo que dice pertenecer a B en uno compartido. Si D también necesita vidrio, la receta sube a
    `shells/_vidrio.scss` a propósito.
 
-   Hoy el único consumidor es `_tokens.scss` con el mixin de tokens; `vidrio-diurno()` existe igual
-   porque es la mitad que hace que la receta se pueda pintar sobre un elemento sin copiarla (es la
-   puerta por la que entraría, por ejemplo, una tarjeta de info con el mismo vidrio) y porque partir
+   El único consumidor es `_tokens.scss` con el mixin de tokens, y eso NO es un accidente que haya
+   que arreglar: en E hay UN SOLO panel de vidrio (contrato §6.1, contra las varias cards opacas de
+   C), que es el flujo de reserva. Las tarjetas de info de más abajo siguen blancas y opacas a
+   propósito, y no porque falte enchufarlas: se apoyan sobre papel liso, donde un `backdrop-filter`
+   no tiene nada que difuminar (es el mismo motivo por el que la B vieja se veía lavada, anotado en
+   el encabezado de `shell.scss`). Vidrio sin nada atrás no es vidrio: es un rectángulo translúcido.
+   `vidrio-diurno()` existe igual porque es la mitad que deja pintar la receta sobre un elemento sin
+   copiarla —la puerta por la que entraría cualquier cosa que sí tenga color detrás— y porque partir
    la pareja dejaría la receta a medio camino de ser una.
    =================================================================== */
 /* El fondo. Medido en pixel real, este número controla UNA sola mitad: sobre el papel de E
@@ -25,7 +30,7 @@
    `#b8b8b8` y la banda se pone pesada. */
 $superficie: color-mix(in srgb, var(--surface) 70%, transparent);
 /* El blur es lo que convierte la franja de color de arriba en luz difusa en vez de un recorte del
-   campo. La saturación de más compensa lo que el 78% de blanco le lava a ese color. */
+   campo. La saturación de más compensa lo que el 70% de blanco le lava a ese color. */
 $desenfoque: blur(20px) saturate(1.3);
 /* ESPECULAR, no luminoso (contrato §6.1 contra las sombras suaves de C): sobre color saturado un
    blanco casi opaco se lee como el REFLEJO del canto del panel. El borde es uno solo y uniforme, y
