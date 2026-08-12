@@ -289,6 +289,15 @@ export class BookingStore {
    *  por transición si llega a re-ejecutarse más de una vez para el mismo estado. */
   private ultimoEstadoAtendido: 'inicial' | 'cargando' | 'ok' | 'error' = 'inicial';
 
+  /**
+   * Generación del pedido de disponibilidad en curso. Cada llamada a `loadAvailability()` se lleva
+   * un número; cuando vuelve la respuesta, si ya no es la última, se descarta. Sin esto, cambiar de
+   * día rápido dejaba que la respuesta VIEJA llegara después y repintara la grilla con los turnos
+   * del día que el visitante ya abandonó — en los e2e salía como un "element detached from the DOM"
+   * al clickear confirmar.
+   */
+  private pedidoSlots = 0;
+
   constructor() {
     // El fetch de config (ClubStore.cargar()) es async: la duración default y el día inicial del
     // flujo de reserva dependen de que la config ya haya llegado (o haya fallado), así que se
@@ -387,16 +396,22 @@ export class BookingStore {
   }
 
   private loadAvailability(day: Date): void {
+    const pedido = ++this.pedidoSlots;
     this.loadingSlots.set(true);
     this.slotsLoaded.set(false);
     this.slots.set([]);
     this.booking.disponibilidad(this.apiFecha(day), this.duracion()).subscribe({
       next: (slots) => {
+        // Llegó tarde: ya hay un pedido más nuevo en vuelo, esta respuesta es de otro día.
+        if (pedido !== this.pedidoSlots) return;
         this.slots.set(slots);
         this.loadingSlots.set(false);
         this.slotsLoaded.set(true);
       },
       error: () => {
+        // La guarda va también acá: un error viejo apagaba el spinner del pedido nuevo y encima
+        // mostraba un toast por un día que el visitante ya no tiene en pantalla.
+        if (pedido !== this.pedidoSlots) return;
         this.slots.set([]);
         this.loadingSlots.set(false);
         this.slotsLoaded.set(true);

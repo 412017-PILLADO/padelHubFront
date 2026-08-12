@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
-import { BookingService } from '../../../core/api/booking.service';
+import { of, Subject } from 'rxjs';
+import { BookingService, Slot } from '../../../core/api/booking.service';
 import { ClubStore } from '../club.store';
 import { BookingStore } from './booking.store';
 
@@ -61,5 +61,58 @@ describe('BookingStore · validación del formulario', () => {
     expect(store.confirmBlockedReason()).toBe('Completá tu nombre y WhatsApp.');
     store.nombreTouched.set(true);
     expect(store.confirmBlockedReason()).toBe('Ingresá tu nombre (mínimo 2 letras).');
+  });
+});
+
+describe('BookingStore · disponibilidad fuera de orden', () => {
+  let store: BookingStore;
+  let enVuelo: Subject<Slot[]>[];
+
+  beforeEach(() => {
+    enVuelo = [];
+    // A diferencia del `bookingFalso` de arriba (que responde ya, con `of([])`), este entrega un
+    // Subject por llamada y lo guarda: así el test decide el ORDEN en que contestan.
+    const bookingDemorado = {
+      config: () => of(null as never),
+      disponibilidad: () => {
+        const s = new Subject<Slot[]>();
+        enVuelo.push(s);
+        return s.asObservable();
+      },
+      crearReserva: () => of(null as never),
+      crearLinkSena: () => of({ initPoint: '' }),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        { provide: BookingService, useValue: bookingDemorado },
+        MessageService,
+        ClubStore,
+        BookingStore,
+      ],
+    });
+    store = TestBed.inject(BookingStore);
+  });
+
+  it('descarta la respuesta que llega tarde y deja la del día elegido', () => {
+    store.selectDay(new Date(2026, 0, 10));
+    store.selectDay(new Date(2026, 0, 11));
+    expect(enVuelo).toHaveLength(2);
+
+    // El día NUEVO contesta primero y el VIEJO después: es el orden que rompía la grilla.
+    enVuelo[1].next([{ hora: '11:00', disponible: true, canchasLibres: [] } as unknown as Slot]);
+    enVuelo[0].next([{ hora: '09:00', disponible: true, canchasLibres: [] } as unknown as Slot]);
+
+    expect(store.slots().map((s) => s.hora)).toEqual(['11:00']);
+  });
+
+  it('el error de un pedido viejo no apaga el spinner del nuevo', () => {
+    store.selectDay(new Date(2026, 0, 10));
+    store.selectDay(new Date(2026, 0, 11));
+
+    enVuelo[0].error(new Error('el pedido viejo falló tarde'));
+
+    expect(store.loadingSlots()).toBe(true);
+    expect(store.slotsLoaded()).toBe(false);
   });
 });
