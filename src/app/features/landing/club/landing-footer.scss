@@ -103,9 +103,13 @@
    sirve de reemplazo — el mismo club casi negro da 1,05:1. */
 :host(.b-foot) a { color: var(--ink-dim); text-decoration: none; }
 :host(.b-foot) a:hover { color: var(--ink); }
-:host(.b-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; }
+/* `opacity: 1` por el mismo motivo que en la C y la A: el `.arrep-link` base arrastra un
+   `opacity: 0.85` que nadie eligió para acá, y con un club casi blanco dejaba la celda de 1280 al
+   filo de AA. Apagarlo la sube a ~5,8:1 y, sobre todo, deja el invariante parejo — ninguna cáscara
+   se guarda esos dos botones abajo de alfa 1. */
+:host(.b-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
 :host(.b-foot) .arrep-link:hover { color: var(--ink); }
-:host(.b-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
+:host(.b-foot) .politica-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
 :host(.b-foot) .politica-link:hover { color: var(--ink); }
 
 /* ── PLANTILLA E · diurna: mismo papel que la C debajo, y aun así NO es la C ──

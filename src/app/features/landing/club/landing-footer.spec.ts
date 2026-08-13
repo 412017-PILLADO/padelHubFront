@@ -172,12 +172,23 @@ describe('LandingFooterComponent · la opacidad de los dos botones del pie', () 
       boton === 'arrep-link' ? BASE_ARREP : BASE_POLITICA,
     );
 
-  it('ni el pie de C ni el de A dejan a sus botones con opacidad menor a 1', () => {
+  /**
+   * Las CUATRO cáscaras, y no una lista de las que se arreglaron: mientras fuera una lista, el que
+   * viniera después iba a preguntarse por qué la B estaba exenta. El invariante es "ninguna cáscara
+   * deja esos dos botones abajo de alfa 1", y así redactado también obliga a la que venga.
+   */
+  it('ninguna cáscara deja a sus botones del pie con opacidad menor a 1', () => {
     // C: `--ink-dim` sobre su papel da 5,73:1 con la opacidad apagada y 4,13:1 con el 0,85 puesto.
     expect(enCascara('c-foot', 'arrep-link')).toBe(1);
     expect(enCascara('c-foot', 'politica-link')).toBe(1);
     // A: el 0,85 se multiplicaba con el `color-mix(… 90%)` y daba un alfa efectivo de 0,765.
     expect(enCascara('pb-foot', 'arrep-link')).toBe(1);
     expect(enCascara('pb-foot', 'politica-link')).toBe(1);
+    // B: con un club casi blanco su celda de 1280 quedaba al filo de AA.
+    expect(enCascara('b-foot', 'arrep-link')).toBe(1);
+    expect(enCascara('b-foot', 'politica-link')).toBe(1);
+    // E ya nacía con la opacidad apagada: fue la primera en pagarlo.
+    expect(enCascara('e-foot', 'arrep-link')).toBe(1);
+    expect(enCascara('e-foot', 'politica-link')).toBe(1);
   });
 });
