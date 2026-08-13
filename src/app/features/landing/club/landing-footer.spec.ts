@@ -6,6 +6,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
+import { DIR_SHELL } from '../../../core/landing/plantillas';
 import { BookingService, PublicConfig } from '../../../core/api/booking.service';
 import { ClubStore } from '../club.store';
 import { LandingFooterComponent } from './landing-footer';
@@ -173,22 +174,33 @@ describe('LandingFooterComponent · la opacidad de los dos botones del pie', () 
     );
 
   /**
-   * Las CUATRO cáscaras, y no una lista de las que se arreglaron: mientras fuera una lista, el que
-   * viniera después iba a preguntarse por qué la B estaba exenta. El invariante es "ninguna cáscara
-   * deja esos dos botones abajo de alfa 1", y así redactado también obliga a la que venga.
+   * TODA cáscara, derivada de `DIR_SHELL`, y no una lista escrita a mano: mientras fuera una lista,
+   * el que viniera después iba a preguntarse por qué tal cáscara estaba exenta, y una cáscara nueva
+   * entraba sin que nadie le exigiera nada. El invariante es "ninguna cáscara deja esos dos botones
+   * abajo de alfa 1", y así redactado también obliga a la que venga.
+   *
+   * Los números que lo motivaron: la C daba 4,13:1 con el 0,85 puesto y 5,73:1 apagado; la A lo
+   * multiplicaba con su `color-mix(… 90%)` y terminaba en un alfa efectivo de 0,765; la B tenía su
+   * celda de 1280 al filo de AA con un club casi blanco. La E nació con la opacidad apagada — fue
+   * la primera en pagarlo.
    */
-  it('ninguna cáscara deja a sus botones del pie con opacidad menor a 1', () => {
-    // C: `--ink-dim` sobre su papel da 5,73:1 con la opacidad apagada y 4,13:1 con el 0,85 puesto.
-    expect(enCascara('c-foot', 'arrep-link')).toBe(1);
-    expect(enCascara('c-foot', 'politica-link')).toBe(1);
-    // A: el 0,85 se multiplicaba con el `color-mix(… 90%)` y daba un alfa efectivo de 0,765.
-    expect(enCascara('pb-foot', 'arrep-link')).toBe(1);
-    expect(enCascara('pb-foot', 'politica-link')).toBe(1);
-    // B: con un club casi blanco su celda de 1280 quedaba al filo de AA.
-    expect(enCascara('b-foot', 'arrep-link')).toBe(1);
-    expect(enCascara('b-foot', 'politica-link')).toBe(1);
-    // E ya nacía con la opacidad apagada: fue la primera en pagarlo.
-    expect(enCascara('e-foot', 'arrep-link')).toBe(1);
-    expect(enCascara('e-foot', 'politica-link')).toBe(1);
-  });
+  /** La clase que la cáscara le pone al `<app-landing-footer>` en su `shell.html`. Copia deliberada
+   *  de la de `pie-por-cascara.spec.ts` y no un import: importar de un `.spec.ts` vuelve a REGISTRAR
+   *  sus tests, y esa suite pasaba a correr dos veces. Lo que importaba deduplicar era la lista de
+   *  cáscaras —que sale de `DIR_SHELL`—, no estas seis líneas. */
+  const claseDelPie = (dir: string) => {
+    const html = readFileSync(
+      resolve(process.cwd(), `src/app/features/landing/shells/${dir}/shell.html`), 'utf8');
+    const m = /<app-landing-footer[^>]*\sclass="([^"]*)"/.exec(html);
+    if (!m) throw new Error(`${dir}/shell.html no monta <app-landing-footer> con class`);
+    return m[1].trim().split(/\s+/)[0];
+  };
+
+  for (const [codigo, dir] of Object.entries(DIR_SHELL)) {
+    for (const boton of ['arrep-link', 'politica-link']) {
+      it(`la plantilla ${codigo} no deja a su .${boton} del pie abajo de alfa 1`, () => {
+        expect(enCascara(claseDelPie(dir), boton)).toBe(1);
+      });
+    }
+  }
 });
