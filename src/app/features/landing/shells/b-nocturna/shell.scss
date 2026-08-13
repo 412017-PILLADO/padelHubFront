@@ -127,7 +127,7 @@
    Con 1.15 acá la tilde seguía cortada 2,2px. El token global `--display-*` y la `.display` de
    plataforma NO son el lugar: el 0.92 sigue siendo correcto para sus otros consumidores, que son
    títulos de varias líneas sin recorte (`.b-title`, `.e-title`, `.name` y `.watermark` de A). */
-.b-brandname { min-width: 0; font-size: 1.12rem; line-height: 1.45; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.b-brandname { min-width: 0; font-size: 1.12rem; line-height: 1.5; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Héroe achicado (feedback owner post-desktop): "ya estamos en la pantalla de sacar turno", así
    que los 2 CTA se eliminaron (ver .b-book más abajo) y el héroe deja de ser un muro — se conserva

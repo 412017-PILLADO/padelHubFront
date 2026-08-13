@@ -47,8 +47,14 @@
   .brand { min-width: 0; gap: 0; }
   .brand-mark, .brand-logo { display: none; }
   .logo-type { min-width: 0; }
+  /* `line-height` propio por lo mismo que los brandnames de las cáscaras B y E: el `overflow:
+     hidden` que el ellipsis necesita convierte el interlineado apretado de `.display` (0.92) en un
+     RECORTE de la tilde de las mayúsculas, y "Sol Pádel" sale "SOL PADEL". Acá el corte era más
+     leve —1,34px, porque es Archivo y no una condensada como Anton—, pero es el nombre del club del
+     cliente igual. Sólo aplica en este breakpoint, que es el único que esconde el desborde. */
   .logo-type .name {
     font-size: 1.02rem;
+    line-height: 1.5;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
   .links { flex-shrink: 0; gap: 4px; }
