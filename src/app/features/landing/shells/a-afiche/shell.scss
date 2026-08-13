@@ -64,6 +64,35 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+
+  /* EL ANILLO DE FOCO DEL AFICHE. `--anillo-foco` es de capa 2 y su default (`styles.scss`) está
+     pensado para las superficies CLARAS del sistema, que es lo que la A tiene del otro lado — la
+     columna del flujo. Pero esta mitad no es superficie del sistema: está pintada con el color del
+     club a plena saturación, así que el default cae encima de un fondo del mismo color del que se
+     deriva y no se despega. Medido en las seis paradas de teclado que viven acá adentro (el stub del
+     mapa, los dos link-rows de contacto y los tres botones del pie), con seis clubes:
+
+       club                anillo de plataforma   default de capa 1   este anillo
+       teal #0a8a99               1,23:1               1,68:1           5,07:1
+       naranja #f89625 (demo)     1,26:1               2,03:1           5,79:1
+       amarillo #FFD400           1,30:1               2,30:1           9,02:1
+       fucsia #FF2D95             1,24:1               1,84:1           3,83:1
+       casi negro #111111         1,02:1               1,04:1          19,17:1
+       casi blanco #ffffff        1,31:1               2,42:1          12,68:1
+
+     Ninguna mezcla contra la tinta del sistema arregla esto: con un club casi negro el afiche ya ES
+     casi negro y oscurecer el anillo lo hunde más (1,04). Lo correcto sobre el acento no lo tiene
+     que calcular la cáscara: la capa 3 ya lo calculó y se llama `--ink-on-accent` — la misma tinta
+     con la que este afiche escribe TODO su texto, elegida por contraste contra los dos extremos del
+     degradé (`--court` y `--court-deep`, ver `core/branding/tenant-colors.ts`). El anillo pasa a ser
+     esa tinta, que es también lo que hace que se lea como parte del afiche y no como un injerto.
+
+     Va acá y no en `_tokens.scss` porque no es un token de la CÁSCARA sino de una ZONA: la columna
+     derecha (`<app-booking-flow>`, hermano de este `<aside>`) tiene que seguir con el default claro.
+     Y alcanza con declararlo, sin reescribir la regla del foco ni usar `::ng-deep`: las propiedades
+     personalizadas se heredan, así que llega hasta el `<app-landing-footer class="pb-foot">` que
+     cuelga acá adentro. */
+  --anillo-foco: var(--ink-on-accent, #fff);
 }
 .watermark {
   position: absolute;

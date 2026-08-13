@@ -86,68 +86,6 @@
     var(--paper);
   background-attachment: fixed;
 }
-/* El anillo de foco de plataforma (`styles.scss:131`) es `2px solid var(--court)`: el color del club
-   CRUDO. Sobre papel claro eso siempre se ve; sobre el telón nocturno no. Medido con los cinco
-   clubes extremos, contra la peor de las cuatro superficies de B (papel, superficie, vidrio del
-   panel y bloque suave):
-
-     club            anillo `--court`   anillo de acá
-     casi negro #111        1,02:1          3,62:1   ← de invisible a legible
-     teal    #0a8a99        3,13:1          5,73:1
-     fucsia  #FF2D95        3,78:1          5,70:1
-     amarillo #FFD400       6,33:1          7,19:1
-     casi blanco #fff       7,52:1          7,52:1
-
-   Con un club casi negro el anillo no es tenue: es un halo NEGRO alrededor del control, que se lee
-   como un agujero y no como foco. Es la falla de accesibilidad más cara de la cáscara (WCAG 2.4.7 y
-   1.4.11), porque el recorrido por teclado es el único que no tiene plan B.
-
-   El acento se aclara hacia el blanco en vez de reemplazarse: el anillo sigue siendo del color del
-   club (fucsia da rosa, teal da celeste), sólo que subido hasta donde la superficie oscura lo deja
-   ver. Un anillo blanco fijo habría sido más simple y habría borrado la marca.
-
-   SEGUNDA (y última) excepción de encapsulación del producto, junto con `.politica-link`
-   (landing.scss): el foco lo declara una hoja GLOBAL y hay que pisarlo en descendientes
-   que son otros componentes (el flujo, las tarjetas de info, el pie). Acotada con `:host`, así que
-   no se escapa de B, y no nombra ninguna plantilla adentro del subárbol del flujo. Los dos modales
-   (arrepentimiento y política) y la pill del preview cuelgan de `<app-landing>`, NO de esta cáscara:
-   no los alcanza, y está bien — se pintan sobre superficies claras.
-
-   OJO · HAY UNA ISLA CLARA QUE SÍ ESTÁ ADENTRO, y para ella aclarar hacia el blanco sería lo
-   contrario de lo correcto: el popover del calendario. `booking-flow.html:52-53` monta el
-   `<p-datepicker [inline]>` DENTRO de `.cal.open` (sin `appendTo="body"`), o sea colgando de esta
-   cáscara, y su panel es blanco puro — los componentes de PrimeNG se pintan sobre superficies claras
-   del sistema en todas las plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre
-   blanco, este anillo mediría 2,25:1 con teal, 2,30 con fucsia y 1,26 con amarillo: tres de cinco
-   clubes por debajo de 3:1.
-
-   NO PASA, y está medido, no supuesto: las cuatro paradas de teclado del popover (las dos flechas de
-   mes y los selectores de mes y de año) conservan el `:focus-visible` PROPIO de PrimeNG, `1px solid`
-   con su `--p-focus-ring-color` — 6,22:1 las flechas, 4,90 / 3,65 / 1,61 / 17,96 / 1,24 los
-   selectores según el club. Las celdas de día no son focusables (la grilla no entra al orden de
-   tabulación), así que no hay una quinta parada.
-
-   El detalle que importa para el próximo que toque esto: el empate es de ESPECIFICIDAD —
-   `[nghost] :focus-visible` (0,2,0) contra `.p-datepicker-select-month:focus-visible` (0,2,0)— y lo
-   resuelve el ORDEN, porque el tema de PrimeNG se inyecta en el `<head>` en runtime, después de los
-   estilos de componente. O sea que esto NO se apoya en una garantía del lenguaje: se apoya en cómo
-   se cargan hoy los estilos de una librería que no es nuestra. Hay dos maneras de darlo vuelta:
-
-     1. que una versión de PrimeNG deje de declarar su propio `:focus-visible`;
-     2. **`cssLayer: true` en `providePrimeNG`** (`app.config.ts`, hoy sin esa opción). Es un
-        renglón que se agrega por un motivo que no tiene nada que ver con esto —domar la
-        especificidad de PrimeNG contra el CSS de la app es la razón de siempre— y como una regla
-        EN capa pierde contra una regla SIN capa, el orden deja de importar: esta regla pasa a
-        ganar adentro de `.cal`. Por eso hay un test que afirma que la opción sigue sin estar
-        (`app.config.spec.ts`), y su mensaje de error apunta acá.
-
-   En cualquiera de los dos casos aparecen esos 1,26:1. Si pasa, la salida no es `:not(.cal *)` —un
-   `:not()` complejo no soportado invalida la regla ENTERA y B se queda sin anillo en ningún lado—
-   sino una regla propia para `.cal :focus-visible` que vuelva a oscurecer el anillo sobre blanco. */
-:host ::ng-deep :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--court) 60%, #fff);
-  outline-offset: 2px;
-}
 
 /* El pilar del vidrio (fondo translúcido + blur + borde luminoso + brillo especular interno) se
    escribe en un solo lugar: el mixin `vidrio-nocturno` de `_vidrio.scss`. Sus dos consumidores son

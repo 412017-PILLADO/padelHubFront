@@ -21,6 +21,37 @@
      plataforma (marketing, panel dev); en un club la recalcula core/branding según su color y la
      escribe inline en el <html> — también en SSR, así el primer paint ya sale bien. */
   --ink-on-accent: #fff;
+
+  /* Anillo del foco de teclado. NO es `--court` pelado: el color del club CRUDO da 2,07:1 con el
+     naranja del tenant demo y 1,32:1 con un amarillo sobre `--paper`, contra el mínimo de 3:1 que
+     WCAG 1.4.11 pide para componentes — el usuario de teclado no veía dónde estaba parado. Medido
+     tabulando de verdad las 22 paradas de la landing y las del panel, con seis clubes.
+
+     ES UN TOKEN DE CAPA 2 (spec §5.1) y por eso este valor es sólo el DEFAULT de plataforma: mezcla
+     hacia la tinta del sistema, que es lo correcto sobre superficie CLARA — la columna de reserva de
+     la A, la C entera, todo el panel, y los modales de la landing (que cuelgan de `<app-landing>`,
+     fuera de toda cáscara, y por eso heredan siempre este default aunque la cáscara sea oscura).
+
+     Una cáscara cuya superficie no es clara lo pisa DESDE SU PROPIA HOJA, nunca desde acá:
+       · `b-nocturna/_tokens.scss` lo aclara hacia `#fff` (sobre el telón nocturno, oscurecer
+         desaparece);
+       · `e-diurna/_tokens.scss` lo oscurece hacia `#000`;
+       · y si sólo una ZONA de la cáscara es de otro material, se pisa en el selector de esa zona y
+         no en el `:host` — `a-afiche/shell.scss` lo hace en `.poster-brand`, que está pintado con el
+         color del club: ahí el anillo es `--ink-on-accent`, la tinta que la capa 3 ya calculó
+         legible sobre el acento. El token se hereda, así que declararlo en un ancestro alcanza y no
+         hace falta reescribir la regla ni un `::ng-deep`.
+     La capa 3 (el `<html>` que escribe `applyTenantColors`) NO lo declara nunca: sabe del club, no
+     de la superficie.
+
+     EL 50% ES UN TECHO, NO UN GUSTO. El peor club posible es el BLANCO (el anillo más claro que la
+     fórmula puede dar) y la peor superficie es `--paper` `#f4f6fb`, que es la más OSCURA de las
+     claras y por lo tanto de la que menos se despega un anillo oscurecido: ahí llega a 3:1 recién
+     con N ≤ 51,7%. 50% es ese techo redondeado hacia abajo (3,16:1 con un club casi blanco; 5,80
+     con el naranja del demo, 4,22 con el amarillo). Subirlo a 55% deja al club casi blanco en
+     2,72:1, o sea otra vez abajo del mínimo. */
+  --anillo-foco: color-mix(in srgb, var(--court) 50%, var(--ink));
+
   --clay: #e0392b;         /* rojo — chispa puntual (la línea de la paleta) */
 
   /* — Tipografía — */
@@ -141,9 +172,13 @@ button {
   border: 0;
 }
 
-/* — Foco accesible — */
+/* — Foco accesible —
+   El COLOR sale de `--anillo-foco` (ver el `:root`): es un token de capa 2, así que esta regla vale
+   para todo el producto y cada cáscara la vuelve correcta sobre su superficie declarando el token,
+   sin volver a escribir la regla. Antes cada cáscara oscura o saturada se copiaba un
+   `:host ::ng-deep :focus-visible` propio; eran dos y la tercera estaba por llegar. */
 :focus-visible {
-  outline: 2px solid var(--court);
+  outline: 2px solid var(--anillo-foco);
   outline-offset: 3px;
   border-radius: 3px;
 }
