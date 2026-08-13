@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
@@ -106,5 +109,75 @@ describe('LandingFooterComponent · links del pie', () => {
     const panel = fixture.nativeElement.querySelector('a.panel-link');
     expect(panel).not.toBeNull();
     expect(panel.getAttribute('href')).toBe('/admin');
+  });
+});
+
+/**
+ * LA OPACIDAD DEL PIE, PINEADA POR CÁSCARA.
+ *
+ * Los dos `<button>` del pie arrastran un `opacity: 0.85` de sus reglas base —`.arrep-link` desde
+ * `landing-footer.scss` y `.politica-link` desde `landing.scss`, porque el MISMO link también vive
+ * adentro de `<app-booking-flow>`—, y esa opacidad es lo único que dejaba a los dos botones de la C
+ * en **4,13:1** sobre su papel, abajo del 4,5:1 de texto chico. En la A es peor todavía: se
+ * multiplica con el `color-mix(… 90%)` del bloque de al lado y deja un alfa de 0,765 que no eligió
+ * nadie. Los dos bloques lo apagan con `opacity: 1`.
+ *
+ * ESTE TEST EXISTE PORQUE EL ARREGLO ES UNA REGLA QUE PISA A OTRA. Si alguien toca el bloque base
+ * —o simplemente copia el bloque de una cáscara para estrenar otra— la opacidad vuelve sin que se
+ * caiga nada más: no hay e2e que mida contraste y el pie se sigue viendo "bien". Es exactamente la
+ * forma en que E estrenó con los dos botones en negro puro durante una fase entera.
+ *
+ * Se lee LA HOJA y no el DOM del fixture a propósito: el runner corre en jsdom, que no aplica la
+ * cascada de las hojas de componente, así que un `getComputedStyle` acá saldría verde siempre — un
+ * tripwire que no puede fallar es peor que no tenerlo. Misma técnica que
+ * `shells/e-diurna/contraste.spec.ts`, que ya pinea la de E.
+ */
+describe('LandingFooterComponent · la opacidad de los dos botones del pie', () => {
+  /**
+   * La ruta va desde la raíz del proyecto y NO relativa a este spec: el builder bundlea los specs a
+   * un temporal, así que `import.meta.url` apunta al bundle. Si el runner cambiara de cwd esto TIRA
+   * (ENOENT) en vez de quedarse verde en silencio.
+   *
+   * Los comentarios de bloque se borran porque la prosa de estas dos hojas cita literalmente
+   * `opacity: 0.85` y `opacity: 1` al explicar el problema, y un docblock no puede poder cambiar lo
+   * que el test mide.
+   */
+  const leerHoja = (ruta: string) =>
+    readFileSync(resolve(process.cwd(), ruta), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+
+  const HOJA_PIE = leerHoja('src/app/features/landing/club/landing-footer.scss');
+  const HOJA_LANDING = leerHoja('src/app/features/landing/landing.scss');
+
+  /** La `opacity` que declara un bloque, o `null` si ese bloque no la declara. */
+  function opacidadDe(hoja: string, selector: RegExp, comoSeLlama: string): number | null {
+    const bloque = selector.exec(hoja)?.[1];
+    if (bloque == null) throw new Error(`ya no existe la regla \`${comoSeLlama}\``);
+    const valor = /(?:^|;)\s*opacity\s*:\s*([\d.]+)/.exec(bloque)?.[1];
+    return valor == null ? null : Number(valor);
+  }
+
+  /** La opacidad con la que TERMINA un botón en una cáscara: la de su bloque si la declara, y si no
+   *  la que le llega de la regla base. Escrito así —y no como "el bloque declara 1"— para que el
+   *  test siga siendo correcto si alguna vez el arreglo es sacar la opacidad de la regla base. */
+  const efectiva = (propia: number | null, base: number | null) => propia ?? base ?? 1;
+
+  const BASE_ARREP = opacidadDe(HOJA_PIE, /(?:^|\n)\.arrep-link\s*\{([^}]*)\}/, '.arrep-link');
+  const BASE_POLITICA = opacidadDe(
+    HOJA_LANDING, /:host\s+::ng-deep\s+\.politica-link\s*\{([^}]*)\}/, ':host ::ng-deep .politica-link');
+
+  const enCascara = (cascara: string, boton: string) =>
+    efectiva(
+      opacidadDe(HOJA_PIE, new RegExp(`:host\\(\\.${cascara}\\)\\s+\\.${boton}\\s*\\{([^}]*)\\}`),
+        `:host(.${cascara}) .${boton}`),
+      boton === 'arrep-link' ? BASE_ARREP : BASE_POLITICA,
+    );
+
+  it('ni el pie de C ni el de A dejan a sus botones con opacidad menor a 1', () => {
+    // C: `--ink-dim` sobre su papel da 5,73:1 con la opacidad apagada y 4,13:1 con el 0,85 puesto.
+    expect(enCascara('c-foot', 'arrep-link')).toBe(1);
+    expect(enCascara('c-foot', 'politica-link')).toBe(1);
+    // A: el 0,85 se multiplicaba con el `color-mix(… 90%)` y daba un alfa efectivo de 0,765.
+    expect(enCascara('pb-foot', 'arrep-link')).toBe(1);
+    expect(enCascara('pb-foot', 'politica-link')).toBe(1);
   });
 });
