@@ -114,7 +114,14 @@
    era el teal, que es justo el color por defecto del producto.
    Bajar este número por debajo de 24 vuelve a poner el umbral en 4,5 y deja al teal afuera;
    `contraste.spec.ts` lee el valor de esta hoja y falla si pasa. */
-.e-brandname { min-width: 0; font-size: 1.5rem;
+/* El `line-height` propio es por lo mismo que en `.b-brandname` (ahí está el comentario largo con la
+   medición): el 0.92 que hereda de `.display` está para títulos de VARIAS líneas, acá es UNA sola
+   con ellipsis, y sumado al `overflow: hidden` recortaba la tilde — "Sol Pádel" salía "SOL PADEL".
+   El mínimo medido acá es aún más alto que en B porque el cuerpo es mayor: con Anton a 24px la
+   tinta con tilde sube 27px sobre la línea de base contra 28px de ascenso de la caja, o sea
+   `(2*27 - 28 + 8) / 24 = 1,417`. 1.45 es el mismo valor que B y deja aire sobre los dos.
+   No se toca el token global ni la `.display` de plataforma. */
+.e-brandname { min-width: 0; font-size: 1.5rem; line-height: 1.45;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Sin `letter-spacing` propio: el que vale es el `--display-tracking` del `:host`, así E tiene un
    solo tracking de display. Declararlo acá le ganaría al token y lo partiría en dos. */

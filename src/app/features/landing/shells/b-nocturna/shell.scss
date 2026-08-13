@@ -111,7 +111,23 @@
 .b-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
 /* Lo que B le ajusta al tamaño de la marca vive en brand-mark.ts (`:host-context(.b-brandline)`). */
 /* La nav es una sola línea: acá el nombre largo se recorta (no baja de renglón como en C). */
-.b-brandname { min-width: 0; font-size: 1.12rem; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* `line-height` propio y no el 0.92 que hereda de `.display`: ese valor está para apretar títulos de
+   VARIAS líneas, y acá es UNA sola con ellipsis, así que no aporta nada y sólo recorta. Con
+   `overflow: hidden` (que el ellipsis necesita) y una condensada como Anton, el 0.92 dejaba la tilde
+   de la mayúscula fuera de la caja de línea y "Costa Pádel" salía **"COSTA PADEL"**.
+   El número NO es al ojo. Medido con canvas sobre Anton a 17,92px: la tinta de una mayúscula con
+   tilde sube 20px sobre la línea de base y la caja de fuente sólo asciende 21px — la tilde sola
+   agrega 5px sobre los 15px de una "A" pelada. Como el `line-height` reparte mitad y mitad, el
+   mínimo que no recorta es `(2*20 - 21 + 6) / 17,92 = 1,395`. De ahí el 1.45: el primer valor
+   redondo con aire, verificado además pixel a pixel (la caja recortada pinta EXACTO lo mismo que la
+   misma caja con `overflow: visible`, a 360 y a 1280).
+   OJO con "copiarle el 1.15 a `.c-brandname`": C no se salva por ese número sino porque NO recorta
+   (`overflow: visible`, el nombre le baja de renglón) y porque su display es Archivo, no Anton —
+   medido, a 1.15 a C también le sobresalen 0,12px de tilde, sólo que ahí no hay nada que los corte.
+   Con 1.15 acá la tilde seguía cortada 2,2px. El token global `--display-*` y la `.display` de
+   plataforma NO son el lugar: el 0.92 sigue siendo correcto para sus otros consumidores, que son
+   títulos de varias líneas sin recorte (`.b-title`, `.e-title`, `.name` y `.watermark` de A). */
+.b-brandname { min-width: 0; font-size: 1.12rem; line-height: 1.45; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Héroe achicado (feedback owner post-desktop): "ya estamos en la pantalla de sacar turno", así
    que los 2 CTA se eliminaron (ver .b-book más abajo) y el héroe deja de ser un muro — se conserva
