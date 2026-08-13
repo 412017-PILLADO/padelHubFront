@@ -146,8 +146,9 @@
   padding: clamp(8px, 3vw, 28px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px); scroll-margin-top: 76px; }
 /* El vidrio del flujo NO se pinta desde acá: lo declara `_tokens.scss` como tokens --flow-*, que
    el flujo lee desde su propia hoja (encapsulada). La tipografía del display tampoco: viaja por
-   herencia con los tokens --display-* del `:host`. La ÚNICA regla de esta cáscara que apunta al DOM
-   del `<app-booking-flow>` es el `:host ::ng-deep :focus-visible` de arriba. */
+   herencia con los tokens --display-* del `:host`. Y desde que el anillo de foco es un token
+   (`--anillo-foco`, que la regla global de `styles.scss` consume), esta cáscara ya NO apunta al DOM
+   del `<app-booking-flow>` con ninguna regla: no le queda ni un `::ng-deep`. */
 
 .b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }
