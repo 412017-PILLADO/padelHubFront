@@ -33,6 +33,9 @@ import { resolve } from 'node:path';
  * 1. **Las zonas que no son superficie de plataforma.** El afiche de la A (`.poster-brand`) está
  *    pintado con el color del club y pisa el token con `--ink-on-accent` en su propia hoja; acá se
  *    mide `--paper` y `--surface`, que son las dos superficies que el default gobierna de verdad.
+ *    Esa zona la pinea `shells/a-afiche/contraste.spec.ts`, que mide contra las dos puntas del
+ *    degradé del afiche. Existe porque durante un tiempo esta exclusión era un agujero y no un
+ *    reparto: la review de rama borró la declaración de A y la suite entera se quedó en verde.
  * 2. **Los controles cuyo foco no pasa por el token.** Los `pInputText` (los dos del flujo y el
  *    buscador del panel) matan el `outline` con más especificidad y ponen su propio anillo por
  *    `box-shadow`. Anotado en el reporte del Task 3.
