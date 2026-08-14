@@ -118,9 +118,14 @@
    El número NO es al ojo. Medido con canvas sobre Anton a 17,92px: la tinta de una mayúscula con
    tilde sube 20px sobre la línea de base y la caja de fuente sólo asciende 21px — la tilde sola
    agrega 5px sobre los 15px de una "A" pelada. Como el `line-height` reparte mitad y mitad, el
-   mínimo que no recorta es `(2*20 - 21 + 6) / 17,92 = 1,395`. De ahí el 1.45: el primer valor
-   redondo con aire, verificado además pixel a pixel (la caja recortada pinta EXACTO lo mismo que la
-   misma caja con `overflow: visible`, a 360 y a 1280).
+   mínimo que no recorta es `(2*20 - 21 + 6) / 17,92 = 1,395`.
+
+   **De ahí el 1.5, y el paso intermedio vale la pena.** El primer valor redondo por encima del
+   mínimo era 1.45, y con ése quedaba verificado pixel a pixel (la caja recortada pinta EXACTO lo
+   mismo que la misma caja con `overflow: visible`, a 360 y a 1280). Pero 1.45 deja **+0,49 px** de
+   aire acá y +0,40 en E: menos de medio pixel, o sea que un rasterizador que dibuje la A con tilde
+   de Anton un pixel más alta vuelve a recortar y nadie se entera. 1.5 sube el aire a ~1,4 px y no
+   cuesta nada — la línea es una sola y el nombre no baja de renglón.
    OJO con "copiarle el 1.15 a `.c-brandname`": C no se salva por ese número sino porque NO recorta
    (`overflow: visible`, el nombre le baja de renglón) y porque su display es Archivo, no Anton —
    medido, a 1.15 a C también le sobresalen 0,12px de tilde, sólo que ahí no hay nada que los corte.

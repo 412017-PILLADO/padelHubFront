@@ -119,7 +119,9 @@
    con ellipsis, y sumado al `overflow: hidden` recortaba la tilde — "Sol Pádel" salía "SOL PADEL".
    El mínimo medido acá es aún más alto que en B porque el cuerpo es mayor: con Anton a 24px la
    tinta con tilde sube 27px sobre la línea de base contra 28px de ascenso de la caja, o sea
-   `(2*27 - 28 + 8) / 24 = 1,417`. 1.45 es el mismo valor que B y deja aire sobre los dos.
+   `(2*27 - 28 + 8) / 24 = 1,417`. 1.5 es el mismo valor que B y deja aire sobre los dos: el primer
+   redondo por encima del mínimo era 1.45, pero acá dejaba **+0,40 px** (y +0,49 en B), o sea menos
+   de medio pixel — un rasterizador que dibuje la tilde un pixel más alta volvía a recortar.
    No se toca el token global ni la `.display` de plataforma. */
 .e-brandname { min-width: 0; font-size: 1.5rem; line-height: 1.5;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
