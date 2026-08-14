@@ -51,9 +51,10 @@ function claseDelPie(dir: string): string {
 }
 
 /**
- * ¿La hoja del pie le da `color` al selector, para esa clase de cáscara y EN REPOSO?
+ * El `color` que la hoja del pie le deja al selector para esa clase de cáscara y EN REPOSO, o
+ * `null` si no le deja ninguno.
  *
- * Dos cosas que el regex hace a propósito:
+ * Tres cosas que hace a propósito:
  *
  * 1. **No acepta pseudo-clases.** Un `:host(.X) .arrep-link:hover { color: … }` no cuenta: el botón
  *    negro lo era en reposo, y un color que sólo aparece con el mouse encima no arregla nada (ni
@@ -61,14 +62,47 @@ function claseDelPie(dir: string): string {
  * 2. **Exige `color` y no cualquier declaración.** Un bloque con sólo `font-family` deja los dos
  *    botones igual de negros. Y el `color` tiene que abrir declaración (principio del bloque o
  *    después de un `;`): sin eso, un `background-color:` alcanzaría para dar el verde.
+ * 3. **Devuelve la ÚLTIMA, no la primera.** Antes esto era un `.test()` —"¿existe en algún lado?"—
+ *    y eso se podía vencer sin tocar una línea existente: entre reglas de la misma especificidad
+ *    gana la de más abajo, así que un bloque agregado al final con un valor que DESVISTE al botón
+ *    lo devolvía a negro puro con la puerta en verde. **Probado, no supuesto**: con
+ *    `:host(.c-foot) .arrep-link { color: revert; }` agregado al final, la suite daba 177 passed y
+ *    el botón de la C medía `rgb(0, 0, 0)` en el navegador — exactamente el defecto que este
+ *    archivo existe para matar. Es el mismo agujero que la review de rama encontró en el pin de
+ *    opacidad, un archivo más allá.
  *
  * El `\\${selector}` no es un typo: los selectores de `BOTONES` empiezan con `.`, y ese backslash es
  * el que la escapa para el regex.
  */
+function colorEnReposo(clase: string, selector: string): string | null {
+  const bloques = [...HOJA_PIE.matchAll(
+    new RegExp(`:host\\(\\.${clase}\\)\\s+\\${selector}\\s*\\{([^}]*)\\}`, 'g'))].map((m) => m[1]);
+  const valores = bloques.flatMap((b) =>
+    [...b.matchAll(/(?:^|;)\s*color\s*:\s*([^;]+)/g)].map((m) => m[1].trim()));
+  return valores.length ? valores[valores.length - 1] : null;
+}
+
+/**
+ * Las palabras clave que DESVISTEN al botón, o sea las que declaran `color` y aun así lo devuelven
+ * al `buttontext` de la UA. Son las únicas tres, y la lista corta importa:
+ *
+ *   · `initial` → el valor inicial de `color` es negro, no el heredado. Vuelve el defecto.
+ *   · `revert` / `revert-layer` → devuelven a la hoja del USER AGENT, que para un `<button>` es
+ *     `color: buttontext`. Vuelve el defecto.
+ *
+ * `inherit` y `unset` NO están y no es un olvido: `color` es una propiedad heredada, así que en las
+ * dos el botón toma el color que `.X-foot` le pasa desde la hoja de la cáscara — que es justamente
+ * lo que la UA le estaba robando. Son un arreglo válido de este bug, sólo que menos explícito.
+ *
+ * Esta puerta sigue sin juzgar SI EL COLOR CONTRASTA (eso es cuenta de cada cáscara, en su
+ * `contraste.spec.ts`): lo que exige es que la hoja lo vista, y estas tres son la manera de escribir
+ * una declaración de `color` que no viste nada.
+ */
+const DESVISTEN = /^(initial|revert|revert-layer)$/i;
+
 function declaraColor(clase: string, selector: string): boolean {
-  return new RegExp(
-    `:host\\(\\.${clase}\\)\\s+\\${selector}\\s*\\{\\s*(?:[^}]*;\\s*)?color\\s*:`,
-  ).test(HOJA_PIE);
+  const valor = colorEnReposo(clase, selector);
+  return valor != null && !DESVISTEN.test(valor);
 }
 
 describe('el pie tiene un bloque por cáscara', () => {
@@ -76,9 +110,13 @@ describe('el pie tiene un bloque por cáscara', () => {
     for (const selector of BOTONES) {
       it(`la plantilla ${codigo} (${dir}) le declara color a ${selector}`, () => {
         const clase = claseDelPie(dir);
+        const valor = colorEnReposo(clase, selector);
         expect(
           declaraColor(clase, selector),
-          `landing-footer.scss no tiene \`:host(.${clase}) ${selector} { color: … }\`. ` +
+          (valor == null
+            ? `landing-footer.scss no tiene \`:host(.${clase}) ${selector} { color: … }\`. `
+            : `la ÚLTIMA declaración de \`:host(.${clase}) ${selector}\` es \`color: ${valor}\`, que ` +
+              `no viste nada: devuelve el botón al color de la hoja del user agent. `) +
             `La cáscara ${dir} monta el pie con la clase "${clase}" pero no lo viste: ` +
             `${selector} es un <button>, la UA le pone \`color: buttontext\` sobre el elemento y le ` +
             `gana a lo que el pie hereda, así que va a salir NEGRO PURO sobre la superficie de la ` +
