@@ -116,7 +116,7 @@ describe('LandingFooterComponent · links del pie', () => {
 /**
  * LA OPACIDAD DEL PIE, PINEADA POR CÁSCARA.
  *
- * Los dos `<button>` del pie arrastran un `opacity: 0.85` de sus reglas base —`.arrep-link` desde
+ * Los dos `<button>` del pie arrastraban un `opacity: 0.85` de sus reglas base —`.arrep-link` desde
  * `landing-footer.scss` y `.politica-link` desde `landing.scss`, porque el MISMO link también vive
  * adentro de `<app-booking-flow>`—, y esa opacidad es lo único que dejaba a los dos botones de la C
  * en **4,13:1** sobre su papel, abajo del 4,5:1 de texto chico. En la A es peor todavía: se
@@ -149,12 +149,35 @@ describe('LandingFooterComponent · la opacidad de los dos botones del pie', () 
   const HOJA_PIE = leerHoja('src/app/features/landing/club/landing-footer.scss');
   const HOJA_LANDING = leerHoja('src/app/features/landing/landing.scss');
 
-  /** La `opacity` que declara un bloque, o `null` si ese bloque no la declara. */
+  /**
+   * La `opacity` con la que un selector TERMINA en la hoja: la ÚLTIMA que se declara, o `null` si
+   * ninguna de sus reglas la declara.
+   *
+   * **La última y no la primera, y eso no es un detalle de parser.** En CSS, entre reglas de la
+   * MISMA especificidad gana la que está más abajo. Una versión anterior de esta función hacía
+   * `selector.exec(hoja)?.[1]` —la PRIMERA coincidencia—, así que este pin se podía vencer sin tocar
+   * una sola línea existente: alcanzaba con agregar al final de `landing-footer.scss`
+   *
+   *     :host(.c-foot) .arrep-link { opacity: 0.85; }
+   *
+   * —literalmente el defecto de 4,13:1 que este pin existe para matar— y la suite entera se quedaba
+   * en verde. Lo probó la review de rama, no es un supuesto.
+   *
+   * Se recorren TODOS los bloques que casan y TODAS las `opacity` de cada uno, en orden de
+   * aparición, y se devuelve la última: es la que pinta. Mismo criterio que la `declaracion()` de
+   * `src/styles.spec.ts`, que ya se defendía de este mismísimo patrón —con un test dedicado— y era
+   * la única de las tres puertas de esta tanda que lo hacía.
+   *
+   * El `g` se agrega acá y no se le pide a quien llama: un `RegExp` global arrastra `lastIndex`
+   * entre usos, y estas expresiones se reusan para las cuatro cáscaras.
+   */
   function opacidadDe(hoja: string, selector: RegExp, comoSeLlama: string): number | null {
-    const bloque = selector.exec(hoja)?.[1];
-    if (bloque == null) throw new Error(`ya no existe la regla \`${comoSeLlama}\``);
-    const valor = /(?:^|;)\s*opacity\s*:\s*([\d.]+)/.exec(bloque)?.[1];
-    return valor == null ? null : Number(valor);
+    const global = new RegExp(selector.source, selector.flags.replace('g', '') + 'g');
+    const bloques = [...hoja.matchAll(global)].map((m) => m[1]);
+    if (!bloques.length) throw new Error(`ya no existe la regla \`${comoSeLlama}\``);
+    const valores = bloques.flatMap((bloque) =>
+      [...bloque.matchAll(/(?:^|;)\s*opacity\s*:\s*([\d.]+)/g)].map((m) => m[1]));
+    return valores.length ? Number(valores[valores.length - 1]) : null;
   }
 
   /** La opacidad con la que TERMINA un botón en una cáscara: la de su bloque si la declara, y si no
