@@ -123,6 +123,13 @@ describe('LandingFooterComponent · links del pie', () => {
  * multiplica con el `color-mix(… 90%)` del bloque de al lado y deja un alfa de 0,765 que no eligió
  * nadie. Los dos bloques lo apagan con `opacity: 1`.
  *
+ * La base de `.arrep-link` YA NO EXISTE: cuando las cuatro cáscaras la pisaron quedó muerta y se
+ * borró. **Este archivo no cambió por eso**, y es la prueba de que estaba bien redactado: mide la
+ * opacidad EFECTIVA (`efectiva()` cae en 1 cuando no hay base) y no "el bloque declara 1", así que
+ * sacar la regla base no movió ni un test ni aflojó el pin — con el agregado que lo vencía sigue
+ * dando rojo. La de `.politica-link` sigue viva en `landing.scss`, o sea que para ese botón la base
+ * todavía es el caso interesante, y por eso `efectiva()` se queda.
+ *
  * ESTE TEST EXISTE PORQUE EL ARREGLO ES UNA REGLA QUE PISA A OTRA. Si alguien toca el bloque base
  * —o simplemente copia el bloque de una cáscara para estrenar otra— la opacidad vuelve sin que se
  * caiga nada más: no hay e2e que mida contraste y el pie se sigue viendo "bien". Es exactamente la

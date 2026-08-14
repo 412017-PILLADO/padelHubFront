@@ -14,13 +14,28 @@
 
 .foot-links { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 
-/* Botón de arrepentimiento (Res. 424/2020): link discreto, visible sin scroll (exigencia legal). */
+/* Botón de arrepentimiento (Res. 424/2020): link discreto, visible sin scroll (exigencia legal).
+
+   ACÁ VIVÍA UN `opacity: 0.85` (con su `:hover { opacity: 1 }` y la `opacity` de la transición), y
+   se saca porque ya no podía aplicar nunca: las CUATRO cáscaras lo apagan con `opacity: 1` en su
+   bloque —que les gana por especificidad— y `landing-footer.spec.ts` le exige lo mismo a la que
+   venga. Era una regla que mentía sobre lo que hacía: quien la leyera creería que este botón sale
+   al 85% en algún lado, y no sale así en ninguno.
+
+   Y no es un detalle de limpieza: ese 0,85 es exactamente lo que dejaba a los dos botones de la C
+   en 4,13:1 sobre su papel —abajo del 4,5:1 de texto chico— y lo que en la A se multiplicaba con el
+   `color-mix(… 90%)` de más abajo hasta un alfa efectivo de 0,765 que no eligió nadie. El estado
+   normal del botón lo pone cada cáscara con su COLOR, que se puede medir; una opacidad heredada no,
+   hay que componerla a mano contra el fondo.
+
+   `.politica-link` es distinto y su opacidad base SIGUE VIVA: vive en `landing.scss` porque el
+   MISMO link también aparece dentro de `<app-booking-flow>`. Por eso los cuatro bloques de abajo le
+   siguen declarando `opacity: 1` a los dos botones y no sólo a uno. */
 .arrep-link {
   background: none; border: none; padding: 0; cursor: pointer;
-  text-decoration: underline; font-size: 0.78rem; opacity: 0.85;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  text-decoration: underline; font-size: 0.78rem;
+  transition: color 0.15s ease;
 }
-.arrep-link:hover { opacity: 1; }
 
 /* El aspecto base de `.politica-link` (fondo, borde, subrayado, opacidad) lo sigue poniendo
    landing.scss con `:host ::ng-deep`, porque el MISMO link también aparece dentro de
@@ -66,14 +81,16 @@
 
    `opacity: 1` EN LOS DOS BOTONES, y no una tinta más oscura, porque el problema no era la tinta:
    `--ink-dim` sobre el papel de C mide 5,73:1 y le sobra. Lo que hundía a los dos botones era el
-   `opacity: 0.85` que arrastran de sus reglas base (`.arrep-link` acá arriba y `.politica-link`
-   desde `landing.scss`), que compuesto contra el papel los dejaba en **4,13:1** — abajo del 4,5:1
-   de texto chico (12,48 px), con los seis clubes y a los dos anchos, porque el papel de C no
-   depende del color del club. La opacidad NO es una tinta: no se puede medir leyendo la hoja, hay
-   que componerla a mano contra el fondo, y multiplica por igual el contraste que el color ya tenía.
-   Apagarla devuelve la tinta que la plantilla eligió —y que se puede medir— en vez de dejar el
-   contraste real a merced de un número que nadie eligió para este pie. Mismo arreglo que ya había
-   hecho E (ver su bloque más abajo, DIFERENCIA 1), donde quedó anotado que C era la pendiente. */
+   `opacity: 0.85` que arrastraban de sus reglas base (la de `.arrep-link` vivía acá arriba y ya no
+   existe; la de `.politica-link` sigue viva en `landing.scss`, porque ese link también aparece
+   dentro de `<app-booking-flow>`), que compuesto contra el papel los dejaba en **4,13:1** — abajo
+   del 4,5:1 de texto chico (12,48 px), con los seis clubes y a los dos anchos, porque el papel de C
+   no depende del color del club. La opacidad NO es una tinta: no se puede medir leyendo la hoja,
+   hay que componerla a mano contra el fondo, y multiplica por igual el contraste que el color ya
+   tenía. Apagarla devuelve la tinta que la plantilla eligió —y que se puede medir— en vez de dejar
+   el contraste real a merced de un número que nadie eligió para este pie. Mismo arreglo que ya
+   había hecho E (ver su bloque más abajo, DIFERENCIA 1); con este bloque, las cuatro cáscaras lo
+   tienen y no queda ninguna pendiente. */
 :host(.c-foot) a { color: var(--ink-dim); text-decoration: none; }
 :host(.c-foot) a:hover { color: var(--court-deep); }
 :host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
@@ -103,10 +120,12 @@
    sirve de reemplazo — el mismo club casi negro da 1,05:1. */
 :host(.b-foot) a { color: var(--ink-dim); text-decoration: none; }
 :host(.b-foot) a:hover { color: var(--ink); }
-/* `opacity: 1` por el mismo motivo que en la C y la A: el `.arrep-link` base arrastra un
+/* `opacity: 1` por el mismo motivo que en la C y la A: las reglas base arrastraban un
    `opacity: 0.85` que nadie eligió para acá, y con un club casi blanco dejaba la celda de 1280 al
    filo de AA. Apagarlo la sube a ~5,8:1 y, sobre todo, deja el invariante parejo — ninguna cáscara
-   se guarda esos dos botones abajo de alfa 1. */
+   se guarda esos dos botones abajo de alfa 1. La de `.arrep-link` ya no existe (quedó muerta
+   cuando las cuatro cáscaras la pisaron); la de `.politica-link` sigue viva en `landing.scss`, así
+   que la declaración se le sigue haciendo falta a los dos. */
 :host(.b-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
 :host(.b-foot) .arrep-link:hover { color: var(--ink); }
 :host(.b-foot) .politica-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
@@ -126,12 +145,14 @@
    (El `font-family` NO hace falta acá: `styles.scss` ya trae `button { font: inherit }` y los dos
    botones computan la Inter Tight de E. Las otras tres lo declaran igual; es redundante en todas.)
 
-   DIFERENCIA 1 · `opacity: 1`. El `.arrep-link` base trae `opacity: 0.85` (y `.politica-link` el
-   suyo, desde `landing.scss`), y la opacidad no es una tinta: compuesta contra el papel, hunde
-   `--ink-dim` de 5,73:1 a **4,13:1**, o sea abajo de AA para 12,48 px. Es exactamente lo que le
-   pasa hoy al `.arrep-link` de la C —conocido y fuera del alcance de este arreglo—, así que copiar
-   ese bloque tal cual habría estrenado E con la misma falla. Con `opacity: 1` la tinta es la que
-   dice el color y se puede medir: 5,73:1, el mismo número que el © de al lado.
+   DIFERENCIA 1 · `opacity: 1`. Las reglas base traían `opacity: 0.85` (la de `.arrep-link` acá
+   mismo y la de `.politica-link` desde `landing.scss`), y la opacidad no es una tinta: compuesta
+   contra el papel, hunde `--ink-dim` de 5,73:1 a **4,13:1**, o sea abajo de AA para 12,48 px. Ese
+   era el estado del `.arrep-link` de la C cuando se escribió este bloque, así que copiarlo tal cual
+   habría estrenado E con la misma falla. **Ya no lo es**: la C tiene su `opacity: 1` desde el mismo
+   cierre de deuda que borró la regla base de `.arrep-link` — o sea que la que sigue viva es la de
+   `.politica-link`, y por eso la declaración le hace falta a los dos. Con `opacity: 1` la tinta es
+   la que dice el color y se puede medir: 5,73:1, el mismo número que el © de al lado.
 
    DIFERENCIA 2 · el hover NO es `--court-deep`. Es la misma lección que la B dejó escrita más
    arriba, con el polo dado vuelta: en una cáscara clara el color del club OSCURECIDO tampoco
