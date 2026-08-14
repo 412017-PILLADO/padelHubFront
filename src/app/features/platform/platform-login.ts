@@ -45,7 +45,7 @@ import { PlatformAuthService } from '../../core/platform/platform-auth.service';
     .field span { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 6px; color: var(--ink-dim); }
     .field input { width: 100%; padding: 11px 13px; border: 1px solid var(--line-strong); border-radius: var(--r);
       background: var(--paper); font-size: 1rem; color: var(--ink); }
-    .field input:focus { outline: none; border-color: var(--court); }
+    .field input:focus { border-color: var(--court); }
     .err { color: var(--clay); font-size: .85rem; margin: -4px 0 14px; }
     button { width: 100%; padding: 12px; border: none; border-radius: var(--r); background: var(--court);
       color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; }

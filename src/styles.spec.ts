@@ -8,9 +8,9 @@ import { resolve } from 'node:path';
  * Es el único de los tres valores del token que no tenía quien lo cuidara. Los otros dos —el de
  * `b-nocturna/_tokens.scss` y el de `e-diurna/_tokens.scss`— están pineados por el
  * `contraste.spec.ts` de su cáscara; éste, que es el que gobierna la columna de reserva de la A, la
- * C ENTERA, TODO EL PANEL DE ADMIN y los dos modales de la landing (que cuelgan de `<app-landing>`,
- * o sea fuera de toda cáscara, y por eso heredan siempre este default), sólo estaba defendido por un
- * comentario.
+ * C ENTERA, EL PANEL DE ADMIN —todo control que vistamos nosotros; los de PrimeNG traen el suyo, ver
+ * la salvedad 2— y los dos modales de la landing (que cuelgan de `<app-landing>`, o sea fuera de
+ * toda cáscara, y por eso heredan siempre este default), sólo estaba defendido por un comentario.
  *
  * Y el comentario dice algo que se puede romper sin que nada se entere: **el 50% es un TECHO
  * medido, no un gusto**. Alguien que lo redondee a 55% en un cleanup deja al club casi blanco en
@@ -36,9 +36,21 @@ import { resolve } from 'node:path';
  *    Esa zona la pinea `shells/a-afiche/contraste.spec.ts`, que mide contra las dos puntas del
  *    degradé del afiche. Existe porque durante un tiempo esta exclusión era un agujero y no un
  *    reparto: la review de rama borró la declaración de A y la suite entera se quedó en verde.
- * 2. **Los controles cuyo foco no pasa por el token.** Los `pInputText` (los dos del flujo y el
- *    buscador del panel) matan el `outline` con más especificidad y ponen su propio anillo por
- *    `box-shadow`. Anotado en el reporte del Task 3.
+ * 2. **Los controles cuyo foco no pasa por el token porque son de PrimeNG.** Los `pInputText` (los
+ *    dos campos del flujo y los dos del login de admin), el `p-datepicker` del panel y de la tab de
+ *    Agenda, los `p-select` y el `p-confirmdialog`: todos declaran su propio `:focus-visible` con
+ *    más especificidad y ponen el anillo por `box-shadow`. Se ven, pero no leen `--anillo-foco`.
+ *
+ *    **La lista era más larga y estaba mal atribuida.** Hasta el cierre de deuda de plantillas,
+ *    SIETE reglas NUESTRAS hacían `{ outline: none; border-color: var(--court) }` y dejaban al
+ *    borde del color crudo del club como único indicador — `.cf-input` (config), `.plantilla-sel` y
+ *    `.color-hex` (tab Marca), `.search-input` (panel), los inputs y selects de las dos grillas del
+ *    panel de plataforma, `.reset-input` y el input del login de plataforma. Ninguna era de
+ *    PrimeNG: el buscador del panel, por ejemplo, es un `<input type="search">` pelado. Medido, el
+ *    cambio de estado daba **1,02:1** con un club amarillo y **1,54** con el naranja del demo contra
+ *    `--line-strong`, y el borde sobre `--surface` **1,00-2,24** con cuatro de los seis clubes.
+ *    Las siete perdieron el `outline: none` y hoy pintan el anillo del token, que es lo que este
+ *    archivo mide. Era la única familia de controles propios cuyo foco no pasaba por acá.
  * 3. **`.ccard.is-selected` y `.ccard.any`**, que se tapan el anillo desde `booking-flow.scss` con
  *    más especificidad. Preexistentes, medidos y anotados en el mismo reporte.
  *
@@ -224,7 +236,7 @@ describe('plataforma · el anillo de foco por defecto sobrevive a cualquier colo
         porDebajoDe(UMBRAL, anilloDe(club), SUPERFICIES),
         `El default de \`--anillo-foco\` del \`:root\` de styles.scss (hoy ${pct(ANILLO.pct)}) deja ` +
           `al usuario de teclado sin ver dónde está parado con un club ${nombre} (${club}), en la ` +
-          `plantilla A, en la C y en TODO el panel. El porcentaje es un TECHO, no un gusto: más ` +
+          `plantilla A, en la C y en el panel. El porcentaje es un TECHO, no un gusto: más ` +
           `porcentaje = más color crudo del club = menos contraste sobre superficie clara. Con ` +
           `estas seis paletas el máximo que aguanta es ${pct(TECHO)}. Bajalo, no bajes el umbral. ` +
           `Una cáscara cuya superficie NO es clara pisa el token en SU hoja, nunca acá.`,
