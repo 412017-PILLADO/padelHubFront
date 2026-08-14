@@ -13,10 +13,10 @@ import { LandingFooterComponent } from '../../club/landing-footer';
  * (`host: { class: 'poster' }`): los e2e siguen viendo `.poster`.
  *
  * No usa `<app-club-info>` ni `<app-brand-mark>`: la A tiene su propia versión bespoke de las dos
- * cosas (`.brand-logo`, `.info-block/.hours/.link-row`), que es justo lo que la distingue de B y C.
+ * cosas (`.brand-logo`, `.info-block/.hours/.link-row`), que es justo lo que la distingue del resto.
  * Se unifican en el Plan 2, cuando se pueda comparar el pixel.
  *
- * Los dos modales son transversales a las 3 plantillas y viven en `Landing`: la cáscara solo avisa
+ * Los dos modales son transversales a las plantillas y viven en `Landing`: la cáscara solo avisa
  * que hay que abrirlos — mismo contrato que ya usan `<app-booking-flow>` y `<app-landing-footer>`.
  *
  * No provee `ClubStore`: lo toma del injector de `Landing`, que es quien lo declara.

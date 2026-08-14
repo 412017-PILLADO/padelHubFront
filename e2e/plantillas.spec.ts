@@ -2,16 +2,17 @@ import { test, expect, Page, request as pwRequest } from '@playwright/test';
 import { API, elegirDiaYSlot } from './helpers';
 
 /**
- * Valida las 3 plantillas de landing (A poster, B hero centrado, C compacta app): que cada tenant
- * renderice SU layout y que el flujo de reserva (compartido por las 3) llegue al éxito en todas.
- * Corre contra tenants dedicados (acepadel/costapadel/urbanpadel) resueltos por subdominio
- * `<slug>.localhost`; si no existen (base recién reseteada) se provisionan acá por la API de
- * plataforma con la key de dev.
+ * Valida las 4 plantillas de landing (A poster, B hero centrado, C compacta app, E diurna): que cada
+ * tenant renderice SU layout y que el flujo de reserva (compartido por las 4) llegue al éxito en
+ * todas. Corre contra tenants dedicados (acepadel/costapadel/urbanpadel/solpadel) resueltos por
+ * subdominio `<slug>.localhost`; si no existen (base recién reseteada) se provisionan acá por la API
+ * de plataforma con la key de dev.
  */
 const PLANTILLAS = [
   { slug: 'acepadel', nombre: 'Ace Pádel', tpl: 'A', shell: '.poster' },
   { slug: 'costapadel', nombre: 'Costa Pádel', tpl: 'B', shell: '.tpl-b' },
   { slug: 'urbanpadel', nombre: 'Urban Pádel', tpl: 'C', shell: '.tpl-c' },
+  { slug: 'solpadel', nombre: 'Sol Pádel', tpl: 'E', shell: '.tpl-e' },
 ];
 
 test.beforeAll(async () => {
@@ -34,7 +35,7 @@ test.beforeAll(async () => {
   await ctx.dispose();
 });
 
-/** Completa los 5 pasos de reserva (el markup es idéntico en las 3 plantillas). */
+/** Completa los 5 pasos de reserva (el markup es idéntico en las 4 plantillas). */
 async function reservar(page: Page, phoneSuffix: string): Promise<void> {
   // 01 · Duración
   await expect(page.locator('.dur-chips .chip').first()).toBeVisible({ timeout: 15_000 });
@@ -88,6 +89,22 @@ for (const { slug, tpl, shell } of PLANTILLAS) {
         return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
       });
       expect(luminancia).toBeLessThan(0.2);
+    }
+
+    // E es la única con el panel montado A CABALLO del borde de abajo del campo de color (spec §6):
+    // esa es su firma, y hoy no la protege nadie. El contrato `--flow-*` mira que los tokens EXISTAN,
+    // no dónde caen: un `--e-solape: 0` dejaría toda la suite en verde y habría borrado la plantilla.
+    // Se mide la geometría real —no un token— porque lo que la firma afirma es que el borde del campo
+    // cae ADENTRO de la caja del vidrio, y eso sólo lo sabe el layout.
+    if (tpl === 'E') {
+      const solape = await page.evaluate(() => {
+        const campo = document.querySelector('.e-campo')!.getBoundingClientRect();
+        const vidrio = document.querySelector('.booking-flow')!.getBoundingClientRect();
+        return Math.round(campo.bottom - vidrio.top);
+      });
+      // 40 px es el PISO del `clamp(40px, 6vw, 68px)` de la cáscara, así que la aserción vale en
+      // cualquier ancho de viewport; por debajo, el panel dejó de estar montado sobre el color.
+      expect(solape).toBeGreaterThanOrEqual(40);
     }
 
     await reservar(page, `${tpl}${String(Date.now()).slice(-4)}`);

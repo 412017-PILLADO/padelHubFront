@@ -1,0 +1,190 @@
+/* ===================================================================
+   PLANTILLA E · Diurna — la hermana clara de B (spec §6): vidrio apoyado sobre el campo de color.
+   Comparte con B el par tipográfico y la idea del panel translúcido; cambia la hora del día.
+
+   El color del club entra igual que en B —como MASA y como LUZ— pero de día: la masa es el campo
+   saturado de arriba (el primario CRUDO, sin mezclar contra nada) y la luz es el radial del
+   secundario adentro de ese campo. Es el reparto de roles que la spec §6 le fija a E.
+
+   LA FIRMA (spec §6): UN SOLO panel de vidrio montado a caballo del borde de abajo del campo. El
+   vidrio no se pinta desde esta hoja —la caja del panel es la del `<app-booking-flow>`, que se viste
+   con los tokens `--flow-*` de `_tokens.scss`, que a su vez los saca de `_vidrio.scss`—: lo que esta
+   hoja aporta a la firma es la GEOMETRÍA, o sea `--e-solape`.
+   =================================================================== */
+/* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
+@use 'tokens';
+
+/* Capa 2 · la cáscara consume `--court` (capa 3) pero NUNCA lo declara (spec §5.1). */
+:host {
+  display: flex; flex-direction: column; min-height: 100svh;
+  background: var(--paper);
+  color: var(--ink);
+
+  /* Mismo trío que B (spec §6): Anton para display, Inter Tight para texto, JetBrains Mono para
+     datos. El <link> a Google Fonts lo pide el constructor de shell.ts (también en SSR), y como es
+     la misma URL que la de B las dos cáscaras comparten un solo <link>. */
+  --display: 'Anton', system-ui, sans-serif;
+  --body: 'Inter Tight', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /* Lo que la `.display` de plataforma (styles.scss) le pide a la familia, acá dicho para Anton —
+     mismos valores que B, por el mismo motivo. Los dos primeros son EJES de Archivo y Anton no
+     tiene ninguno (una sola cara, `wght@400`), así que pedirlos hace que el navegador los SINTETICE
+     y engorde una tipografía que ya viene condensada. El tercero es tracking: Anton viene muy
+     apretada y un pelo de aire la hace legible.
+     Van acá y no en un `::ng-deep .display`: los tokens BAJAN POR HERENCIA a todo el subárbol de la
+     cáscara, incluido el `<app-booking-flow>`, sin que esta hoja nombre el DOM de otro componente. */
+  --display-stretch: normal;
+  --display-weight: 400;
+  --display-tracking: 0.01em;
+
+  /* Cuánto del panel se monta SOBRE el campo. Un solo número, y es la firma de E: el panel queda
+     *a caballo* del borde inferior del color (spec §6), no apoyado debajo. Se usa dos veces y
+     siempre en pareja — el campo reserva esta altura de más abajo del título y `.e-panel` la sube
+     con un margen negativo del mismo valor—, así que mover el número mueve las dos mitades juntas.
+
+     El techo que tenía mientras el panel no era vidrio (quedarse por debajo del padding de arriba
+     del flujo, para que lo único montado sobre el color crudo fuera AIRE) ya no existe: ahora el
+     panel trae su propia superficie, así que lo que se apoya sobre `--court` es el VIDRIO y la tinta
+     del encabezado del flujo cae sobre él y no sobre el color. Medido con el club casi negro —el
+     peor caso—, el vidrio sobre el campo da ≈#cacaca y el `RESERVÁ TU CANCHA.` ahí arriba pasa 10:1.
+
+     El valor es el que hace que la firma se LEA: tiene que morder más que el padding de arriba del
+     flujo (20-40 px según el ancho) para que la franja montada se vea como vidrio sobre color y no
+     como un margen, y no tanto como para empujar el flujo fuera del fold en mobile. Los tres
+     números salen de mirar los cuatro anchos: 40 px de piso (360/390), 6vw en el medio y 68 px de
+     techo (1280), donde el campo tiene alto de sobra para regalar. */
+  --e-solape: clamp(40px, 6vw, 68px);
+
+  font-family: var(--body);
+}
+
+/* EL ANILLO DE FOCO DE E. Mismo mecanismo que la nocturna (`b-nocturna/shell.scss`) y por el mismo
+   motivo: el anillo lo declara una hoja global (`styles.scss`, `:focus-visible { outline: 2px solid
+   var(--court) }`), o sea el color del club CRUDO, y hay que pisarlo en descendientes que son otros
+   componentes. Dos cáscaras resolviendo el mismo problema de dos maneras distintas es peor que
+   cualquiera de las dos, así que esta regla es la de B con el polo dado vuelta.
+
+   POR QUÉ HACE FALTA. Las superficies de E son claras —el vidrio del panel (`#fcfcff`), `--surface`
+   (`#ffffff`) y el papel del pie (`#f4f6fb`)— y sobre ellas el color del club crudo desaparece
+   cuando el club es CLARO. Medido tabulando de verdad las 22 paradas de la landing, con el anillo de
+   plataforma:
+
+     club            vidrio   --surface   papel     veredicto
+     teal #0a8a99     4,01      4,11      3,80      pasa
+     fucsia #FF2D95   3,38      3,46      3,20      pasa
+     casi negro #111 18,44     18,88     17,46      pasa
+     naranja #f89625  2,19      2,24      2,07      NO PASA  ← es el club real del demo
+     amarillo #FFD400 1,40      1,43      1,32      NO PASA
+
+   Es la imagen espejada de lo que le pasaba a B: allá el club casi NEGRO dejaba un halo negro sobre
+   el telón oscuro (1,02:1); acá el club claro deja un halo claro sobre el papel. Por eso el polo de
+   la mezcla también está espejado: B aclara hacia `#fff`, E oscurece hacia `#000`.
+
+   EL 55% ES UN TECHO, NO UN GUSTO. Con alfa 1 sobre `--surface` (`#ffffff`, la superficie más clara
+   del producto) el peor club posible es el BLANCO: `color-mix(#fff N%, #000)` llega a 3:1 recién con
+   N ≤ 58,4%. 55% es ese techo redondeado hacia abajo, y da 3,35:1 con un club casi blanco, 4,52 con
+   el amarillo y 9,7 con el teal. Subirlo por encima de 58% deja otra vez sin foco a los clubes
+   claros; bajarlo apaga el matiz del club sin necesidad.
+
+   SÓLO EL COLOR. `outline-offset` NO es parte del shorthand `outline`, así que esta regla no lo
+   toca: el offset sigue siendo el 3px de plataforma. B además lo baja a 2px; acá no hay motivo
+   medido para hacerlo, y cambiar geometría en un audit de contraste sería cambiar de más.
+
+   LA ISLA CLARA DEL DATEPICKER NO ES UN RIESGO EN E, y esto es lo único que se lee distinto que en
+   B. Allá el anillo se aclara, así que sobre el panel BLANCO de PrimeNG (que `.cal.open` monta
+   adentro del host) haría lo contrario de lo correcto, y B depende de que el `:focus-visible` propio
+   de PrimeNG gane el empate de especificidad por orden de carga. Acá el anillo se OSCURECE: sobre
+   blanco es exactamente la dirección correcta, así que gane quien gane el empate, E queda bien. */
+:host ::ng-deep :focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--court) 55%, #000);
+}
+
+/* EL CAMPO. El color del club a plena saturación, con el secundario como luz radial (spec §6, rol
+   del color en E). No es decorado: es lo que le da sustancia al vidrio del panel. Sobre blanco
+   plano un blur no tiene nada que difuminar —por eso la B vieja se veía lavada— así que ninguna
+   plantilla del producto usa vidrio sobre papel liso; B pone noche debajo y E pone este campo.
+
+   El primario va CRUDO, sin mezclar contra ninguna base: la masa de E es el color del club tal cual
+   lo eligió, y eso es lo que hace que el white-label se lea de lejos (un club naranja da una
+   plantilla naranja). El radial es el secundario al 55% arriba a la derecha, o sea luz que cae
+   sobre la masa y no un segundo bloque; si el club no cargó secundario cae al primario y el campo
+   queda plano a propósito, que es la degradación correcta — no inventa un segundo color.
+
+   La tinta la decide la capa 3 con `--ink-on-accent`, calculada por contraste contra el color del
+   club (core/branding/tenant-colors.ts): blanco o la tinta oscura del sistema, lo que se lea. La
+   cáscara NO decide nada acá, y no hay ningún condicional por club — con eso alcanza también para
+   un primario claro. El `#fff` es sólo el default de antes de que corra el branding. */
+.e-campo {
+  /* El aire de abajo lleva el solape sumado: es la franja de color que el panel va a morder, así
+     que el título no se le acerca aunque el panel suba. */
+  padding: clamp(18px, 4vw, 34px) clamp(16px, 5vw, 40px)
+           calc(clamp(22px, 4vw, 40px) + var(--e-solape));
+  background:
+    radial-gradient(70% 90% at 78% 8%,
+      color-mix(in srgb, var(--court-2, var(--court)) 55%, transparent), transparent 70%),
+    var(--court);
+  color: var(--ink-on-accent, #fff);
+}
+.e-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/* Una sola línea: el nombre largo se recorta (como en B, no baja de renglón como en C). */
+/* Ni acá ni en `.e-title` hay `color`: los dos heredan la tinta que `.e-campo` sacó de
+   `--ink-on-accent`. Poner `var(--ink)` (que es lo que decía el andamio) los ataría a la tinta de
+   la PLATAFORMA, que se calculó contra papel claro y no contra el color del club: sobre un campo
+   oscuro desaparecen. */
+/* 1.5rem = 24px, y el 24 NO es estético: es el umbral de "texto grande" de WCAG (18pt), que es lo
+   que decide contra qué se mide este renglón.
+   El nombre del club cae sobre `--court` CRUDO, así que su tinta es `--ink-on-accent` y su techo lo
+   fija el matiz del club. Con el teal de plataforma (#0a8a99), `--ink-on-accent` vale blanco y da
+   **4,11:1**, y no hay nada que subir del lado del color sin salirse de la capa 3.
+
+   PRECISIÓN QUE IMPORTA, porque el número invita a leerlo mal: 4,11 es el techo de LA TINTA QUE
+   `inkOnAccent` ELIGE, no el techo físico del teal. Sobre el teal crudo la tinta oscura (#11162b)
+   da **4,35**, mejor que el blanco; `decidirTinta` igual elige blanco porque puntúa el PEOR de los
+   dos extremos del gradiente —`--court` y `--court-deep`— y en el extremo oscuro la tinta oscura se
+   cae a 3,13 (blanco: 4,11 y 5,71, o sea peor caso 4,11 contra 3,13). El campo de E **nunca pinta
+   `--court-deep`**: es el primario crudo más el radial del secundario, así que una tinta calculada
+   sólo para esta superficie llegaría a 4,35. **Seguiría por debajo de 4,5**, o sea que el arreglo por
+   cuerpo hace falta igual — pero si alguien alguna vez agrega una tinta específica de superficie
+   plana, el número a superar es 4,35, no 4,11.
+
+   A 17,92px, que es lo que medía, eso es texto chico y AA pide 4,5: no llegaba, y la palanca no era
+   la cuenta sino el cuerpo. A 24px el que aplica es el 3:1 de texto grande, y 4,11 lo pasa con
+   margen. Los otros cuatro clubes medidos pasan holgado en las dos
+   escalas (fucsia 5,17 · amarillo 12,50 · casi negro 18,88 · naranja 7,99): el único que obligaba
+   era el teal, que es justo el color por defecto del producto.
+   Bajar este número por debajo de 24 vuelve a poner el umbral en 4,5 y deja al teal afuera;
+   `contraste.spec.ts` lee el valor de esta hoja y falla si pasa. */
+.e-brandname { min-width: 0; font-size: 1.5rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Sin `letter-spacing` propio: el que vale es el `--display-tracking` del `:host`, así E tiene un
+   solo tracking de display. Declararlo acá le ganaría al token y lo partiría en dos. */
+.e-title { margin-top: clamp(10px, 2vw, 18px); font-size: clamp(1.9rem, 6vw, 3.4rem);
+  line-height: 1.02; }
+
+/* UN solo panel (contrato §6.1), montado A CABALLO del borde de abajo del campo: sube `--e-solape`
+   sobre el color y el resto cae sobre el papel. Es la firma de E, y por eso el panel es más angosto
+   que el campo — el color tiene que verse a los dos lados de la franja montada, si no el panel
+   parece una banda más y no algo apoyado encima.
+
+   El margen negativo se apoya en el orden del documento: el panel es hermano POSTERIOR del campo,
+   así que se pinta encima sin necesidad de `position`/`z-index`. El `backdrop-filter` del vidrio
+   difumina justo esa franja de color: eso es lo que hace que la mitad montada se lea como vidrio
+   sobre color y no como un recorte del campo.
+
+   Sin padding de arriba propio: el aire de adentro del panel lo pone `--flow-padding` (ver
+   `_tokens.scss`), que vive del lado correcto del borde del vidrio. Si acá hubiera padding, el
+   solape tendría que descontarlo y serían dos números en vez de uno. */
+.e-panel { width: 100%; max-width: 880px; margin: calc(var(--e-solape) * -1) auto 0;
+  padding: 0 clamp(12px, 4vw, 24px); }
+.e-book { scroll-margin-top: 16px; }
+/* Lo que E le pinta al flujo lo declara `_tokens.scss` como tokens --flow-*: ninguna regla de esta
+   cáscara apunta al DOM del `<app-booking-flow>`. */
+
+.e-info { width: 100%; max-width: 1000px; margin: 0 auto;
+  padding: clamp(24px, 4vw, 44px) clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px;
+  scroll-margin-top: 16px; }
+
+.e-foot { margin-top: auto; padding: 20px clamp(16px, 5vw, 40px);
+  border-top: 1px solid var(--line); color: var(--ink-dim); }

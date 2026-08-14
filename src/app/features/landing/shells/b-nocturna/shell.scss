@@ -51,6 +51,21 @@
   --body: 'Inter Tight', system-ui, sans-serif;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
 
+  /* Lo que la `.display` de plataforma (styles.scss) le pide a la familia, acá dicho para Anton.
+     Los dos primeros son EJES de Archivo y Anton no tiene ninguno —es una sola cara, `wght@400`
+     (ver EJES_POR_FAMILIA en plantillas.ts, que le pide 400 porque no hay otra)—, así que pedirlos
+     no es gratis: el navegador los SINTETIZA, estira los glifos y los engorda por su cuenta, y en
+     una tipografía que ya es condensada de fábrica eso cierra los contrapunzones y escala con el
+     tamaño. El tercero es tracking, no un eje: Anton viene muy apretada y un pelo de aire la hace
+     legible, sobre el telón oscuro todavía más (el texto claro sobre fondo oscuro "engorda"
+     ópticamente y cierra los blancos internos).
+     Van acá y no en un `::ng-deep .display`: los tokens BAJAN POR HERENCIA a todo el subárbol de la
+     cáscara, incluido el `<app-booking-flow>`, sin que esta hoja tenga que nombrar el DOM de otro
+     componente. Antes esto costaba una excepción de encapsulación; ahora no cuesta ninguna. */
+  --display-stretch: normal;
+  --display-weight: 400;
+  --display-tracking: 0.01em;
+
   min-height: 100svh; display: flex; flex-direction: column;
   font-family: var(--body);
   color: var(--ink);
@@ -71,42 +86,6 @@
     var(--paper);
   background-attachment: fixed;
 }
-/* La `.display` de plataforma (styles.scss) está escrita para **Archivo**, que es variable en dos
-   ejes, y le pide los dos: `font-stretch: 125%` (eje `wdth`) y `font-weight: 800` (eje `wght`).
-   Anton no tiene ninguno de los dos — es una sola cara, `wght@400` (ver EJES_POR_FAMILIA en
-   plantillas.ts, que le pide 400 porque no hay otra). Cuando la cara pedida no existe el navegador
-   la **sintetiza**: estira los glifos en horizontal y los engorda por su cuenta. En una tipografía
-   que ya es condensada de fábrica eso cierra los contrapunzones, y escala con el tamaño. Acá se
-   anulan las dos síntesis, para el subárbol de B nada más.
-
-   Por qué `::ng-deep`: dentro de B, `.display` la emiten DOS componentes — `booking-flow.html`
-   (encabezado del flujo y título de la pantalla de éxito) y esta misma cáscara (marca de la nav y
-   título del héroe). `club-info` y `landing-footer` no emiten ninguna. O sea que la alternativa
-   encapsulada cuesta UNA hoja ajena: `:host-context(.tpl-b) .display` dentro de booking-flow.scss,
-   que es el patrón por cáscara que el repo ya usa (club-info.scss, landing-footer.scss).
-
-   No se tomó por una razón concreta, no por costo: booking-flow.scss hoy no tiene **un solo**
-   selector `.tpl-*`, y eso no es casualidad — es una invariante que un plan anterior consiguió a
-   propósito vistiendo el flujo con los tokens `--flow-*`, y que está escrita en el header de
-   booking-flow.scss y en el docblock de shell.ts. Meter `:host-context(.tpl-b)` ahí la rompe y
-   obliga a desmentir esos dos comentarios. Entre reintroducir selectores de plantilla en la hoja
-   del flujo o usar la excepción de encapsulación que la spec ya acepta para `.politica-link`
-   (`:host ::ng-deep` en landing.scss), se eligió la segunda — acotada con `:host`, así que no se
-   escapa de B. Es la segunda excepción del producto: si la review prefiere pagar la invariante,
-   mover esto es un cambio de tres líneas. */
-:host ::ng-deep .display {
-  font-stretch: normal;    /* Archivo: eje wdth. Anton no lo tiene → estirado sintético. */
-  font-weight: 400;        /* Archivo: eje wght. Anton es una sola cara → negrita sintética. */
-  /* Anton viene muy condensada de fábrica: un pelo de aire la hace legible, y sobre el telón oscuro
-     todavía más (el texto claro sobre fondo oscuro "engorda" ópticamente y cierra los blancos
-     internos). Esto alcanza TAMBIÉN al título del héroe: `.b-title` empata en
-     especificidad con esta regla y está más abajo en la hoja, así que le ganaba con su propio
-     `letter-spacing` — se le borró la declaración justamente para que no haya dos trackings de
-     display en la misma cáscara. Si alguna regla de más abajo vuelve a declarar `letter-spacing`,
-     va a ganar: es un empate resuelto por orden, no por especificidad. */
-  letter-spacing: 0.01em;
-}
-
 /* El anillo de foco de plataforma (`styles.scss:131`) es `2px solid var(--court)`: el color del club
    CRUDO. Sobre papel claro eso siempre se ve; sobre el telón nocturno no. Medido con los cinco
    clubes extremos, contra la peor de las cuatro superficies de B (papel, superficie, vidrio del
@@ -127,8 +106,8 @@
    club (fucsia da rosa, teal da celeste), sólo que subido hasta donde la superficie oscura lo deja
    ver. Un anillo blanco fijo habría sido más simple y habría borrado la marca.
 
-   TERCERA excepción de encapsulación del producto, después de `.politica-link` (landing.scss) y del
-   `.display` de acá arriba: el foco lo declara una hoja GLOBAL y hay que pisarlo en descendientes
+   SEGUNDA (y última) excepción de encapsulación del producto, junto con `.politica-link`
+   (landing.scss): el foco lo declara una hoja GLOBAL y hay que pisarlo en descendientes
    que son otros componentes (el flujo, las tarjetas de info, el pie). Acotada con `:host`, así que
    no se escapa de B, y no nombra ninguna plantilla adentro del subárbol del flujo. Los dos modales
    (arrepentimiento y política) y la pill del preview cuelgan de `<app-landing>`, NO de esta cáscara:
@@ -138,7 +117,7 @@
    contrario de lo correcto: el popover del calendario. `booking-flow.html:52-53` monta el
    `<p-datepicker [inline]>` DENTRO de `.cal.open` (sin `appendTo="body"`), o sea colgando de esta
    cáscara, y su panel es blanco puro — los componentes de PrimeNG se pintan sobre superficies claras
-   del sistema en las tres plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre
+   del sistema en todas las plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre
    blanco, este anillo mediría 2,25:1 con teal, 2,30 con fucsia y 1,26 con amarillo: tres de cinco
    clubes por debajo de 3:1.
 
@@ -217,18 +196,20 @@
      oculto.
    · TRACKING — el `-0.02em` venía de cuando el display era Archivo (expandida). Anton ya es muy
      condensada de fábrica y encima el texto claro sobre fondo oscuro "engorda" ópticamente, así que
-     el negativo cerraba los contrapunzones. Se borra la declaración en vez de reescribirla: sin
-     ella gana el `+0.01em` de `:host ::ng-deep .display`, y B pasa a tener UN solo tracking de
-     display para nav, héroe y panel. */
+     el negativo cerraba los contrapunzones. Se borró la declaración en vez de reescribirla, y por
+     eso acá no hay `letter-spacing`: el que vale es el `+0.01em` del token `--display-tracking` del
+     `:host`, y B tiene UN solo tracking de display para nav, héroe y panel. Ojo con volver a
+     declararlo acá: `.b-title` es más específico que la `.display` global, así que le ganaría al
+     token y partiría el tracking de la cáscara en dos. */
 .b-title { font-size: clamp(1.6rem, 3.4vw, 2.6rem); line-height: 1.05; color: var(--ink); }
 .b-lede { margin: 8px auto 0; max-width: 42ch; color: var(--ink-dim); font-size: clamp(0.88rem, 1.6vw, 0.98rem); }
 
 .b-book { width: 100%; max-width: 880px; margin: 0 auto;
   padding: clamp(8px, 3vw, 28px) clamp(16px, 4vw, 24px) clamp(24px, 4vw, 40px); scroll-margin-top: 76px; }
 /* El vidrio del flujo NO se pinta desde acá: lo declara `_tokens.scss` como tokens --flow-*, que
-   el flujo lee desde su propia hoja (encapsulada). La ÚNICA regla de esta cáscara que apunta al DOM
-   del `<app-booking-flow>` es el `:host ::ng-deep .display` de arriba, que anula las síntesis de
-   ancho y peso de Anton; el porqué de esa excepción está documentado ahí. */
+   el flujo lee desde su propia hoja (encapsulada). La tipografía del display tampoco: viaja por
+   herencia con los tokens --display-* del `:host`. La ÚNICA regla de esta cáscara que apunta al DOM
+   del `<app-booking-flow>` es el `:host ::ng-deep :focus-visible` de arriba. */
 
 .b-info { width: 100%; max-width: 1000px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 24px) clamp(28px, 5vw, 52px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; scroll-margin-top: 76px; }

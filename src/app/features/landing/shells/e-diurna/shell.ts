@@ -10,14 +10,14 @@ import { ClubInfoComponent } from '../../club/club-info';
 import { LandingFooterComponent } from '../../club/landing-footer';
 
 /**
- * Cáscara de la plantilla B (hero centrado sobre vidrio translúcido): nav con la marca, héroe,
- * el flujo de reserva y la info del club en tarjetas.
+ * Cáscara de la plantilla E (diurna): la hermana clara de B (spec §6). Campo de color arriba con la
+ * marca y el título, y UN solo panel debajo con el flujo de reserva — un panel y no varias cards es
+ * la primera línea del contrato §6.1, que la separa de C.
  *
- * El `<div class="tpl-b">` que envolvía todo en `landing.html` es ahora el host (`host: { class }`):
- * los e2e siguen viendo `.tpl-b`, y `club-info.scss` la sigue usando como ancestro
- * (`:host-context(.tpl-b)`). El flujo de reserva ya NO: `booking-flow.scss` no tiene un solo
- * selector `.tpl-*` desde que se lo viste con los tokens `--flow-*` que declara `_tokens.scss` de
- * esta cáscara.
+ * El campo de arriba lleva el primario del club CRUDO con el secundario como luz radial, y el panel
+ * se le monta a caballo del borde de abajo (`--e-solape` en shell.scss): esa franja de vidrio sobre
+ * color es la firma de la plantilla. El vidrio no lo pinta la cáscara — lo declara `_tokens.scss`
+ * como tokens `--flow-*` que el `<app-booking-flow>` consume.
  *
  * Los dos modales son transversales a las plantillas y viven en `Landing`: la cáscara solo avisa
  * que hay que abrirlos — mismo contrato que ya usan `<app-booking-flow>` y `<app-landing-footer>`.
@@ -25,15 +25,15 @@ import { LandingFooterComponent } from '../../club/landing-footer';
  * No provee `ClubStore`: lo toma del injector de `Landing`, que es quien lo declara.
  */
 @Component({
-  selector: 'app-shell-b',
+  selector: 'app-shell-e',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [BookingFlowComponent, BrandMarkComponent, ClubInfoComponent, LandingFooterComponent],
   templateUrl: './shell.html',
   styleUrl: './shell.scss',
-  host: { class: 'tpl-b' },
+  host: { class: 'tpl-e' },
 })
-export class ShellBComponent {
+export class ShellEComponent {
   private readonly club = inject(ClubStore);
   private readonly doc = inject(DOCUMENT);
 
@@ -43,13 +43,10 @@ export class ShellBComponent {
   readonly tenantNombre = this.club.tenantNombre;
 
   constructor() {
-    // Primera cáscara con par tipográfico propio (spec §6.2), y por eso la primera que enchufa
-    // `cargarFuentes()`: hasta acá ninguna hoja del repo referenciaba las familias del registry, así
-    // que inyectar sólo agregaba peso. B sí las usa — shell.scss declara --display/--body/--mono con
-    // Anton/Inter Tight/JetBrains Mono.
-    // Corre también en SSR (el DOCUMENT inyectado se serializa), así que el HTML que sale del server
-    // ya pide la tipografía de B y la plantilla no parpadea con la fuente de plataforma hasta que
-    // hidrata. `cargarFuentes` es idempotente por URL: al hidratar no duplica el <link> del server.
-    cargarFuentes(this.doc, urlFuentes(PLANTILLAS.B.fuentes));
+    // E reusa el trío de B (spec §6, pineado en plantillas.spec.ts), así que esto no agrega fuentes
+    // al producto: `cargarFuentes` es idempotente por URL y las dos cáscaras comparten un solo
+    // <link> sin coordinarse. Corre también en SSR (el DOCUMENT inyectado se serializa), así que el
+    // HTML del server ya pide la tipografía de E y no parpadea con la de plataforma al hidratar.
+    cargarFuentes(this.doc, urlFuentes(PLANTILLAS.E.fuentes));
   }
 }

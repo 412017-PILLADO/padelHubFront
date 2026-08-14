@@ -85,7 +85,8 @@ describe('LandingFooterComponent · links del pie', () => {
    * Las tres copias del pie eran idénticas SALVO dos clases que solo usa la plantilla A: `cr` en el
    * © y `panel-link` en el link al panel (`.pb-foot .cr` / `.pb-foot .panel-link` les dan su color,
    * y en desktop el `order` que pone el © debajo de los links). El pie unificado las lleva siempre:
-   * en B y C no casa ninguna regla, pero si se caen, el afiche cambia de aspecto en silencio — no
+   * en las demás cáscaras no casa ninguna regla, pero si se caen, el afiche cambia de aspecto en
+   * silencio — no
    * hay e2e que lo note, porque es puramente cosmético.
    */
   it('el © lleva la clase `cr` que la plantilla A necesita para pintarlo', () => {

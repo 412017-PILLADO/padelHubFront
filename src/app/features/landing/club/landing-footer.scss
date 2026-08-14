@@ -1,6 +1,10 @@
-/* Lo que las tres cáscaras tenían en común. El resto (margen, padding, borde, color de fondo y
+/* Lo que todas las cáscaras tienen en común. El resto (margen, padding, borde, color de fondo y
    lugar en el layout) lo pone cada cáscara en SU hoja (ver shells/) sobre `.pb-foot` / `.b-foot` /
-   `.c-foot`, que son clases del host y por lo tanto le siguen llegando desde afuera. */
+   `.c-foot` / `.e-foot`, que son clases del host y por lo tanto le siguen llegando desde afuera.
+
+   Los COLORES, en cambio, viven acá abajo, un bloque `:host(.X-foot)` por cáscara: son lo único del
+   pie que se puede medir contra la superficie de cada plantilla, y por eso ninguno se hereda ni se
+   comparte. Cáscara nueva = bloque nuevo; sin él, los dos `<button>` del pie salen negro puro. */
 :host {
   display: flex;
   justify-content: space-between;
@@ -45,6 +49,13 @@
 :host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
 :host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
 :host(.c-foot) .politica-link:hover { color: var(--court-deep); }
+/* El © es lo ÚNICO del pie de C que se quedaba con el `--ink-faint` que `.c-foot` (shell.scss) le
+   pone a todo el pie: los links ya lo pisan con `--ink-dim` acá arriba. Y `--ink-faint` sobre el
+   papel de C da 2,43:1 medido en el navegador — abajo de AA a CUALQUIER ancho, no sólo en mobile
+   (donde el `opacity` de más abajo lo hundía hasta 1,65:1). Pasa a `--ink-dim`, que da 5,73:1: el
+   mismo camino que ya había tomado el pie de la B (ver `.b-foot` en b-nocturna/shell.scss). La
+   jerarquía contra los links no la da el color sino el tamaño (0,7rem) y la mono. */
+:host(.c-foot) .cr { color: var(--ink-dim); }
 
 /* B es la plantilla oscura: el hover sube de `--ink-dim` a la tinta PLENA, que es lo que hace de
    "encendido" en esta cáscara (mismo criterio que `.ic-link` en club-info.scss y que
@@ -66,10 +77,65 @@
 :host(.b-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
 :host(.b-foot) .politica-link:hover { color: var(--ink); }
 
+/* ── PLANTILLA E · diurna: mismo papel que la C debajo, y aun así NO es la C ──
+   El pie de E cae sobre `--paper` (`#f4f6fb`): `.e-foot` no declara fondo y el `:host` de la
+   cáscara es `background: var(--paper)`, o sea el MISMO fondo que el pie de la C. Aun así este
+   bloque no es una copia del de la C, y las dos diferencias salen de medir, no del gusto.
+
+   SIN ESTE BLOQUE, `.arrep-link` Y `.politica-link` SALEN NEGRO PURO. Los dos son `<button>` y la
+   UA les pone `color: buttontext` SOBRE EL ELEMENTO, que le gana al `color: var(--ink-dim)` que
+   `.e-foot` les pasa por herencia; el © y el link del panel se salvan porque heredan de verdad.
+   Medido a 360 y a 1280 con los seis clubes: `rgb(0,0,0)` al lado de un © `#5a6172`. No es una
+   falla de AA (negro sobre el papel da 14,2:1 con el `opacity` puesto) — es el control legalmente
+   obligatorio (Res. 424/2020) dibujado más pesado que todo el resto del pie, y sin hover de color.
+   (El `font-family` NO hace falta acá: `styles.scss` ya trae `button { font: inherit }` y los dos
+   botones computan la Inter Tight de E. Las otras tres lo declaran igual; es redundante en todas.)
+
+   DIFERENCIA 1 · `opacity: 1`. El `.arrep-link` base trae `opacity: 0.85` (y `.politica-link` el
+   suyo, desde `landing.scss`), y la opacidad no es una tinta: compuesta contra el papel, hunde
+   `--ink-dim` de 5,73:1 a **4,13:1**, o sea abajo de AA para 12,48 px. Es exactamente lo que le
+   pasa hoy al `.arrep-link` de la C —conocido y fuera del alcance de este arreglo—, así que copiar
+   ese bloque tal cual habría estrenado E con la misma falla. Con `opacity: 1` la tinta es la que
+   dice el color y se puede medir: 5,73:1, el mismo número que el © de al lado.
+
+   DIFERENCIA 2 · el hover NO es `--court-deep`. Es la misma lección que la B dejó escrita más
+   arriba, con el polo dado vuelta: en una cáscara clara el color del club OSCURECIDO tampoco
+   alcanza cuando el club es claro. Medido sobre `--paper` con los cinco extremos de
+   `e-diurna/contraste.spec.ts` más el naranja real del demo:
+
+     club                --court-deep   mix(--court 40%, --ink)   mix(--court 30%, --ink)
+     teal #0a8a99            5,28              9,74                     11,39
+     fucsia #FF2D95          4,56              9,60                     11,46
+     amarillo #FFD400        1,99              5,62                      7,60
+     casi negro #111111     17,86             16,96                     16,86
+     casi blanco #ffffff     1,41              4,35                      6,15
+     naranja #f89625         3,03              7,34                      9,31
+                             ↑ 4 de 6 abajo    ↑ el casi blanco no      ↑ los seis pasan
+                               de AA (4,5)       llega a AA               y los seis SUBEN
+
+   O sea que `--court-deep` no es un caso borde acá: con cuatro de los seis clubes el hover
+   contrasta MENOS que el estado normal (5,73), que es el mismo síntoma por el que la B se separó
+   de la C. La receta que sí sirve es la que E ya usa para `--flow-soft-ink-accent`: el acento
+   arrimado a la tinta de la plantilla hasta que se lea.
+
+   EL 30% ES UN TECHO, NO UN GUSTO. El club que manda es el casi blanco, y lo que ata no es AA
+   (aguanta hasta 38%) sino la regla de la casa de que el hover tiene que SUBIR contra el estado
+   normal: a 31% da 5,94 y a 32% ya cae a 5,73, que es empatar. 30% es ese techo redondeado hacia
+   abajo. Y sigue siendo el color del club, no la tinta pelada: con fucsia da `#581d4b` y con teal
+   `#0f394c`. */
+:host(.e-foot) a { color: var(--ink-dim); text-decoration: none; }
+:host(.e-foot) a:hover { color: color-mix(in srgb, var(--court) 30%, var(--ink)); }
+:host(.e-foot) .arrep-link { color: var(--ink-dim); opacity: 1; }
+:host(.e-foot) .arrep-link:hover { color: color-mix(in srgb, var(--court) 30%, var(--ink)); }
+:host(.e-foot) .politica-link { color: var(--ink-dim); opacity: 1; }
+:host(.e-foot) .politica-link:hover { color: color-mix(in srgb, var(--court) 30%, var(--ink)); }
+/* El © no lleva regla: `.e-foot` (e-diurna/shell.scss) le pone `--ink-dim` a todo el pie y el
+   `<span>` lo hereda — 5,73:1 sobre el papel, a los dos anchos. Es lo que el Task 4 dejó pago. */
+
 /* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
    mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada
    contra el ancho angosto de la columna afiche (que partía el © en 2 líneas y apilaba los links).
-   Solo toca la A; B y C ya se ven bien en una línea, quedan como están. */
+   Solo toca la A; las demás ya se ven bien en una línea, quedan como están. */
 @media (min-width: 900px) {
   :host(.pb-foot) .foot-links {
     order: 1;
@@ -90,7 +156,7 @@
 
 /* Mobile (feedback owner, M-mobile-plantillas): los links en una fila centrada con wrap (con un
    punto medio de separador entre ellos) y el © debajo, centrado, chico y apagado. Mismo criterio
-   en las 3 plantillas. */
+   en todas las plantillas. */
 @media (max-width: 899px) {
   :host {
     flex-direction: column;
@@ -103,10 +169,16 @@
     justify-content: center;
     width: 100%;
   }
+  /* Acá vivía `opacity: 0.6`, que es lo que dejaba al © abajo de AA en las TRES plantillas (medido
+     a 390px sobre los tenants reales: A 3,21:1 · B 4,09:1 · C 1,65:1). La opacidad no es una tinta:
+     multiplica el contraste que el color ya tenía, así que hunde por igual a la A sobre el afiche
+     del club, a la B sobre el telón y a la C sobre el papel, y no se puede medir sin componerla a
+     mano contra el fondo. Secundario no es ilegible: la jerarquía contra los links la siguen dando
+     el tamaño (0,7rem contra 0,78rem) y la mono, y el color lo pone cada plantilla allá arriba —
+     que es donde se puede medir. Es el mismo criterio con el que ya se veía el © en desktop. */
   .foot-copy {
     order: 2;
     font-size: 0.7rem;
-    opacity: 0.6;
   }
   .foot-links > *:not(:first-child) {
     position: relative;

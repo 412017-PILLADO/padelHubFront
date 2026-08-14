@@ -28,6 +28,19 @@
   --body: 'Hanken Grotesk', system-ui, sans-serif;
   --mono: 'Space Mono', ui-monospace, monospace;
 
+  /* Lo que `.display` le pide a la familia de display, en tokens en vez de hardcodeado. Una cáscara
+     que cambia `--display` los pisa en su propio `:host` — NO neutraliza la clase global con
+     `::ng-deep`, que era el patrón viejo y costaba una excepción de encapsulación por plantilla.
+     Los dos primeros son EJES de Archivo, que es variable en ancho y en peso. Una familia que no
+     los tiene (Anton es una sola cara, `wght@400`) no los ignora: el navegador los SINTETIZA
+     —estira los glifos en horizontal y engorda los trazos por su cuenta—, lo que cierra los
+     contrapunzones de una condensada y encima escala con el tamaño.
+     El tercero no es un eje sintetizado, pero es el mismo problema: el tracking correcto depende de
+     la familia. Archivo expandida quiere un negativo que la compacte; una condensada quiere aire. */
+  --display-stretch: 125%;      /* eje de ancho variable: jersey/atlético */
+  --display-weight: 800;
+  --display-tracking: -0.01em;
+
   /* — Forma / ritmo — */
   --r: 6px;                /* radius chico, recto-deportivo */
   --r-lg: 14px;
@@ -65,13 +78,14 @@ body {
   overflow-x: hidden;
 }
 
-/* — Display athletic: Archivo expandida — */
+/* — Display athletic: Archivo expandida por defecto, pero los valores propios de la familia salen
+     de los tokens de arriba, así una cáscara con otra familia los pisa desde su `:host`. — */
 .display {
   font-family: var(--display);
-  font-stretch: 125%;            /* eje de ancho variable: jersey/atlético */
-  font-weight: 800;
+  font-stretch: var(--display-stretch);
+  font-weight: var(--display-weight);
   line-height: 0.92;
-  letter-spacing: -0.01em;
+  letter-spacing: var(--display-tracking);
   text-transform: uppercase;
 }
 

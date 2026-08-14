@@ -39,12 +39,34 @@ export const CODIGOS_PLANTILLA: readonly CodigoPlantilla[] =
   Object.keys(PLANTILLAS) as CodigoPlantilla[];
 
 /**
- * Códigos que hoy tienen cáscara propia en `features/landing/shells/`. El catálogo lista las cinco
- * porque el back ya acepta las cinco, pero las cáscaras de D y E llegan en el Plan 2: hasta
- * entonces `shellDePlantilla()` las manda a la A. Cuando existan, esta lista se borra y todo el
- * mundo pasa a usar `CODIGOS_PLANTILLA`.
+ * Códigos que hoy tienen cáscara propia y en qué carpeta de `features/landing/shells/` vive cada
+ * una. El catálogo lista las cinco porque el back ya acepta las cinco, pero la cáscara de D todavía
+ * no existe: hasta entonces `shellDePlantilla()` la manda a la A.
+ *
+ * Es un MAPA y no una lista suelta porque el nombre de la carpeta hacía falta en dos lugares y
+ * estaba escrito a mano en los dos: `plantillas.spec.ts` (que va a leer la hoja de cada cáscara para
+ * pinear su `esquema`) y `booking/contrato-flow.spec.ts` (la puerta del contrato `--flow-*`). Una
+ * cáscara nueva que no se agregaba a mano en el segundo quedaba SIN VERIFICAR con la suite entera en
+ * verde — justo el modo de falla que esa puerta existe para matar. Ahora los dos derivan de acá y no
+ * hay nada que sincronizar: alta de cáscara = un renglón en este mapa.
  */
-export const CODIGOS_CON_SHELL: readonly CodigoPlantilla[] = ['A', 'B', 'C'];
+export const DIR_SHELL = {
+  A: 'a-afiche',
+  B: 'b-nocturna',
+  C: 'c-tarjeta',
+  E: 'e-diurna',
+} as const satisfies Partial<Record<CodigoPlantilla, string>>;
+
+/** Un código que hoy tiene cáscara. Tiparlo así deja indexar `DIR_SHELL` sin castear ni chequear. */
+export type CodigoConShell = keyof typeof DIR_SHELL;
+
+/**
+ * Los códigos del mapa de arriba, en orden de declaración. Lo consumen el dispatcher
+ * (`shellDePlantilla`), el selector del preview de venta y el `?plantilla=` del ClubStore. Cuando
+ * las cinco plantillas tengan cáscara, esto y `CODIGOS_PLANTILLA` pasan a ser lo mismo.
+ */
+export const CODIGOS_CON_SHELL: readonly CodigoConShell[] =
+  Object.keys(DIR_SHELL) as CodigoConShell[];
 
 /** Normaliza a un código válido; cualquier cosa rara cae en la plantilla por defecto. */
 export function normalizarPlantilla(v: string | null | undefined): CodigoPlantilla {
@@ -108,7 +130,8 @@ export function urlFuentes(fuentes: readonly string[]): string {
 
 /**
  * Familias del sistema de diseño de plataforma: las que declaran `--display`/`--body`/`--mono` en
- * styles.scss y de las que viven marketing, el panel y las tres plantillas de landing. Hoy
+ * styles.scss y de las que viven marketing, el panel y las plantillas de landing que no declaran
+ * un par tipográfico propio (hoy A, C y D; B y E sí lo declaran, en su `:host`). Hoy
  * coinciden con las de la plantilla A, pero se listan aparte a propósito: si la A cambia de
  * tipografía en el rediseño, la plataforma no tiene por qué seguirla.
  *

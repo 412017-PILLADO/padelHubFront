@@ -1,0 +1,26 @@
+<!-- El campo de color: la banda superior donde vive la marca y el título, pintada con el primario
+     del club a plena saturación más el radial del secundario (ver `.e-campo` en shell.scss). El
+     panel de abajo se le monta a caballo del borde inferior: esa franja es la firma de E. -->
+<header class="e-campo">
+  <div class="e-brandline">
+    <app-brand-mark />
+    <span class="e-brandname display">{{ tenantNombre() }}</span>
+  </div>
+  <!-- Copy imperativo por contrato §6.1: es lo que separa a E de C, que pregunta ("¿Cuándo
+       jugás?") desde un tono cercano. No es decoración. -->
+  <h1 class="e-title display">Jugá hoy mismo.</h1>
+</header>
+
+<!-- UN SOLO panel, no varias cards: la otra mitad del contrato §6.1 contra C. -->
+<main class="e-panel">
+  <section id="reservar" class="e-book" tabindex="-1">
+    <app-booking-flow (abrirPolitica)="abrirPolitica.emit()" />
+  </section>
+</main>
+
+<section id="e-info" class="e-info">
+  <app-club-info />
+</section>
+
+<app-landing-footer class="e-foot"
+  (abrirArrepentimiento)="abrirArrepentimiento.emit()" (abrirPolitica)="abrirPolitica.emit()" />

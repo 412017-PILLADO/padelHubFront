@@ -36,9 +36,9 @@ export class BookingFlowComponent {
   private readonly booking = inject(BookingStore);
 
   /**
-   * El modal de la política de cancelación es transversal a las 3 plantillas y vive en `Landing`
-   * (junto al de arrepentimiento): el bloque de seña de la pantalla de éxito solo avisa que hay que
-   * abrirlo. Mismo contrato que usará el pie en el Task 4.
+   * El modal de la política de cancelación es transversal a todas las plantillas y vive en
+   * `Landing` (junto al de arrepentimiento): el bloque de seña de la pantalla de éxito solo avisa
+   * que hay que abrirlo. Mismo contrato que usa `<app-landing-footer>`.
    */
   readonly abrirPolitica = output<void>();
 

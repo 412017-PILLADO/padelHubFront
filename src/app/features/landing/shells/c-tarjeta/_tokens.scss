@@ -2,10 +2,11 @@
    CONTRATO --flow-* · PLANTILLA C (minimalista)
 
    Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
-   NO tiene identidad visual propia: lee estos catorce valores (ver el encabezado de
+   NO tiene identidad visual propia: lee estos valores (ver el encabezado de
    booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
 
-   Toda cáscara nueva tiene que declarar los catorce.
+   Toda cáscara tiene que declarar todos los tokens que el flujo consume;
+   `booking/contrato-flow.spec.ts` verifica que esta cáscara los declare todos.
 
    En la C el flujo va a sangre dentro de `.c-book`, sin caja propia: el aire y el ancho máximo los
    pone la cáscara (ver shell.scss), no el flujo — por eso el padding es 0 en los dos breakpoints.
@@ -38,4 +39,10 @@
   --flow-soft-surface: var(--court-soft);
   --flow-soft-ink: var(--ink-dim);
   --flow-soft-ink-accent: var(--court-deep);
+
+  /* El acento como TRAZO (tinta/ícono y línea/borde). El color del club se usa crudo: sobre papel
+     claro tiene contraste de sobra, incluso el club casi negro. Los dos valen lo mismo acá — están
+     separados porque las dos familias van a divergir cuando alguna plantilla lo necesite. */
+  --flow-accent-ink: var(--court);
+  --flow-accent-line: var(--court);
 }

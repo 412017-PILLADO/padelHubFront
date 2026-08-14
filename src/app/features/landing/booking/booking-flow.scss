@@ -3,8 +3,12 @@
 
    El flujo NO tiene identidad visual propia: la caja que lo contiene se pinta con los tokens
    `--flow-*` que declara la cáscara de cada plantilla (shells/<x>/_tokens.scss). Esta hoja es el
-   único consumidor del contrato y el que lo define; toda cáscara nueva tiene que declarar los
-   catorce tokens:
+   único consumidor del contrato y el que lo define: los tokens del contrato son EXACTAMENTE los que
+   esta hoja lee con `var(--flow-…)`, y `booking/contrato-flow.spec.ts` verifica que cada cáscara los
+   declare todos (y que ninguna declare uno que acá no se consuma). Por eso no hay un numeral escrito
+   acá: el número se cuenta solo y el que manda es el test.
+
+   Los tokens de la caja del contenedor:
 
      --flow-surface         fondo del contenedor
      --flow-border          borde del contenedor (shorthand completo, o `none`)
@@ -36,6 +40,31 @@
                             dice "accent" y no "strong". Lo usan el título del aviso de seña y el
                             precio del turno.
 
+   Y los DOS del ACENTO COMO TRAZO: el color del club cuando es ÉL MISMO la tinta, el ícono o la
+   línea, apoyado directo sobre la superficie de la cáscara. Existen por la misma razón que los
+   bloques suaves: la capa 3 deriva las variantes del acento contra blanco y negro fijos, SIN saber
+   sobre qué superficie van a caer. Mientras todas las plantillas fueron claras eso alcanzaba; en
+   una cáscara oscura un club casi negro colapsa — medido en la B con `#111111`: el anillo del check
+   1,05:1, los numeritos de paso 1,02, los bordes de seña 1,06, y el hover de un chip BORRANDO el
+   único límite visible del control (3,33:1 → 1,02:1). No falla en señalar: borra. El que sabe sobre
+   qué superficie cae el trazo es la cáscara, así que es la cáscara la que lo dice:
+
+     --flow-accent-ink      el color del club usado como TINTA o ÍCONO: los numeritos de paso, el
+                            check de la pantalla de éxito, el ícono de "cualquiera disponible".
+     --flow-accent-line     el color del club usado como LÍNEA, BORDE o CONTORNO: el hover de chips
+                            y horarios (y el del botón fantasma), el borde del paso hecho, los dos
+                            bordes del aviso de seña, el contorno de la cancha elegida y el anillo
+                            de la card "cualquiera disponible".
+
+   Son dos y no uno A PROPÓSITO: hoy arrancan con el mismo valor en todas las cáscaras, y están
+   separados porque las dos familias van a divergir cuando alguna plantilla lo necesite —una línea
+   de 1px puede pedir más peso que una tinta sobre la misma superficie—, no porque hoy difieran.
+
+   Lo que estos dos NO cubren es el acento como FONDO (el chip y el horario elegidos, el botón de
+   confirmar, el de WhatsApp, el de copiar el alias): ahí `--court` es relleno con `--ink-on-accent`
+   encima, y de esa pareja ya se ocupa `decidirTinta()` en la capa 3. Tampoco el resplandor del
+   botón de confirmar, que es la sombra del propio relleno y tiene que seguir al relleno.
+
    Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
    se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
 
@@ -60,7 +89,8 @@
   min-height: 0;
   padding: var(--flow-padding, clamp(20px, 3vw, 40px));
   /* Con `auto` (plantilla A) la columna derecha ENTERA scrollea (título + selectores + horario +
-     cancha + datos) y el afiche izquierdo queda fijo; con `visible` (B y C) scrollea el documento. */
+     cancha + datos) y el afiche izquierdo queda fijo; con `visible` (B, C y E) scrollea el
+     documento. */
   overflow-y: var(--flow-overflow, auto);
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
@@ -105,9 +135,9 @@
   padding: clamp(12px, 1.8vh, 18px) 0;
   transition: border-color 0.2s ease;
 }
-.step.done { border-top-color: var(--court); }
+.step.done { border-top-color: var(--flow-accent-line, var(--court)); }
 .step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
-.step-num { color: var(--court); font-size: 0.95rem; font-weight: 700; }
+.step-num { color: var(--flow-accent-ink, var(--court)); font-size: 0.95rem; font-weight: 700; }
 .step-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
 /* Precio del turno (M2), junto al selector de horario cuando el club lo muestra. Bloque suave: la
    cáscara decide sobre qué se apoya y con qué tinta (ver el contrato arriba). */
@@ -138,7 +168,10 @@
   color: var(--ink);
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }
-.chip:hover { border-color: var(--court); transform: translateY(-1px); }
+/* El hover es el peor caso de todo el flujo: el relleno del chip es `--surface`, así que su ÚNICO
+   límite visible es el borde de 1px, y pintarlo del color del club crudo lo BORRA cuando el club es
+   casi negro sobre una cáscara oscura. Por eso va por el token de línea y no por `--court`. */
+.chip:hover { border-color: var(--flow-accent-line, var(--court)); transform: translateY(-1px); }
 .chip[aria-pressed='true'] {
   background: var(--court);
   border-color: var(--court);
@@ -191,7 +224,8 @@
   font-weight: 600;
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
 }
-.slot:hover:not(:disabled) { border-color: var(--court); transform: translateY(-1px); }
+/* Mismo caso que `.chip:hover`: el borde es el único límite del control. */
+.slot:hover:not(:disabled) { border-color: var(--flow-accent-line, var(--court)); transform: translateY(-1px); }
 .slot[aria-pressed='true'] {
   background: var(--court);
   border-color: var(--court);
@@ -212,7 +246,7 @@
   /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio.
      justify-content:center (feedback owner post-desktop): el grid quedaba pegado a la izquierda
      dejando un hueco muerto a la derecha respecto de las líneas divisorias de las otras secciones;
-     centrado se ve prolijo en las 3 plantillas sin deformar la proporción de las cards.
+     centrado se ve prolijo en todas las plantillas sin deformar la proporción de las cards.
      auto-fit (no auto-fill, feedback owner de seguimiento): con auto-fill, cuando el contenedor
      entra una 5ª track (caso de C, 920px de ancho útil) esa track queda vacía pero sigue contando
      para el centrado, corriendo las 4 cards reales hacia la izquierda. auto-fit colapsa las tracks
@@ -296,7 +330,7 @@
 }
 
 /* Seleccionada */
-.ccard.is-selected { outline: 3px solid var(--court); outline-offset: -2px; }
+.ccard.is-selected { outline: 3px solid var(--flow-accent-line, var(--court)); outline-offset: -2px; }
 .ccard.is-selected::after {
   content: ""; position: absolute; z-index: 4; top: 9px; right: 9px; width: 22px; height: 22px; border-radius: 50%;
   background: var(--court) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 13px no-repeat;
@@ -304,9 +338,13 @@
 }
 
 /* "Cualquiera disponible" */
-.ccard.any { background: var(--surface); box-shadow: inset 0 0 0 1.6px color-mix(in srgb, var(--court) 45%, transparent), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+/* Esta card no usa el piso claro de las otras: se apoya en `--surface`, o sea en la superficie de la
+   cáscara, así que su anillo es una línea del acento sobre la superficie y va por el token. */
+.ccard.any { background: var(--surface); box-shadow: inset 0 0 0 1.6px color-mix(in srgb, var(--flow-accent-line, var(--court)) 45%, transparent), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
 .ccard.any .cc-in { background: none; justify-content: center; align-items: center; text-align: center; gap: 9px; color: var(--ink); }
-.any-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--flow-soft-surface, var(--court-soft)); color: var(--court); }
+/* El ícono ES el color del club (no hay relleno de acento debajo: el bloque suave lo pone la
+   cáscara), así que es acento-como-ícono. */
+.any-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--flow-soft-surface, var(--court-soft)); color: var(--flow-accent-ink, var(--court)); }
 .any-ic svg { width: 22px; height: 22px; }
 .ccard.any .cc-name { font-size: 1.05rem; text-align: center; }
 .any-sub { font-size: 0.82rem; color: var(--ink-dim); }
@@ -368,7 +406,8 @@
   display: grid; place-items: center;
   border-radius: 50%;
   background: var(--flow-soft-surface, var(--court-soft));
-  color: var(--court);
+  /* El check dibujado es el color del club: acento-como-ícono, no relleno. */
+  color: var(--flow-accent-ink, var(--court));
   margin-bottom: 2px;
 }
 .check-ring svg { width: 30px; height: 30px; }
@@ -403,15 +442,19 @@
    apaga contra el fondo (≈2,4:1 con el teal de plataforma) y el botón se APAGA al pasar el mouse.
    Es el mismo caso ya corregido en el pie (landing-footer.scss) y en `.ic-link` (club-info.scss), y
    se resuelve con el token que el contrato ya tiene: A y C lo declaran como `var(--court-deep)`
-   —o sea, exactamente lo que había—, y B lo declara aclarado hacia su tinta. Sin token nuevo. */
-.ghost-btn:hover { border-color: var(--court); color: var(--flow-soft-ink-accent, var(--court-deep)); }
+   —o sea, exactamente lo que había—, y las dos cáscaras con tinta propia lo arriman a la suya (B
+   aclarando, E oscureciendo). Sin token nuevo.
+   El BORDE de ese mismo hover sí quedó crudo hasta ahora y tiene el problema de `.chip:hover`: el
+   fantasma sólo se distingue por su borde, así que un club casi negro lo apagaba al pasar el mouse.
+   Va por `--flow-accent-line`, que es exactamente para eso. */
+.ghost-btn:hover { border-color: var(--flow-accent-line, var(--court)); color: var(--flow-soft-ink-accent, var(--court-deep)); }
 
 /* Aviso de seña pendiente en la pantalla de éxito. El bloque suave más grande del flujo (y el único
    con un párrafo adentro), así que es el que más depende de que la cáscara diga sobre qué se apoya. */
 .sena-box {
   width: 100%; max-width: 340px;
   background: var(--flow-soft-surface, var(--court-soft));
-  border: 1px solid var(--court);
+  border: 1px solid var(--flow-accent-line, var(--court));
   border-radius: var(--r-lg);
   padding: 14px 16px;
   margin: 0 0 12px;
@@ -454,7 +497,7 @@
   margin-top: 10px;
   padding: 9px 12px;
   background: var(--surface);
-  border: 1px solid var(--court);
+  border: 1px solid var(--flow-accent-line, var(--court));
   border-radius: var(--r);
 }
 .sa-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }

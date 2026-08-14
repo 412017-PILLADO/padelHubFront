@@ -1,0 +1,63 @@
+/* ===================================================================
+   El vidrio diurno: el panel apoyado a caballo del borde del campo de color.
+
+   Misma FORMA que el vidrio de la nocturna (las variables se escriben una sola vez y dos mixins las
+   sirven en los dos formatos que piden los consumidores: uno emite declaraciones para pintar un
+   elemento, el otro emite los tokens `--flow-*` del contrato de la cáscara con el flujo de reserva)
+   pero receta propia: acá el vidrio se apoya sobre color saturado, no sobre noche.
+
+   NO se comparte con `b-nocturna/_vidrio.scss`: esa receta es para fondo oscuro y vive en el
+   directorio de B; parametrizarla con un argumento de claridad convertiría por la puerta de atrás un
+   archivo que dice pertenecer a B en uno compartido. Si D también necesita vidrio, la receta sube a
+   `shells/_vidrio.scss` a propósito.
+
+   El único consumidor es `_tokens.scss` con el mixin de tokens, y eso NO es un accidente que haya
+   que arreglar: en E hay UN SOLO panel de vidrio (contrato §6.1, contra las varias cards opacas de
+   C), que es el flujo de reserva. Las tarjetas de info de más abajo siguen blancas y opacas a
+   propósito, y no porque falte enchufarlas: se apoyan sobre papel liso, donde un `backdrop-filter`
+   no tiene nada que difuminar (es el mismo motivo por el que la B vieja se veía lavada, anotado en
+   el encabezado de `shell.scss`). Vidrio sin nada atrás no es vidrio: es un rectángulo translúcido.
+   `vidrio-diurno()` existe igual porque es la mitad que deja pintar la receta sobre un elemento sin
+   copiarla —la puerta por la que entraría cualquier cosa que sí tenga color detrás— y porque partir
+   la pareja dejaría la receta a medio camino de ser una.
+   =================================================================== */
+/* El fondo. Medido en pixel real, este número controla UNA sola mitad: sobre el papel de E
+   (`#f4f6fb`, casi blanco) el vidrio da `#fcfcff` al 70% y `#fdfdff` al 78% — o sea que ahí abajo es
+   casi un no-op, y el cuerpo del panel se lo dan el borde y la sombra, no el relleno. Arriba, en
+   cambio, es todo: al 78% el club naranja se ve `#ffe7c7` y al 70% `#ffdeb3`, que es la diferencia
+   entre un blanco tibio y vidrio con color atrás. Por eso bajó de 78 a 70: es gratis del lado del
+   papel y es la firma del lado del color. Más abajo empieza a costar — el club casi negro ya llega a
+   `#b8b8b8` y la banda se pone pesada. */
+$superficie: color-mix(in srgb, var(--surface) 70%, transparent);
+/* El blur es lo que convierte la franja de color de arriba en luz difusa en vez de un recorte del
+   campo. La saturación de más compensa lo que el 70% de blanco le lava a ese color. */
+$desenfoque: blur(20px) saturate(1.3);
+/* ESPECULAR, no luminoso (contrato §6.1 contra las sombras suaves de C): sobre color saturado un
+   blanco casi opaco se lee como el REFLEJO del canto del panel. El borde es uno solo y uniforme, y
+   sin embargo se apaga solo hacia abajo: el mismo blanco que arriba brilla contra `--court`, abajo
+   cae sobre papel casi blanco y desaparece. Lo hace el solape, no un degradado. */
+$borde: 1px solid color-mix(in srgb, #fff 85%, transparent);
+/* La sombra ASIENTA el panel sobre el papel (es lo que le da cuerpo a la mitad de abajo, donde el
+   borde ya no se ve) y el `inset` de arriba es el canto iluminado del vidrio. La sombra es tinta y
+   no color del club: teñirla ensuciaría la franja de papel justo debajo del campo. */
+$sombra: 0 18px 40px -24px rgba(15, 23, 42, 0.35),
+  inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent);
+
+/* El vidrio como declaraciones, para pintar un elemento. */
+@mixin vidrio-diurno($radio) {
+  background: $superficie;
+  -webkit-backdrop-filter: $desenfoque;
+  backdrop-filter: $desenfoque;
+  border: $borde;
+  border-radius: $radio;
+  box-shadow: $sombra;
+}
+
+/* El MISMO vidrio partido en los cinco tokens --flow-* del contrato de la cáscara con el flujo. */
+@mixin vidrio-diurno-tokens($radio) {
+  --flow-surface: #{$superficie};
+  --flow-border: #{$borde};
+  --flow-radius: #{$radio};
+  --flow-shadow: #{$sombra};
+  --flow-backdrop: #{$desenfoque};
+}

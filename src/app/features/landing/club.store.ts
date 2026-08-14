@@ -121,7 +121,8 @@ export class ClubStore {
   }
 
   /**
-   * Preview de venta: `?plantilla=A|B|C` y `?color=%23RRGGBB` pisan visualmente el tenant sin
+   * Preview de venta: `?plantilla=` (uno de `CODIGOS_CON_SHELL`) y `?color=%23RRGGBB` pisan
+   * visualmente el tenant sin
    * persistir nada. Solo en browser (en SSR no hay location) y solo se lee una vez al iniciar.
    * Aplica `previewColor` directo (ver constructor); devuelve la plantilla validada (o null) para
    * que el constructor decida CUÁNDO aplicarla. Después de este arranque, el selector flotante
@@ -132,7 +133,7 @@ export class ClubStore {
     const params = new URLSearchParams(location.search);
 
     // El `find` valida y tipa de una: nada de castear a CodigoPlantilla lo que vino en la URL. Se
-    // acepta sólo lo que tiene cáscara: forzar D o E mostraría la A con el selector sin activa.
+    // acepta sólo lo que tiene cáscara: forzar D mostraría la A con el selector sin activa.
     const tpl = (params.get('plantilla') ?? '').trim().toUpperCase();
     const validTpl = CODIGOS_CON_SHELL.find((c) => c === tpl) ?? null;
 
@@ -149,7 +150,8 @@ export class ClubStore {
     return validTpl;
   }
 
-  /** Click en el selector flotante A/B/C: cambia el preview en vivo y actualiza el query param
+  /** Click en el selector flotante (un botón por código de `CODIGOS_CON_SHELL`): cambia el preview
+   *  en vivo y actualiza el query param
    *  (sin recargar) para que el link se pueda copiar tal cual se está viendo. */
   setPreviewPlantilla(tpl: CodigoPlantilla): void {
     this.previewPlantilla.set(tpl);

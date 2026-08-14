@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import {
   CODIGOS_CON_SHELL,
   CODIGOS_PLANTILLA,
+  DIR_SHELL,
   FUENTES_PLATAFORMA,
   PLANTILLAS,
   normalizarPlantilla,
@@ -45,12 +46,10 @@ function esClara(hex: string): boolean {
   return (((num >> 16) & 255) + ((num >> 8) & 255) + (num & 255)) / 3 > 127;
 }
 
-/** Carpeta de la cáscara de cada código con shell, para ir a leer su hoja real. */
-const DIR_SHELL: Readonly<Record<string, string>> = {
-  A: 'a-afiche',
-  B: 'b-nocturna',
-  C: 'c-tarjeta',
-};
+/* La carpeta de la cáscara de cada código ya no se escribe acá: sale de `DIR_SHELL`, que exporta el
+   registry. Vivía como copia local y era la segunda de dos copias (la otra estaba en
+   `booking/contrato-flow.spec.ts`), con el agravante de que la puerta del contrato --flow-* se
+   saltea en silencio a la cáscara que no figure en su lista. */
 
 describe('registry de plantillas', () => {
   it('tiene las cinco plantillas con datos completos', () => {
@@ -97,7 +96,7 @@ describe('registry de plantillas', () => {
    * Ojo con "simplificar" los ejes a `wght@400;500;600;700;800` para todas las familias: Archivo es
    * variable con eje de ANCHO además del de peso, y `.display { font-stretch: 125% }` en
    * styles.scss vive de eso. Pidiendo sólo `wght`, Google devuelve `font-stretch: 100%` y el
-   * display de las tres plantillas adelgaza.
+   * display de toda plantilla que viva del trío de plataforma adelgaza.
    */
   it('la URL del trío de plataforma es, textual, la del <link> de index.html', () => {
     const html = leerFuente('src/index.html');
@@ -128,13 +127,18 @@ describe('registry de plantillas', () => {
    * landing.scss no engancha y el afiche pierde su clamp de viewport.
    */
   it('las plantillas sin cáscara se dibujan con la A', () => {
-    expect(CODIGOS_CON_SHELL).toEqual(['A', 'B', 'C']);
+    expect(CODIGOS_CON_SHELL).toEqual(['A', 'B', 'C', 'E']);
     expect(normalizarPlantilla('D')).toBe('D');
     expect(shellDePlantilla('D')).toBe('A');
-    expect(shellDePlantilla('E')).toBe('A');
+    expect(shellDePlantilla('E')).toBe('E'); // E ya tiene cáscara propia
     expect(shellDePlantilla('b')).toBe('B');
     expect(shellDePlantilla('Z')).toBe('A');
     expect(shellDePlantilla(null)).toBe('A');
+  });
+
+  /** Todo código con cáscara tiene su carpeta en el mapa, y al revés: es la misma fuente. */
+  it('el mapa de carpetas y la lista de códigos con cáscara son la misma cosa', () => {
+    expect(Object.keys(DIR_SHELL)).toEqual([...CODIGOS_CON_SHELL]);
   });
 
   it('todo código con cáscara es un código del catálogo', () => {
