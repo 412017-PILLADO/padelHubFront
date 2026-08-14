@@ -54,9 +54,14 @@
   /* Lo que la `.display` de plataforma (styles.scss) le pide a la familia, acá dicho para Anton.
      Los dos primeros son EJES de Archivo y Anton no tiene ninguno —es una sola cara, `wght@400`
      (ver EJES_POR_FAMILIA en plantillas.ts, que le pide 400 porque no hay otra)—, así que pedirlos
-     no es gratis: el navegador los SINTETIZA, estira los glifos y los engorda por su cuenta, y en
-     una tipografía que ya es condensada de fábrica eso cierra los contrapunzones y escala con el
-     tamaño. El tercero es tracking, no un eje: Anton viene muy apretada y un pelo de aire la hace
+     no es gratis: el navegador ENGORDA los trazos por su cuenta, y en una tipografía que ya es
+     condensada de fábrica eso cierra los contrapunzones y escala con el tamaño.
+     PRECISIÓN, porque acá decía de más: el ancho **no** se sintetiza. Medido en Chrome sobre Anton,
+     `font-stretch: 125%` da 42 px de tinta contra 42 px sin él — delta cero. El que sí mueve es el
+     peso (3052 → 3706 px de tinta, +21%), así que de los dos ejes el que carga peso real es
+     `--display-weight: 400`; el `--display-stretch: normal` es un no-op en Chrome y se queda por
+     si otro motor sí lo sintetiza.
+     El tercero es tracking, no un eje: Anton viene muy apretada y un pelo de aire la hace
      legible, sobre el telón oscuro todavía más (el texto claro sobre fondo oscuro "engorda"
      ópticamente y cierra los blancos internos).
      Van acá y no en un `::ng-deep .display`: los tokens BAJAN POR HERENCIA a todo el subárbol de la

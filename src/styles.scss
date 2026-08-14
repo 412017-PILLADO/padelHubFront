@@ -64,7 +64,7 @@
      `::ng-deep`, que era el patrón viejo y costaba una excepción de encapsulación por plantilla.
      Los dos primeros son EJES de Archivo, que es variable en ancho y en peso. Una familia que no
      los tiene (Anton es una sola cara, `wght@400`) no los ignora: el navegador los SINTETIZA
-     —estira los glifos en horizontal y engorda los trazos por su cuenta—, lo que cierra los
+     —engorda los trazos por su cuenta; el ancho NO lo sintetiza, medido—, lo que cierra los
      contrapunzones de una condensada y encima escala con el tamaño.
      El tercero no es un eje sintetizado, pero es el mismo problema: el tracking correcto depende de
      la familia. Archivo expandida quiere un negativo que la compacte; una condensada quiere aire. */
