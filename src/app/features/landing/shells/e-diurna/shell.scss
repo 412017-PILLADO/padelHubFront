@@ -138,6 +138,14 @@
    difumina justo esa franja de color: eso es lo que hace que la mitad montada se lea como vidrio
    sobre color y no como un recorte del campo.
 
+   Y el `backdrop-filter` hace además algo que NO es obvio y que conviene saber antes de tocar esto:
+   convierte al panel en CONTEXTO DE APILADO, así que la firma está más protegida de lo que el
+   párrafo de arriba sugiere. Un `position: relative` suelto en el campo NO la rompe —los dos quedan
+   en el mismo grupo de pintado y gana el orden del árbol, que favorece al panel—. Lo que sí la
+   rompe es `position` CON un `z-index` que lo levante: ahí el color se pinta sobre el vidrio, el
+   solape sigue midiendo lo mismo y la firma desaparece. Por eso `plantillas.spec.ts` no se conforma
+   con medir la geometría y pregunta, con `elementFromPoint`, QUIÉN está pintado arriba.
+
    Sin padding de arriba propio: el aire de adentro del panel lo pone `--flow-padding` (ver
    `_tokens.scss`), que vive del lado correcto del borde del vidrio. Si acá hubiera padding, el
    solape tendría que descontarlo y serían dos números en vez de uno. */
