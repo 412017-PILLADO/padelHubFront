@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 import { BrandingService } from '../../../../../core/branding/branding.service';
+import { CODIGOS_CON_SHELL, PLANTILLAS } from '../../../../../core/landing/plantillas';
 import { ConfigStateService } from '../../config-state.service';
 
 /** Pestaña "Tu club": marca (colores + logo + plantilla) y contacto/ubicación. Sin inputs/outputs:
@@ -21,11 +22,21 @@ export class TabClubComponent {
   private readonly messages = inject(MessageService);
   private readonly branding = inject(BrandingService);
 
-  readonly plantillas = [
-    { value: 'A', label: 'A · Poster', hint: 'Afiche a un lado + reserva' },
-    { value: 'B', label: 'B · Hero centrado', hint: 'Marca grande centrada, más comercial' },
-    { value: 'C', label: 'C · Compacta (app)', hint: 'Barra lateral + grilla, directo a reservar' },
-  ];
+  /**
+   * Las plantillas que el dueño puede elegir, derivadas del registry en vez de escritas a mano.
+   * Era la 4ta copia de la misma constante, y estaba desactualizada en las dos puntas: no ofrecía la
+   * E —construida y andando— y describía a la B como "hero centrado", que es lo que era antes de
+   * volverse la nocturna.
+   *
+   * `CODIGOS_CON_SHELL` y no `CODIGOS_PLANTILLA`: el catálogo lista las cinco porque el back las
+   * acepta, pero D todavía no tiene cáscara y `shellDePlantilla()` la manda a la A. Ofrecerla sería
+   * dejar que el dueño elija algo que se ve como otra cosa. Cuando D exista, aparece sola.
+   */
+  readonly plantillas = CODIGOS_CON_SHELL.map((c) => ({
+    value: c,
+    label: `${c} · ${PLANTILLAS[c].nombre}`,
+    hint: PLANTILLAS[c].descripcion,
+  }));
 
   // ── Alias de signals/computed del servicio (mismo nombre que antes, sin `st.` en el template) ──
   readonly marcaColor = this.st.marcaColor;
