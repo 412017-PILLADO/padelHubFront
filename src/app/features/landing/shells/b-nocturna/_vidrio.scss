@@ -1,0 +1,47 @@
+/* ===================================================================
+   La receta del vidrio nocturno, en un solo lugar.
+
+   Dos consumidores: los tokens --flow-* con los que la cáscara viste al flujo de reserva
+   (_tokens.scss) y las tarjetas de info (club/club-info.scss). Estaban copiados a mano en las dos
+   hojas porque `@extend` no cruza de hoja — un `@mixin` sí.
+
+   Los cuatro valores se escriben UNA sola vez, en las variables de acá abajo. Los dos mixins no son
+   dos copias: son dos formas de servir esas mismas variables, porque los consumidores piden formatos
+   distintos. `vidrio-nocturno()` las emite como declaraciones, para pintar un elemento;
+   `vidrio-nocturno-tokens()` las emite como custom properties --flow-*, porque el contrato del flujo
+   de reserva (ver el encabezado de booking/booking-flow.scss) pide los valores sueltos y no un
+   bloque. Tocás la variable y se mueven los dos lados.
+
+   El radio es el único parámetro porque es lo único que los dos consumidores difieren a propósito:
+   28px el panel del flujo, 20px las tarjetas, que son mucho más chicas y con 28px se ven infladas.
+
+   La receta es la versión NOCTURNA del vidrio (B es la plantilla oscura del producto): el fondo sube
+   de opacidad porque el papel de atrás ya no aporta luz, y el borde y el brillo especular interno
+   bajan a 12% y 10% de blanco — sobre el telón oscuro un blanco fuerte deja de leerse como reflejo y
+   pasa a ser un trazo plateado. La sombra no se tiñe con `--court`: sobre fondo oscuro una sombra de
+   color aclara en vez de asentar, así que es negra.
+   =================================================================== */
+$superficie: color-mix(in srgb, var(--surface) 72%, transparent);
+$desenfoque: blur(22px) saturate(1.4);
+$borde: 1px solid color-mix(in srgb, #fff 12%, transparent);
+$sombra: 0 20px 50px -28px rgba(0, 0, 0, 0.7),
+  inset 0 1px 0 color-mix(in srgb, #fff 10%, transparent);
+
+/* El vidrio como declaraciones, para pintar un elemento. */
+@mixin vidrio-nocturno($radio) {
+  background: $superficie;
+  -webkit-backdrop-filter: $desenfoque;
+  backdrop-filter: $desenfoque;
+  border: $borde;
+  border-radius: $radio;
+  box-shadow: $sombra;
+}
+
+/* El MISMO vidrio partido en los cinco tokens --flow-* del contrato de la cáscara con el flujo. */
+@mixin vidrio-nocturno-tokens($radio) {
+  --flow-surface: #{$superficie};
+  --flow-border: #{$borde};
+  --flow-radius: #{$radio};
+  --flow-shadow: #{$sombra};
+  --flow-backdrop: #{$desenfoque};
+}

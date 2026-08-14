@@ -2,10 +2,10 @@
    CONTRATO --flow-* · PLANTILLA A (afiche)
 
    Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
-   NO tiene identidad visual propia: lee estos nueve valores (ver el encabezado de
+   NO tiene identidad visual propia: lee estos catorce valores (ver el encabezado de
    booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
 
-   Toda cáscara nueva tiene que declarar los nueve. El flujo trae un fallback por token para no
+   Toda cáscara nueva tiene que declarar los catorce. El flujo trae un fallback por token para no
    romperse si falta alguno, y ese fallback es justamente lo que declara la A: la A es la plantilla
    default, así que "el flujo sin cáscara que lo vista" y "el flujo en la A" son lo mismo. Se
    declaran igual, explícitos, para que el contrato se lea completo en las tres cáscaras.
@@ -31,4 +31,14 @@
   /* El nombre del club se muestra en el encabezado de la reserva: en la A la marca del afiche está
      en la otra columna, así que no es repetición. */
   --flow-marca-display: inline;
+
+  /* El estado seleccionado se marca sólo con el color del club: sin halo. El halo es la firma de la
+     nocturna y sobre papel claro se vería sucio. */
+  --flow-slot-sel-shadow: none;
+  --flow-chip-sel-shadow: none;
+
+  /* Bloques suaves (seña, precio, íconos): el lavado del color del club sobre papel claro. */
+  --flow-soft-surface: var(--court-soft);
+  --flow-soft-ink: var(--ink-dim);
+  --flow-soft-ink-accent: var(--court-deep);
 }

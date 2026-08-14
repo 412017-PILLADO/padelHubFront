@@ -1,24 +1,23 @@
 /* ===================================================================
-   CONTRATO --flow-* · PLANTILLA B (liquid glass)
+   CONTRATO --flow-* · PLANTILLA B (nocturna)
 
    Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
-   NO tiene identidad visual propia: lee estos nueve valores (ver el encabezado de
+   NO tiene identidad visual propia: lee estos catorce valores (ver el encabezado de
    booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
 
-   Toda cáscara nueva tiene que declarar los nueve.
+   Toda cáscara nueva tiene que declarar los catorce.
 
-   En la B el flujo es uno de los paneles de vidrio: los valores de acá son la MISMA receta que
-   `:host-context(.tpl-b) .ic-card` en club/club-info.scss (el otro consumidor del vidrio). Están
-   escritos a mano en las dos hojas porque `@extend` no cruza de hoja; si tocás una, tocá la otra.
+   En la B el flujo es uno de los paneles de vidrio nocturno, el mismo que las tarjetas de info: esa
+   receta ya no se escribe acá, vive una sola vez en `_vidrio.scss` y este archivo la incluye. El
+   radio es lo único que difiere a propósito — 28px el panel del flujo, 20px la tarjeta.
    =================================================================== */
+@use 'vidrio';
+
 :host {
-  /* Vidrio: fondo translúcido + blur + borde luminoso + brillo especular interno. */
-  --flow-surface: color-mix(in srgb, var(--surface) 58%, transparent);
-  --flow-border: 1px solid color-mix(in srgb, #fff 60%, transparent);
-  --flow-radius: 28px;
-  --flow-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --flow-backdrop: blur(22px) saturate(1.6);
+  /* Los cinco tokens de vidrio (fondo translúcido + blur + borde luminoso + brillo especular
+     interno) los emite el mixin, que es su único origen: acá sólo se elige el radio. El porqué de
+     cada valor está documentado en `_vidrio.scss`. */
+  @include vidrio.vidrio-nocturno-tokens(28px);
 
   /* El panel crece con su contenido y scrollea el documento: recortarlo le comería el vidrio. */
   --flow-overflow: visible;
@@ -29,4 +28,41 @@
 
   /* El nombre ya está en la nav (y en el héroe, en desktop): en el encabezado de la reserva sobra. */
   --flow-marca-display: none;
+
+  /* LA FIRMA (spec §6): el horario elegido prende como luz de cancha. Tres capas — un anillo interior
+     claro que hace de filamento, un halo cercano que es el foco encendido y un derrame lejano del
+     color del club. Sobre el fondo nocturno el halo tiene dónde derramarse; ésta es la razón por la
+     que la firma es de esta plantilla y no de las claras.
+
+     El halo cercano NO es `--court` con transparencia: es `--court` mezclado con la TINTA CLARA, o
+     sea un color opaco y siempre más luminoso que el telón. Es a propósito. Un halo hecho sólo de
+     `--court` no puede prender si el club es casi negro: medido con `#111111`, ese halo ENSOMBRECE
+     (luminancia media -0.35 sobre el recorte de la grilla) y lo único que se ve del estado elegido
+     es el filamento. Mezclando con `--ink` el mismo caso da +4.08, y los clubes brillantes casi no
+     se mueven (amarillo #FFD400 pasa de +13.96 a +14.47): la luz se le agrega al que no la tiene
+     sin lavar al que ya la tenía. Subir la opacidad, en cambio, arregla el negro reventando a los
+     otros tres — por eso no es la salida. El derrame lejano sí sigue siendo color puro: es la cola
+     de la luz y en un club oscuro simplemente no llega, que es lo correcto. */
+  --flow-slot-sel-shadow:
+    0 0 0 1px color-mix(in srgb, #fff 30%, transparent) inset,
+    0 0 18px -2px color-mix(in srgb, var(--court) 70%, var(--ink)),
+    0 0 42px -6px color-mix(in srgb, var(--court) 50%, transparent);
+
+  /* Los chips prenden más suave: el protagonista es el horario, no la duración. Misma lámpara que el
+     horario (el mismo color mezclado con la tinta, por la misma razón: con `#111111` un halo de puro
+     `--court` acá también ENSOMBRECE — medido, -1.07 de media y CERO pixeles encendidos), pero más
+     chica: menos radio y más spread negativo. La diferencia entre el horario y el chip la hace la
+     geometría, no el color, así que la firma es una sola y no dos. */
+  --flow-chip-sel-shadow:
+    0 0 14px -6px color-mix(in srgb, var(--court) 70%, var(--ink));
+
+  /* Bloques suaves. `--court-soft` (capa 3) es `color-mix(c 12%, #fff)`: casi blanco para cualquier
+     club, porque se derivó asumiendo papel claro debajo. Dentro del panel oscuro eso queda un
+     manchón con el texto adentro ilegible (≈1.7:1 el párrafo de la seña). Acá los bloques suaves
+     son una veladura del color sobre la propia superficie oscura, y la tinta la del sistema.
+     La de acento no puede ser `--court-deep` (el color OSCURECIDO desaparece sobre fondo oscuro):
+     es el color del club aclarado hacia la tinta, la misma receta que `.ic-link` en club-info.scss. */
+  --flow-soft-surface: color-mix(in srgb, var(--court) 18%, var(--surface));
+  --flow-soft-ink: var(--ink-dim);
+  --flow-soft-ink-accent: color-mix(in srgb, var(--court) 55%, var(--ink));
 }

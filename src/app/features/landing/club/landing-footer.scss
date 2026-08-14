@@ -31,13 +31,40 @@
 :host(.pb-foot) .politica-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-family: inherit; }
 :host(.pb-foot) .politica-link:hover { color: var(--ink-on-accent, #fff); }
 
-/* ── PLANTILLAS B y C · sobre fondo claro (héroe / rail) ── */
-:host(.b-foot) a, :host(.c-foot) a { color: var(--ink-dim); text-decoration: none; }
-:host(.b-foot) a:hover, :host(.c-foot) a:hover { color: var(--court-deep); }
-:host(.b-foot) .arrep-link, :host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; }
-:host(.b-foot) .arrep-link:hover, :host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
-:host(.b-foot) .politica-link, :host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
-:host(.b-foot) .politica-link:hover, :host(.c-foot) .politica-link:hover { color: var(--court-deep); }
+/* ── PLANTILLAS B y C · el pie va sobre el fondo de la cáscara, no sobre el color del club ──
+   Las dos comparten el estado normal (`--ink-dim`, la tinta apagada de SU cáscara: clara en la C,
+   clara-sobre-oscuro en la B), pero YA NO el hover. Por eso están en dos bloques y no en uno:
+   el hover del bloque único era `--court-deep` —el color del club OSCURECIDO— y sobre el fondo
+   nocturno de la B contrastaba MENOS que el `--ink-dim` del estado normal, o sea que los links se
+   APAGABAN al pasar el mouse. Si venís a tocar uno de los dos bloques, no los vuelvas a juntar. */
+
+/* C sigue siendo clara: sobre su papel, `--court-deep` es el realce que siempre fue. Tal cual. */
+:host(.c-foot) a { color: var(--ink-dim); text-decoration: none; }
+:host(.c-foot) a:hover { color: var(--court-deep); }
+:host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; }
+:host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
+:host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
+:host(.c-foot) .politica-link:hover { color: var(--court-deep); }
+
+/* B es la plantilla oscura: el hover sube de `--ink-dim` a la tinta PLENA, que es lo que hace de
+   "encendido" en esta cáscara (mismo criterio que `.ic-link` en club-info.scss y que
+   `--flow-soft-ink-accent` en b-nocturna/_tokens).
+
+   Medido sobre `--paper` de B, con los cuatro colores de club extremos con los que se audita esta
+   cáscara (teal de plataforma · fucsia · casi negro · amarillo):
+     estado normal `--ink-dim` .... 9,77 · 10,21 · 10,84 ·  8,60 :1
+     hover `--ink` (el de acá) .... 15,88 · 16,59 · 17,61 · 13,97 :1   ← siempre sube
+     hover `--court-deep` (el que
+     tenía compartido con la C) ...  3,12 ·  2,96 ·  1,02 ·  7,29 :1   ← siempre baja
+   O sea que el color del club oscurecido no es un caso borde acá: con los CUATRO contrasta menos
+   que el estado normal, y con un club casi negro directamente desaparece (1,02:1). Crudo tampoco
+   sirve de reemplazo — el mismo club casi negro da 1,05:1. */
+:host(.b-foot) a { color: var(--ink-dim); text-decoration: none; }
+:host(.b-foot) a:hover { color: var(--ink); }
+:host(.b-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; }
+:host(.b-foot) .arrep-link:hover { color: var(--ink); }
+:host(.b-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
+:host(.b-foot) .politica-link:hover { color: var(--ink); }
 
 /* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
    mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada

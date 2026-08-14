@@ -1,3 +1,6 @@
+/* La receta del vidrio nocturno con la que B viste estas tarjetas — ver el bloque de B más abajo. */
+@use '../shells/b-nocturna/vidrio';
+
 /* Las tarjetas son items de la grilla de la cáscara (.b-info / .c-info): el host no puede meter una
    caja en el medio — ver el comentario de club-info.ts. */
 :host { display: contents; }
@@ -30,22 +33,22 @@
    volver global la hoja. Deuda reconocida del plan: se reemplaza por tokens en el Plan 2.
    =================================================================== */
 
-/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio. Las declaraciones están escritas a mano
-   porque la misma receta la declara `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los
-   que se pinta el flujo de reserva) y `@extend` no cruza de hoja. Antes las compartía el placeholder
-   `%b-glass` de landing.scss; después fue la regla `.tpl-b .booking-flow` de booking-flow.scss, que
-   el Task 10 reemplazó por esos tokens. La obligación de sincronía es en los dos sentidos: si tocás
-   esta copia, tocá la otra (y al revés). El `border-radius` sí difiere a propósito: 20px la tarjeta,
-   28px el panel del flujo. */
-:host-context(.tpl-b) .ic-card {
-  background: color-mix(in srgb, var(--surface) 58%, transparent);
-  -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
-  border: 1px solid color-mix(in srgb, #fff 60%, transparent);
-  box-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  border-radius: 20px;
-}
-:host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 16%, transparent); }
+/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio nocturno, el mismo que viste al flujo de
+   reserva. La receta no se escribe acá: vive una sola vez en `shells/b-nocturna/_vidrio.scss`, que
+   documenta el porqué de cada valor. Acá sólo se elige el radio, que es lo único que las tarjetas
+   difieren a propósito del panel del flujo: 20px contra 28px, porque son mucho más chicas. */
+:host-context(.tpl-b) .ic-card { @include vidrio.vidrio-nocturno(20px); }
+/* La pastilla del icono es una veladura del color del club: sobre el vidrio de la tarjeta un 16%
+   apenas se despega (1,21:1 con el teal de plataforma, 1,00:1 con un club casi negro). Sube a 26%,
+   que con esos mismos clubes da 1,39:1 y 1,01:1, para que el icono siga teniendo su propio bloque.
+   No llega a 3:1 con ningún club y no tiene por qué: es decoración detrás del icono, no un control
+   (WCAG 1.4.11 pide 3:1 para lo segundo). */
+:host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 26%, transparent); }
+/* `--court-deep` es el color del club OSCURECIDO: sobre el vidrio nocturno se apaga (≈2.4:1 con el
+   teal de plataforma). Acá el link va al revés, aclarando el color hacia la tinta de la cáscara, y
+   el hover termina de encenderlo. Misma receta que `--flow-soft-ink-accent` en b-nocturna/_tokens. */
+:host-context(.tpl-b) .ic-link { color: color-mix(in srgb, var(--court) 55%, var(--ink)); }
+:host-context(.tpl-b) .ic-link:hover { color: var(--ink); }
 
 /* PLANTILLA C · tarjeta plana, esquinas más chicas. */
 :host-context(.tpl-c) .ic-card { border-radius: 14px; }

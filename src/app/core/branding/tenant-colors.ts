@@ -35,10 +35,11 @@ function contrastRatio(l1: number, l2: number): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-const DARK_INK_HEX = '#11162b'; // matchea --ink en styles.scss
+/** Tinta oscura del sistema (matchea --ink en styles.scss). */
+const TINTA_OSCURA = '#11162b';
 
 export interface DecisionTinta {
-  /** true = texto blanco; false = la tinta del shell. */
+  /** true = texto blanco; false = la tinta oscura del sistema (`TINTA_OSCURA`). */
   usaBlanco: boolean;
   /** Contraste WCAG del peor extremo del gradiente con la tinta elegida. */
   ratio: number;
@@ -49,29 +50,39 @@ export interface DecisionTinta {
  * del gradiente (el color base y `--court-deep`, 18% más oscuro): si no, un color en el límite
  * elige una tinta que se cae en la mitad oscura del degradé.
  *
- * `inkHex` es la tinta del shell — en una plantilla oscura es clara, así que NO se puede asumir
- * `#11162b` como antes: devolver `var(--ink)` ahí daría claro sobre claro.
+ * Los dos candidatos son SIEMPRE blanco y la tinta oscura del sistema, y esto NO depende del
+ * esquema de la cáscara: el texto cae sobre el acento, no sobre la superficie. La versión anterior
+ * recibía el `--ink` del shell como segundo candidato y en la plantilla oscura eso lo desactivaba
+ * todo — con `--ink: #eef2f8` (L≈0.87) el blanco (L=1.0) gana para CUALQUIER color de club, así que
+ * un club de primario claro (#FFD400) terminaba en 1.36:1. Por eso la función ya no toma la tinta
+ * de la cáscara: no hay ningún valor de shell que pueda ganarle a blanco sobre un acento oscuro ni
+ * perder contra él sobre uno claro, y ofrecerlo era pedirle a la capa 2 que decida algo de la 3.
  */
-export function decidirTinta(fondoHex: string, inkHex: string): DecisionTinta {
+export function decidirTinta(fondoHex: string): DecisionTinta {
   const rgb = hexToRgb(fondoHex);
-  const ink = hexToRgb(inkHex);
-  if (!rgb || !ink) return { usaBlanco: true, ratio: 0 };
+  if (!rgb) return { usaBlanco: true, ratio: 0 };
   // `color-mix(in srgb, c 82%, #000)` = cada canal × 0.82.
   const deep: [number, number, number] = [rgb[0] * 0.82, rgb[1] * 0.82, rgb[2] * 0.82];
   const luminancias = [relativeLuminance(rgb), relativeLuminance(deep)];
   const peorContraste = (lTinta: number) =>
     Math.min(...luminancias.map((lFondo) => contrastRatio(lFondo, lTinta)));
   const conBlanco = peorContraste(1);
-  const conInk = peorContraste(relativeLuminance(ink));
-  return conBlanco >= conInk
+  const conOscura = peorContraste(relativeLuminance(hexToRgb(TINTA_OSCURA)!));
+  return conBlanco >= conOscura
     ? { usaBlanco: true, ratio: conBlanco }
-    : { usaBlanco: false, ratio: conInk };
+    : { usaBlanco: false, ratio: conOscura };
 }
 
-/** Texto legible sobre el color del club, listo para CSS. `#fff` si el color no es parseable. */
-export function inkOnAccent(hex: string | null | undefined, inkHex: string = DARK_INK_HEX): string {
+/**
+ * Texto legible sobre el color del club, listo para CSS. `#fff` si el color no es parseable.
+ *
+ * Devuelve el hex oscuro LITERAL, no `var(--ink)`: `--ink-on-accent` se escribe en el `<html>`, así
+ * que un `var(--ink)` se resolvía siempre contra el token global aunque abajo la cáscara declarara
+ * otro — o sea que el CSS decía una cosa y pintaba otra. El literal no puede mentir.
+ */
+export function inkOnAccent(hex: string | null | undefined): string {
   if (!hex || !hexToRgb(hex)) return '#fff';
-  return decidirTinta(hex, inkHex).usaBlanco ? '#fff' : 'var(--ink)';
+  return decidirTinta(hex).usaBlanco ? '#fff' : TINTA_OSCURA;
 }
 
 /**
@@ -86,10 +97,8 @@ export function inkOnAccent(hex: string | null | undefined, inkHex: string = DAR
 function tokensPrimeNG(c: string): Record<string, string> {
   const tokens: Record<string, string> = {
     '--p-primary-color': c,
-    // A propósito SIN pasarle la tinta del shell: los componentes de PrimeNG (datepicker, dialogs,
-    // selects) se pintan sobre superficies claras del sistema en las tres plantillas, no sobre el
-    // fondo de la cáscara. Cablearle la tinta de la plantilla —cuando la B pase a oscura— le daría
-    // el contraste al revés justo acá. Esta llamada está bien como está: no la "arregles".
+    // La tinta de contraste de PrimeNG es la misma que la del resto: cae sobre el primario del
+    // componente (botón, día seleccionado del datepicker), no sobre la superficie de la cáscara.
     '--p-primary-contrast-color': inkOnAccent(c),
     '--p-primary-hover-color': `color-mix(in srgb, ${c} 88%, #000)`,
     '--p-primary-active-color': `color-mix(in srgb, ${c} 78%, #000)`,
@@ -119,14 +128,13 @@ function tokensPrimeNG(c: string): Record<string, string> {
  * Devuelve las variables que dejó escritas: es lo que se cachea para repintar en el próximo arranque
  * sin recalcular nada (ver ./branding-boot).
  *
- * `inkHex` es la tinta base del shell (ver `decidirTinta`): opcional porque no todos los llamadores
- * conocen su plantilla (p. ej. `BrandingService`, que cae en la tinta oscura por defecto).
+ * No recibe la tinta de la cáscara: la tinta legible sale sólo del color del club (ver
+ * `decidirTinta`), así que esta función es la misma para la landing y para el panel.
  */
 export function applyTenantColors(
   root: CSSStyleDeclaration,
   primario?: string | null,
   secundario?: string | null,
-  inkHex?: string,
 ): Record<string, string> {
   const vars: Record<string, string> = {};
   const c = primario?.trim();
@@ -134,13 +142,13 @@ export function applyTenantColors(
     vars['--court'] = c;
     vars['--court-deep'] = `color-mix(in srgb, ${c} 82%, #000)`;
     vars['--court-soft'] = `color-mix(in srgb, ${c} 12%, #fff)`;
-    vars['--ink-on-accent'] = inkOnAccent(c, inkHex);
+    vars['--ink-on-accent'] = inkOnAccent(c);
     Object.assign(vars, tokensPrimeNG(c));
   }
   const c2 = secundario?.trim();
   if (c2) {
     vars['--court-2'] = c2;
-    vars['--ink-on-accent-2'] = inkOnAccent(c2, inkHex);
+    vars['--ink-on-accent-2'] = inkOnAccent(c2);
   }
   for (const [prop, valor] of Object.entries(vars)) root.setProperty(prop, valor);
   if (!c2) {
