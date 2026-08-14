@@ -1,0 +1,478 @@
+/* ===================================================================
+   Estilos del flujo de reserva.
+
+   El flujo NO tiene identidad visual propia: la caja que lo contiene se pinta con los tokens
+   `--flow-*` que declara la cáscara de cada plantilla (shells/<x>/_tokens.scss). Esta hoja es el
+   único consumidor del contrato y el que lo define; toda cáscara nueva tiene que declarar los
+   nueve tokens:
+
+     --flow-surface         fondo del contenedor
+     --flow-border          borde del contenedor (shorthand completo, o `none`)
+     --flow-radius          radio del contenedor
+     --flow-shadow          sombra del contenedor (o `none`)
+     --flow-backdrop        filtro de fondo / vidrio (o `none`)
+     --flow-overflow        overflow-y del contenedor en ≥900px: `auto` si la plantilla clava el
+                            flujo al viewport y lo scrollea internamente, `visible` si scrollea el
+                            documento. En <900px el flujo siempre va `visible` (regla propia).
+     --flow-padding         padding del contenedor en ≥900px
+     --flow-padding-mobile  padding del contenedor en <900px
+     --flow-marca-display   `display` del nombre del club en el encabezado: `none` cuando la
+                            plantilla ya muestra la marca en otro lado de la misma pantalla.
+
+   Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
+   se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
+
+   Regla del contrato: ninguna hoja de afuera apunta al DOM de este componente POR CLASE DE
+   PLANTILLA, y esta hoja no nombra ninguna plantilla. Por eso la encapsulación volvió a ser la
+   default (Emulated) — ver el docblock de booking-flow.ts. (La excepción, deliberada y
+   agnóstica de la encapsulación, es `:host ::ng-deep .politica-link` en landing.scss: el MISMO
+   link vive en dos componentes hijos y su aspecto base se define una sola vez arriba. No depende
+   de qué plantilla sea, así que no rompe el contrato ni pide un token.)
+   =================================================================== */
+
+/* El host no dibuja: `display: contents` deja al <main class="booking-flow"> como hijo directo de
+   la cáscara, igual que cuando el flujo se insertaba con ngTemplateOutlet. Sin esto el
+   <app-booking-flow> se interpone como caja y rompe el grid de la plantilla A en desktop y el
+   `order` de las bandas en mobile. */
+:host { display: contents; }
+
+/* ===================== FLUJO ===================== */
+.booking-flow {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: var(--flow-padding, clamp(20px, 3vw, 40px));
+  /* Con `auto` (plantilla A) la columna derecha ENTERA scrollea (título + selectores + horario +
+     cancha + datos) y el afiche izquierdo queda fijo; con `visible` (B y C) scrollea el documento. */
+  overflow-y: var(--flow-overflow, auto);
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+
+  /* La caja la pone la plantilla: sin tokens, el flujo va a sangre sobre el papel (que es la A). */
+  background: var(--flow-surface, transparent);
+  border: var(--flow-border, none);
+  border-radius: var(--flow-radius, 0);
+  box-shadow: var(--flow-shadow, none);
+  -webkit-backdrop-filter: var(--flow-backdrop, none);
+  backdrop-filter: var(--flow-backdrop, none);
+}
+.booking-flow::-webkit-scrollbar { width: 8px; }
+.booking-flow::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+
+.flow-head {
+  flex: none;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  margin-bottom: clamp(12px, 2vh, 22px);
+}
+.flow-head strong {
+  font-size: clamp(1.4rem, 2.6vw, 2.1rem);
+  text-transform: uppercase;
+}
+.hdash { flex: 1; min-width: 24px; height: 2px; background: var(--line-strong); }
+/* El nombre del club. Las plantillas que ya lo muestran en otro lado de la misma pantalla lo
+   apagan con `--flow-marca-display: none` (ver el contrato arriba). */
+.flow-head .mono { display: var(--flow-marca-display, inline); color: var(--ink-dim); font-size: 0.85rem; }
+
+/* selectores compactos (duración + día) fijos arriba */
+.flow-top { flex: none; }
+
+/* horario + cancha + datos: altura natural; el scroll lo maneja el contenedor .booking-flow
+   (la columna derecha entera), no esta región. */
+.flow-body {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.step {
+  border-top: 2px solid var(--line);
+  padding: clamp(12px, 1.8vh, 18px) 0;
+  transition: border-color 0.2s ease;
+}
+.step.done { border-top-color: var(--court); }
+.step-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px; }
+.step-num { color: var(--court); font-size: 0.95rem; font-weight: 700; }
+.step-title { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em; }
+/* Precio del turno (M2), junto al selector de horario cuando el club lo muestra. */
+.step-price {
+  margin-left: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--court-deep);
+  background: var(--court-soft);
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.step-hint { color: var(--ink-faint); font-size: 0.95rem; }
+
+/* la grilla de horarios es el bloque más alto; vive dentro del scroll de .flow-body */
+.step-times { min-height: 0; }
+
+/* — Chips (duración / día) — */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 76px; gap: 2px;
+  padding: 10px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  color: var(--ink);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+.chip:hover { border-color: var(--court); transform: translateY(-1px); }
+.chip[aria-pressed='true'] {
+  background: var(--court);
+  border-color: var(--court);
+  color: var(--ink-on-accent, #fff);
+}
+.chip .c-label { font-weight: 700; font-size: 1rem; }
+.chip .c-date { font-size: 0.72rem; color: var(--ink-faint); text-transform: uppercase; letter-spacing: 0.06em; }
+.chip[aria-pressed='true'] .c-date { color: color-mix(in srgb, var(--ink-on-accent, #fff) 80%, transparent); }
+
+/* — Calendario — */
+/* El día es el contexto de posicionamiento del calendario (popover flotante). */
+.step-day { position: relative; }
+
+/* Calendario: popover flotante por ENCIMA del contenido (no inline → no agrega scroll ni empuja
+   los pasos de abajo). Aparece justo debajo de los chips de día. */
+.cal.open {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 50;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 24px 60px -18px rgba(15, 23, 42, 0.45);
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+/* `::ng-deep` para atravesar la encapsulación del datepicker de PrimeNG, que es un componente
+   aparte (mismo recurso que usa el calendario del panel, ver admin/panel/panel.scss). Queda acotado
+   al `.cal` de este componente: no es una regla global. */
+.cal.open ::ng-deep .p-datepicker {
+  border: none;
+  box-shadow: none;
+}
+
+/* — Grilla de horarios — */
+.times {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 8px;
+  align-content: start;
+}
+.slot {
+  padding: 10px 8px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s ease;
+}
+.slot:hover:not(:disabled) { border-color: var(--court); transform: translateY(-1px); }
+.slot[aria-pressed='true'] { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
+.slot:disabled {
+  color: var(--ink-faint);
+  text-decoration: line-through;
+  background: var(--paper);
+  border-style: dashed;
+  cursor: not-allowed;
+}
+
+/* — Canchas (cards = la cancha vista desde arriba, con la ficha adentro) — */
+.courts {
+  display: grid;
+  /* columnas con tope (no 1fr): en web las cards no se agrandan al sobrar espacio.
+     justify-content:center (feedback owner post-desktop): el grid quedaba pegado a la izquierda
+     dejando un hueco muerto a la derecha respecto de las líneas divisorias de las otras secciones;
+     centrado se ve prolijo en las 3 plantillas sin deformar la proporción de las cards.
+     auto-fit (no auto-fill, feedback owner de seguimiento): con auto-fill, cuando el contenedor
+     entra una 5ª track (caso de C, 920px de ancho útil) esa track queda vacía pero sigue contando
+     para el centrado, corriendo las 4 cards reales hacia la izquierda. auto-fit colapsa las tracks
+     vacías a 0, así el centrado se calcula solo sobre las cards que existen. */
+  grid-template-columns: repeat(auto-fit, minmax(138px, 172px));
+  justify-content: center;
+  gap: 12px;
+}
+.ccard {
+  /* piso claro + líneas + materiales (la landing es tema claro fijo) */
+  --floor: #e9eef8;
+  --floor-line: #93a4c6;
+  --scrim: 247, 250, 255;
+  --plan-ink: #16233f;
+  --plan-ink-dim: #4c5878;
+  --concrete: #b4bcce;
+  --concrete-edge: #97a0b6;
+  --glass: rgba(150, 185, 235, 0.5);
+
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border: none; padding: 0; margin: 0;
+  border-radius: var(--r);
+  background: var(--floor);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 12px 26px -18px rgba(18, 32, 63, 0.5);
+  transition: transform 0.16s ease;
+}
+.ccard:hover { transform: translateY(-2px); }
+.court-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; color: var(--floor-line); z-index: 0; }
+.ccard .glow, .ccard .sky { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+.ccard .glow { background: radial-gradient(52% 22% at 50% 27%, rgba(255, 214, 150, 0.55), transparent 70%), radial-gradient(52% 22% at 50% 73%, rgba(255, 214, 150, 0.48), transparent 70%); }
+.ccard .sky { background: linear-gradient(180deg, rgba(150, 180, 220, 0.2), transparent 28%); }
+
+/* Materiales de pared */
+.ccard.mat-glass { box-shadow: inset 0 0 0 3px var(--glass), 0 10px 22px -12px rgba(70, 115, 195, 0.55); }
+.ccard.mat-glass::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none;
+  padding: 4px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 28%, rgba(255, 255, 255, 0) 64%, rgba(255, 255, 255, 0.55));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+.ccard.mat-concrete { box-shadow: inset 0 0 0 6px var(--concrete), inset 0 0 0 7px var(--concrete-edge), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+.ccard.mat-mixed { box-shadow: inset 0 6px 0 var(--concrete), inset 0 -6px 0 var(--concrete), inset 4px 0 0 var(--glass), inset -4px 0 0 var(--glass), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+.ccard.mat-mixed::before {
+  content: ""; position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0) 13%, rgba(255, 255, 255, 0) 87%, rgba(255, 255, 255, 0.55));
+}
+
+/* Ficha adentro, con velo arriba/abajo para legibilidad */
+.cc-in {
+  position: absolute; inset: 0; z-index: 2;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 13px;
+  color: var(--plan-ink);
+  background: linear-gradient(180deg, rgba(var(--scrim), 0.94) 0%, rgba(var(--scrim), 0) 27%, rgba(var(--scrim), 0) 58%, rgba(var(--scrim), 0.96) 100%);
+}
+.cc-top { display: flex; align-items: center; gap: 7px; }
+.cc-dot { width: 10px; height: 10px; border-radius: 3px; background: var(--dot, var(--court)); flex: none; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8); }
+.cc-name { font-weight: 800; letter-spacing: -0.01em; font-size: 1.18rem; line-height: 1.02; }
+.cc-bot { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; }
+.cc-chips { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.cc-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(22, 35, 63, 0.14);
+  border-radius: 999px; padding: 4px 9px 4px 7px;
+  font-size: 0.8rem; font-weight: 600; color: var(--plan-ink-dim); white-space: nowrap;
+}
+.cc-chip svg { width: 14px; height: 14px; }
+.cc-chip.lit { color: #9a6412; border-color: rgba(214, 150, 40, 0.42); background: rgba(255, 224, 160, 0.8); }
+.cc-price { align-self: flex-end; flex: none; }
+.cc-price .amount { font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--plan-ink); }
+/* Precio pisado por una franja horaria especial (M-precio-franjas): chip en la fila de chips de la
+   cancha (junto a material/iluminación), en ámbar como .cc-chip.lit para no sumar un color nuevo. */
+.cc-chip.cc-price-tag {
+  color: #9a6412; border-color: rgba(214, 150, 40, 0.42); background: rgba(255, 224, 160, 0.8);
+}
+
+/* Seleccionada */
+.ccard.is-selected { outline: 3px solid var(--court); outline-offset: -2px; }
+.ccard.is-selected::after {
+  content: ""; position: absolute; z-index: 4; top: 9px; right: 9px; width: 22px; height: 22px; border-radius: 50%;
+  background: var(--court) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E") center / 13px no-repeat;
+  box-shadow: 0 3px 9px rgba(0, 0, 0, 0.28);
+}
+
+/* "Cualquiera disponible" */
+.ccard.any { background: var(--surface); box-shadow: inset 0 0 0 1.6px color-mix(in srgb, var(--court) 45%, transparent), 0 12px 26px -18px rgba(18, 32, 63, 0.5); }
+.ccard.any .cc-in { background: none; justify-content: center; align-items: center; text-align: center; gap: 9px; color: var(--ink); }
+.any-ic { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--court-soft); color: var(--court); }
+.any-ic svg { width: 22px; height: 22px; }
+.ccard.any .cc-name { font-size: 1.05rem; text-align: center; }
+.any-sub { font-size: 0.82rem; color: var(--ink-dim); }
+
+/* — Formulario — */
+.form { display: flex; flex-direction: column; gap: 14px; max-width: 420px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 0.85rem; font-weight: 600; color: var(--ink-dim); }
+.field input { width: 100%; }
+.field input[aria-invalid='true'] { border-color: var(--clay); }
+.field-hint { font-size: 0.78rem; color: var(--clay); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* Recap compacto del turno, junto al botón de confirmar (M10) */
+.recap-mini {
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 4px 14px;
+}
+.recap-mini-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; }
+.recap-mini-row + .recap-mini-row { border-top: 1px solid var(--line); }
+.recap-mini-row .k { color: var(--ink-dim); font-size: 0.85rem; }
+.recap-mini-row .v { font-weight: 700; font-size: 0.9rem; }
+
+.confirm {
+  height: 50px;
+  border: none;
+  border-radius: var(--r);
+  background: var(--court);
+  color: var(--ink-on-accent, #fff);
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--court) 80%, transparent);
+  transition: background 0.16s ease, transform 0.16s ease;
+}
+.confirm:hover:not(:disabled) { background: var(--court-deep); transform: translateY(-1px); }
+.confirm:disabled { background: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
+.confirm-hint { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-dim); text-align: center; }
+
+/* ===================== ÉXITO =====================
+   Vive DENTRO de la columna derecha (.booking-flow): el afiche izquierdo queda fijo y el éxito no
+   toma toda la pantalla. En desktop se centra vertical en la columna; en mobile va en su lugar
+   natural (entre las dos bandas de marca), altura natural. */
+/* `safe center`: centra el éxito en la columna, pero si el contenido (recap + seña) es más alto
+   que el viewport, alinea al inicio en vez de RECORTAR arriba/abajo (así el check y el botón
+   siempre quedan accesibles). La compactación de abajo lo hace entrar sin scroll en notebooks. */
+.booking-flow.is-success { justify-content: safe center; align-items: center; }
+.success {
+  display: flex; flex-direction: column; align-items: center;
+  text-align: center;
+  width: 100%; max-width: 400px;
+  padding: clamp(8px, 1.6vh, 20px) 0;
+  gap: 8px;
+}
+.check-ring {
+  width: 62px; height: 62px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--court-soft);
+  color: var(--court);
+  margin-bottom: 2px;
+}
+.check-ring svg { width: 30px; height: 30px; }
+.success .big { font-size: clamp(2rem, 5.5vw, 3rem); line-height: 1.02; }
+.success .closing { font-size: 1.05rem; color: var(--ink-dim); margin-bottom: 6px; }
+.recap {
+  width: 100%; max-width: 340px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  padding: 2px 18px;
+  margin: 6px 0 12px;
+}
+.recap-row {
+  display: flex; justify-content: space-between; gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+}
+.recap-row:last-child { border-bottom: none; }
+.recap-row .k { color: var(--ink-dim); font-size: 0.9rem; }
+.recap-row .v { font-weight: 700; }
+.ghost-btn {
+  height: 48px; padding: 0 24px;
+  background: transparent;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r);
+  color: var(--ink);
+  font-weight: 600;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+.ghost-btn:hover { border-color: var(--court); color: var(--court-deep); }
+
+/* Aviso de seña pendiente en la pantalla de éxito */
+.sena-box {
+  width: 100%; max-width: 340px;
+  background: var(--court-soft);
+  border: 1px solid var(--court);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  margin: 0 0 12px;
+  text-align: left;
+}
+.sena-title { font-weight: 700; color: var(--court-deep); margin-bottom: 5px; }
+.sena-text { font-size: 0.9rem; color: var(--ink-dim); line-height: 1.4; margin: 0; }
+
+/* Botón "Pagar seña con Mercado Pago" + divisor hacia el alias por transferencia */
+.sena-pay {
+  display: block;
+  text-align: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #009ee3; // azul Mercado Pago
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  margin-top: 12px;
+}
+.sena-pay:hover { filter: brightness(1.08); }
+.sena-alt {
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+.sena-wa {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin-top: 12px; width: 100%; height: 44px;
+  background: var(--court); color: var(--ink-on-accent, #fff);
+  border-radius: var(--r); font-weight: 700; text-decoration: none;
+  transition: filter 0.15s ease;
+}
+.sena-wa:hover { filter: brightness(1.08); }
+
+/* Alias de transferencia + botón copiar (dentro del aviso de seña) */
+.sena-alias-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+  padding: 9px 12px;
+  background: var(--surface);
+  border: 1px solid var(--court);
+  border-radius: var(--r);
+}
+.sa-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.sa-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-dim); }
+.sa-value { font-weight: 700; font-size: 1rem; color: var(--ink); overflow-wrap: anywhere; }
+.sa-copy {
+  flex: none;
+  height: 38px; padding: 0 16px;
+  background: var(--court); color: var(--ink-on-accent, #fff);
+  border: none; border-radius: var(--r);
+  font-weight: 700; font-size: 0.85rem;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.sa-copy:hover { filter: brightness(1.08); }
+
+/* ===================== MOBILE (<900px) ===================== */
+@media (max-width: 899px) {
+  /* (2) formulario completo. En mobile ninguna plantilla clava el flujo al viewport: el scroll es
+     siempre del documento, así que `overflow` va fijo y no pasa por `--flow-overflow`. */
+  .booking-flow {
+    order: 2;
+    overflow: visible;
+    padding: var(--flow-padding-mobile, clamp(20px, 5vw, 26px) clamp(16px, 5vw, 24px) 26px);
+  }
+  .flow-body { overflow: visible; }
+
+  /* chips y slots un toque más aireados al tacto */
+  .chip { min-width: 0; flex: 1 1 auto; }
+  .dur-chips .chip { flex: 1 1 28%; }
+  .days .chip { flex: 1 1 40%; }
+  .times { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); }
+  .slot { padding: 12px 8px; }
+  .form { max-width: none; }
+}
+
+/* Política de cancelación dentro del bloque de seña del éxito (fondo claro), como un link más chico
+   debajo de las acciones. El resto de `.politica-link` lo sigue poniendo landing.scss. */
+.sena-politica { display: block; margin-top: 10px; color: var(--ink-dim); }
+
+@media (max-width: 899px) {
+  /* Canchas: 2 columnas centradas a 390px (2x2 con 4 opciones); mismo fix de auto-fit que en
+     desktop — con `repeat(2, …)` fijo, un club con 1 sola cancha dejaba la track vacía descentrando
+     la card real. auto-fit colapsa las tracks sin contenido a 0, así 1 cancha queda centrada y 4
+     siguen en 2x2. 160px de tope: con 172px quedaba apretado en plantilla B (paneles anidados). */
+  .courts {
+    grid-template-columns: repeat(auto-fit, minmax(0, 160px));
+    justify-content: center;
+    gap: 10px;
+  }
+}

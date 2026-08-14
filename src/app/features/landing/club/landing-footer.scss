@@ -1,0 +1,92 @@
+/* Lo que las tres cáscaras tenían en común. El resto (margen, padding, borde, color de fondo y
+   lugar en el layout) lo pone cada cáscara en SU hoja (ver shells/) sobre `.pb-foot` / `.b-foot` /
+   `.c-foot`, que son clases del host y por lo tanto le siguen llegando desde afuera. */
+:host {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.78rem;
+}
+
+.foot-links { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+/* Botón de arrepentimiento (Res. 424/2020): link discreto, visible sin scroll (exigencia legal). */
+.arrep-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  text-decoration: underline; font-size: 0.78rem; opacity: 0.85;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.arrep-link:hover { opacity: 1; }
+
+/* El aspecto base de `.politica-link` (fondo, borde, subrayado, opacidad) lo sigue poniendo
+   landing.scss con `:host ::ng-deep`, porque el MISMO link también aparece dentro de
+   <app-booking-flow> (bloque de seña del éxito). Acá solo van los colores por plantilla. */
+
+/* ── PLANTILLA A · sobre el afiche (fondo con el color del tenant) ── */
+:host(.pb-foot) .cr { color: color-mix(in srgb, var(--ink-on-accent, #fff) 85%, transparent); }
+:host(.pb-foot) .panel-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-weight: 600; }
+:host(.pb-foot) .panel-link:hover { color: var(--ink-on-accent, #fff); text-decoration: underline; }
+:host(.pb-foot) .arrep-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-family: inherit; }
+:host(.pb-foot) .arrep-link:hover { color: var(--ink-on-accent, #fff); }
+:host(.pb-foot) .politica-link { color: color-mix(in srgb, var(--ink-on-accent, #fff) 90%, transparent); font-family: inherit; }
+:host(.pb-foot) .politica-link:hover { color: var(--ink-on-accent, #fff); }
+
+/* ── PLANTILLAS B y C · sobre fondo claro (héroe / rail) ── */
+:host(.b-foot) a, :host(.c-foot) a { color: var(--ink-dim); text-decoration: none; }
+:host(.b-foot) a:hover, :host(.c-foot) a:hover { color: var(--court-deep); }
+:host(.b-foot) .arrep-link, :host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; }
+:host(.b-foot) .arrep-link:hover, :host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
+:host(.b-foot) .politica-link, :host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; }
+:host(.b-foot) .politica-link:hover, :host(.c-foot) .politica-link:hover { color: var(--court-deep); }
+
+/* Pie de la plantilla A en desktop (feedback owner post-mobile): mismo criterio que ya se aplicó en
+   mobile — los links en una fila (con separador) arriba y el © abajo, en vez de una fila apretada
+   contra el ancho angosto de la columna afiche (que partía el © en 2 líneas y apilaba los links).
+   Solo toca la A; B y C ya se ven bien en una línea, quedan como están. */
+@media (min-width: 900px) {
+  :host(.pb-foot) .foot-links {
+    order: 1;
+  }
+  :host(.pb-foot) .cr {
+    order: 2;
+    font-size: 0.72rem;
+  }
+  :host(.pb-foot) .foot-links > *:not(:first-child) {
+    position: relative;
+  }
+  :host(.pb-foot) .foot-links > *:not(:first-child)::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.45;
+  }
+}
+
+/* Mobile (feedback owner, M-mobile-plantillas): los links en una fila centrada con wrap (con un
+   punto medio de separador entre ellos) y el © debajo, centrado, chico y apagado. Mismo criterio
+   en las 3 plantillas. */
+@media (max-width: 899px) {
+  :host {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+  }
+  .foot-links {
+    order: 1;
+    justify-content: center;
+    width: 100%;
+  }
+  .foot-copy {
+    order: 2;
+    font-size: 0.7rem;
+    opacity: 0.6;
+  }
+  .foot-links > *:not(:first-child) {
+    position: relative;
+  }
+  .foot-links > *:not(:first-child)::before {
+    content: '·';
+    margin-right: 10px;
+    opacity: 0.45;
+  }
+}

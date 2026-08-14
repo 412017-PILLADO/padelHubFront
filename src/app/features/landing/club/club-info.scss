@@ -1,0 +1,58 @@
+/* Las tarjetas son items de la grilla de la cáscara (.b-info / .c-info): el host no puede meter una
+   caja en el medio — ver el comentario de club-info.ts. */
+:host { display: contents; }
+
+/* scroll-margin-top: si se llega por anchor (nav de C, ids ic-horarios/ic-donde/ic-contacto) que el
+   header sticky de B (.b-nav) no tape la card al saltar. */
+.ic-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 18px 20px; scroll-margin-top: 76px; }
+.ic-h { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.ic-ic { width: 32px; height: 32px; border-radius: 9px; background: var(--court-soft); color: var(--court); display: grid; place-items: center; flex: none; }
+.ic-ic svg { width: 17px; height: 17px; }
+.ic-t { font-weight: 700; font-size: 0.98rem; color: var(--ink); }
+.ic-hours { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.ic-hours li { display: flex; justify-content: space-between; gap: 14px; font-size: 0.9rem; }
+.ic-hours .d { color: var(--ink-dim); }
+.ic-hours .h { color: var(--ink); font-weight: 600; }
+.ic-hours .closed { color: var(--ink-faint); }
+.ic-addr { color: var(--ink-dim); font-size: 0.92rem; margin-bottom: 10px; }
+.ic-links { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.ic-link { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0;
+  cursor: pointer; color: var(--court-deep); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+.ic-link:hover { text-decoration: underline; }
+/* Icono de WhatsApp/Instagram delante del link: visible en todos los breakpoints (feedback owner
+   post-desktop revierte el display:none de escritorio que se había puesto en M-mobile-plantillas). */
+.ic-link-svg { display: inline-flex; width: 18px; height: 18px; flex: none; }
+
+/* ===================================================================
+   LO QUE CADA PLANTILLA LE PINTA A LAS TARJETAS DESDE AFUERA
+   Vive acá (y no en landing.scss) porque, encapsulada, `.tpl-b .ic-card` ya no casaría con el DOM
+   de este componente. `:host-context()` deja la regla acotada al subárbol de la plantilla sin
+   volver global la hoja. Deuda reconocida del plan: se reemplaza por tokens en el Plan 2.
+   =================================================================== */
+
+/* PLANTILLA B · la tarjeta es uno de los paneles de vidrio. Las declaraciones están escritas a mano
+   porque la misma receta la declara `shells/b-nocturna/_tokens.scss` como tokens --flow-* (con los
+   que se pinta el flujo de reserva) y `@extend` no cruza de hoja. Antes las compartía el placeholder
+   `%b-glass` de landing.scss; después fue la regla `.tpl-b .booking-flow` de booking-flow.scss, que
+   el Task 10 reemplazó por esos tokens. La obligación de sincronía es en los dos sentidos: si tocás
+   esta copia, tocá la otra (y al revés). El `border-radius` sí difiere a propósito: 20px la tarjeta,
+   28px el panel del flujo. */
+:host-context(.tpl-b) .ic-card {
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6); backdrop-filter: blur(22px) saturate(1.6);
+  border: 1px solid color-mix(in srgb, #fff 60%, transparent);
+  box-shadow: 0 20px 50px -28px color-mix(in srgb, var(--court) 45%, rgba(15, 23, 42, 0.45)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-radius: 20px;
+}
+:host-context(.tpl-b) .ic-ic { background: color-mix(in srgb, var(--court) 16%, transparent); }
+
+/* PLANTILLA C · tarjeta plana, esquinas más chicas. */
+:host-context(.tpl-c) .ic-card { border-radius: 14px; }
+:host-context(.tpl-c) .ic-ic { background: color-mix(in srgb, var(--court) 10%, transparent); }
+
+@media (min-width: 900px) {
+  /* En el rail angosto de C el horario deja de ser día-a-la-izquierda / rango-a-la-derecha (parte
+     feo en 280px): se apila. */
+  :host-context(.c-rail) .ic-hours li { flex-direction: column; align-items: flex-start; gap: 2px; }
+}

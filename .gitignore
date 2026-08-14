@@ -46,3 +46,9 @@ Thumbs.db
 # Playwright
 /test-results/
 /playwright-report/
+
+# Scratch de superpowers (ledger de ejecución, briefs y paquetes de review)
+.superpowers/
+
+# Config local de Claude Code (launch.json y settings.local.json son de cada máquina)
+.claude/

@@ -1,0 +1,34 @@
+/* ===================================================================
+   CONTRATO --flow-* · PLANTILLA A (afiche)
+
+   Los tokens con los que esta cáscara pinta al `<app-booking-flow>` que cuelga de ella. El flujo
+   NO tiene identidad visual propia: lee estos nueve valores (ver el encabezado de
+   booking/booking-flow.scss, que es el único consumidor y documenta qué significa cada uno).
+
+   Toda cáscara nueva tiene que declarar los nueve. El flujo trae un fallback por token para no
+   romperse si falta alguno, y ese fallback es justamente lo que declara la A: la A es la plantilla
+   default, así que "el flujo sin cáscara que lo vista" y "el flujo en la A" son lo mismo. Se
+   declaran igual, explícitos, para que el contrato se lea completo en las tres cáscaras.
+
+   La A no le pone caja al flujo: es la columna derecha del afiche, a sangre sobre el papel, y la
+   única de las tres que scrollea internamente (el afiche izquierdo queda clavado al viewport).
+   =================================================================== */
+:host {
+  /* Sin caja propia: ni fondo, ni borde, ni radio, ni sombra, ni vidrio. */
+  --flow-surface: transparent;
+  --flow-border: none;
+  --flow-radius: 0;
+  --flow-shadow: none;
+  --flow-backdrop: none;
+
+  /* La columna derecha ENTERA scrollea; en mobile el flujo se apila y el scroll es del documento
+     (eso lo resuelve el propio flujo en su @media, no depende de la cáscara). */
+  --flow-overflow: auto;
+
+  --flow-padding: clamp(20px, 3vw, 40px);
+  --flow-padding-mobile: clamp(20px, 5vw, 26px) clamp(16px, 5vw, 24px) 26px;
+
+  /* El nombre del club se muestra en el encabezado de la reserva: en la A la marca del afiche está
+     en la otra columna, así que no es repetición. */
+  --flow-marca-display: inline;
+}
