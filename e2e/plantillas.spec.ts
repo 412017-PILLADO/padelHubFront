@@ -105,6 +105,40 @@ for (const { slug, tpl, shell } of PLANTILLAS) {
       // 40 px es el PISO del `clamp(40px, 6vw, 68px)` de la cáscara, así que la aserción vale en
       // cualquier ancho de viewport; por debajo, el panel dejó de estar montado sobre el color.
       expect(solape).toBeGreaterThanOrEqual(40);
+
+      // La otra mitad de la firma: que el vidrio quede ARRIBA. El solape de acá arriba mide
+      // geometría, y la geometría NO VE LAS CAPAS: se puede mandar el vidrio abajo del color sin
+      // mover un solo pixel de las dos cajas, y entonces la firma desaparece con toda la suite en
+      // verde. Eso es lo que pinea esta aserción, preguntando QUIÉN QUEDA PINTADO ARRIBA en el medio
+      // de la franja montada.
+      //
+      // MEDIDO, porque el orden de pintado no se deduce leyendo la hoja de estilos. El vidrio queda
+      // arriba por DOS motivos, no uno: es hermano posterior del campo (shell.scss) y además su
+      // `backdrop-filter` lo convierte en stacking context, así que se pinta en el mismo grupo que un
+      // hermano `position: relative` con `z-index: auto` y le gana POR ORDEN DE DOCUMENTO. Por eso un
+      // `position: relative` pelado en `.e-campo` NO rompe nada — se probó y la aserción sigue verde.
+      // Lo que sí rompe es sumarle `z-index`: con `position: relative; z-index: 1` en `.e-campo` el
+      // campo sube de capa, tapa al vidrio y esta aserción cae con `header.e-campo`, mientras el
+      // solape de arriba sigue midiendo los mismos 68 px y pasando. Ése es el agujero que esto cubre.
+      const arriba = await page.evaluate(() => {
+        const campo = document.querySelector('.e-campo')!.getBoundingClientRect();
+        const vidrio = document.querySelector('.booking-flow')!.getBoundingClientRect();
+        const x = vidrio.left + vidrio.width / 2;
+        const y = (vidrio.top + campo.bottom) / 2;   // el medio de la franja solapada
+        // Fuera del viewport `elementFromPoint` devuelve null y un `!= null` haría PASAR el test por
+        // accidente; se devuelve el motivo para que falle diciendo qué pasó.
+        if (x < 0 || x > innerWidth || y < 0 || y > innerHeight) return `punto fuera del viewport (${x}, ${y})`;
+        const el = document.elementFromPoint(x, y);
+        if (!el) return 'elementFromPoint no devolvió nada';
+        // `closest` y no `===` porque el hit-test devuelve el DESCENDIENTE pintado arriba (el padding
+        // del vidrio o lo que haya adentro), no el contenedor. Los pseudo-elementos no aparecen acá:
+        // `elementFromPoint` siempre devuelve el elemento originante, así que un `::before` del campo
+        // no puede hacerse pasar por el vidrio. La transparencia tampoco confunde: el hit-test es por
+        // caja, no por pixel, así que el vidrio (que es translúcido a propósito) igual contesta.
+        // Se devuelve el elemento encontrado —no un booleano— para que el rojo diga QUIÉN estaba arriba.
+        return el.closest('.booking-flow') ? 'vidrio' : `${el.tagName.toLowerCase()}.${el.getAttribute('class')}`;
+      });
+      expect(arriba, 'el vidrio tiene que quedar por ENCIMA del campo en la zona de solape').toBe('vidrio');
     }
 
     await reservar(page, `${tpl}${String(Date.now()).slice(-4)}`);

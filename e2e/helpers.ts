@@ -4,6 +4,19 @@ export const API = 'http://localhost:8095';
 export const RESERVA_URL = 'http://demo.localhost:4400/';
 export const OWNER = { email: 'owner@padelhub.com', password: 'padel123' };
 
+/**
+ * Todos los tenants que la suite toca. `demo` es el de siempre; los otros cuatro los provisiona
+ * `plantillas.spec.ts` por la API de plataforma si no existen. Vive acá y no en el teardown porque
+ * es la respuesta a "¿en qué bases escribe esta suite?", y esa pregunta la va a tener cualquiera.
+ */
+export const TENANTS_E2E: readonly { slug: string; email: string; password: string }[] = [
+  { slug: 'demo', email: OWNER.email, password: OWNER.password },
+  { slug: 'acepadel', email: 'owner@acepadel.com', password: 'padel123' },
+  { slug: 'costapadel', email: 'owner@costapadel.com', password: 'padel123' },
+  { slug: 'urbanpadel', email: 'owner@urbanpadel.com', password: 'padel123' },
+  { slug: 'solpadel', email: 'owner@solpadel.com', password: 'padel123' },
+];
+
 /** Obtiene un JWT del owner del tenant demo vía la API real. */
 export async function ownerToken(request: APIRequestContext): Promise<string> {
   const res = await request.post(`${API}/api/v1/auth/login`, {

@@ -44,7 +44,11 @@
   border: 1px solid var(--line-strong); border-radius: var(--r);
   background: var(--paper); color: var(--ink);
   font: 500 0.95rem var(--body); padding: 9px 11px; width: 100%;
-  &:focus-visible { outline: 2px solid var(--court); outline-offset: 1px; }
+  /* El color sale de `--anillo-foco` y no de `--court` crudo, por lo mismo que la regla global:
+     el color del club pelado da 2,07:1 con el naranja del demo y 1,32 con un amarillo sobre estas
+     superficies claras. Acá sólo se cambia la GEOMETRÍA (offset 1px, que el input pide por su
+     borde propio); el color es el de plataforma. */
+  &:focus-visible { outline: 2px solid var(--anillo-foco); outline-offset: 1px; }
   &:disabled { opacity: 0.55; cursor: not-allowed; }
 }
 .m-actions {
@@ -130,7 +134,10 @@ main { max-width: 1280px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
   width: 100%; font: inherit; padding: 10px 14px; border-radius: var(--r);
   border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink);
 }
-.search-input:focus { outline: none; border-color: var(--court); }
+/* Sin `outline: none`. Y ojo con la prosa vieja: este buscador NO es un `pInputText` — es un
+   <input type="search"> pelado, asi que quien le apagaba el anillo era ESTA hoja y no PrimeNG.
+   Los numeros, en config-shared.scss. */
+.search-input:focus { border-color: var(--court); }
 
 /* Filtro por cancha */
 .cancha-filter { margin-top: 18px; }

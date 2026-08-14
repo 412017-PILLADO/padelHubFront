@@ -58,7 +58,15 @@
   font: inherit; padding: 11px 14px; border-radius: var(--r);
   border: 1px solid var(--line-strong); background: var(--paper); color: var(--ink);
 }
-.cf-input:focus { outline: none; border-color: var(--court); }
+/* El cambio de borde es un REALCE, no el indicador de foco. Acá había un `outline: none` que dejaba
+   al borde del color crudo del club como única señal, y eso no llega: contra `--line-strong`
+   (`#cfd6e6`, el borde en reposo) el cambio de estado mide 1,02:1 con un club amarillo, 1,54 con el
+   naranja del demo y 2,82 con el teal de plataforma — los tres abajo del 3:1 que WCAG 1.4.11 pide
+   para componentes, y sobre `--surface` el borde naranja da 2,24. Sin el `outline: none`, la regla
+   global `:focus-visible` de styles.scss vuelve a pintar `--anillo-foco`, que con los seis clubes da
+   3,16-18,43:1 sobre las dos superficies claras (lo mide `src/styles.spec.ts`). El borde se queda:
+   suma, no reemplaza. MISMO CRITERIO en tab-club.scss, panel.scss y platform-panel.scss. */
+.cf-input:focus { border-color: var(--court); }
 .cf-hint { font-size: 0.78rem; color: var(--ink-faint); }
 .cf-inline { flex-direction: row; align-items: center; justify-content: space-between; }
 

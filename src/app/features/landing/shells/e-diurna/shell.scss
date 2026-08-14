@@ -59,47 +59,6 @@
   font-family: var(--body);
 }
 
-/* EL ANILLO DE FOCO DE E. Mismo mecanismo que la nocturna (`b-nocturna/shell.scss`) y por el mismo
-   motivo: el anillo lo declara una hoja global (`styles.scss`, `:focus-visible { outline: 2px solid
-   var(--court) }`), o sea el color del club CRUDO, y hay que pisarlo en descendientes que son otros
-   componentes. Dos cáscaras resolviendo el mismo problema de dos maneras distintas es peor que
-   cualquiera de las dos, así que esta regla es la de B con el polo dado vuelta.
-
-   POR QUÉ HACE FALTA. Las superficies de E son claras —el vidrio del panel (`#fcfcff`), `--surface`
-   (`#ffffff`) y el papel del pie (`#f4f6fb`)— y sobre ellas el color del club crudo desaparece
-   cuando el club es CLARO. Medido tabulando de verdad las 22 paradas de la landing, con el anillo de
-   plataforma:
-
-     club            vidrio   --surface   papel     veredicto
-     teal #0a8a99     4,01      4,11      3,80      pasa
-     fucsia #FF2D95   3,38      3,46      3,20      pasa
-     casi negro #111 18,44     18,88     17,46      pasa
-     naranja #f89625  2,19      2,24      2,07      NO PASA  ← es el club real del demo
-     amarillo #FFD400 1,40      1,43      1,32      NO PASA
-
-   Es la imagen espejada de lo que le pasaba a B: allá el club casi NEGRO dejaba un halo negro sobre
-   el telón oscuro (1,02:1); acá el club claro deja un halo claro sobre el papel. Por eso el polo de
-   la mezcla también está espejado: B aclara hacia `#fff`, E oscurece hacia `#000`.
-
-   EL 55% ES UN TECHO, NO UN GUSTO. Con alfa 1 sobre `--surface` (`#ffffff`, la superficie más clara
-   del producto) el peor club posible es el BLANCO: `color-mix(#fff N%, #000)` llega a 3:1 recién con
-   N ≤ 58,4%. 55% es ese techo redondeado hacia abajo, y da 3,35:1 con un club casi blanco, 4,52 con
-   el amarillo y 9,7 con el teal. Subirlo por encima de 58% deja otra vez sin foco a los clubes
-   claros; bajarlo apaga el matiz del club sin necesidad.
-
-   SÓLO EL COLOR. `outline-offset` NO es parte del shorthand `outline`, así que esta regla no lo
-   toca: el offset sigue siendo el 3px de plataforma. B además lo baja a 2px; acá no hay motivo
-   medido para hacerlo, y cambiar geometría en un audit de contraste sería cambiar de más.
-
-   LA ISLA CLARA DEL DATEPICKER NO ES UN RIESGO EN E, y esto es lo único que se lee distinto que en
-   B. Allá el anillo se aclara, así que sobre el panel BLANCO de PrimeNG (que `.cal.open` monta
-   adentro del host) haría lo contrario de lo correcto, y B depende de que el `:focus-visible` propio
-   de PrimeNG gane el empate de especificidad por orden de carga. Acá el anillo se OSCURECE: sobre
-   blanco es exactamente la dirección correcta, así que gane quien gane el empate, E queda bien. */
-:host ::ng-deep :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--court) 55%, #000);
-}
-
 /* EL CAMPO. El color del club a plena saturación, con el secundario como luz radial (spec §6, rol
    del color en E). No es decorado: es lo que le da sustancia al vidrio del panel. Sobre blanco
    plano un blur no tiene nada que difuminar —por eso la B vieja se veía lavada— así que ninguna
@@ -155,7 +114,16 @@
    era el teal, que es justo el color por defecto del producto.
    Bajar este número por debajo de 24 vuelve a poner el umbral en 4,5 y deja al teal afuera;
    `contraste.spec.ts` lee el valor de esta hoja y falla si pasa. */
-.e-brandname { min-width: 0; font-size: 1.5rem;
+/* El `line-height` propio es por lo mismo que en `.b-brandname` (ahí está el comentario largo con la
+   medición): el 0.92 que hereda de `.display` está para títulos de VARIAS líneas, acá es UNA sola
+   con ellipsis, y sumado al `overflow: hidden` recortaba la tilde — "Sol Pádel" salía "SOL PADEL".
+   El mínimo medido acá es aún más alto que en B porque el cuerpo es mayor: con Anton a 24px la
+   tinta con tilde sube 27px sobre la línea de base contra 28px de ascenso de la caja, o sea
+   `(2*27 - 28 + 8) / 24 = 1,417`. 1.5 es el mismo valor que B y deja aire sobre los dos: el primer
+   redondo por encima del mínimo era 1.45, pero acá dejaba **+0,40 px** (y +0,49 en B), o sea menos
+   de medio pixel — un rasterizador que dibuje la tilde un pixel más alta volvía a recortar.
+   No se toca el token global ni la `.display` de plataforma. */
+.e-brandname { min-width: 0; font-size: 1.5rem; line-height: 1.5;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* Sin `letter-spacing` propio: el que vale es el `--display-tracking` del `:host`, así E tiene un
    solo tracking de display. Declararlo acá le ganaría al token y lo partiría en dos. */
@@ -171,6 +139,14 @@
    así que se pinta encima sin necesidad de `position`/`z-index`. El `backdrop-filter` del vidrio
    difumina justo esa franja de color: eso es lo que hace que la mitad montada se lea como vidrio
    sobre color y no como un recorte del campo.
+
+   Y el `backdrop-filter` hace además algo que NO es obvio y que conviene saber antes de tocar esto:
+   convierte al panel en CONTEXTO DE APILADO, así que la firma está más protegida de lo que el
+   párrafo de arriba sugiere. Un `position: relative` suelto en el campo NO la rompe —los dos quedan
+   en el mismo grupo de pintado y gana el orden del árbol, que favorece al panel—. Lo que sí la
+   rompe es `position` CON un `z-index` que lo levante: ahí el color se pinta sobre el vidrio, el
+   solape sigue midiendo lo mismo y la firma desaparece. Por eso `plantillas.spec.ts` no se conforma
+   con medir la geometría y pregunta, con `elementFromPoint`, QUIÉN está pintado arriba.
 
    Sin padding de arriba propio: el aire de adentro del panel lo pone `--flow-padding` (ver
    `_tokens.scss`), que vive del lado correcto del borde del vidrio. Si acá hubiera padding, el

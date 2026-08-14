@@ -11,6 +11,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  // La suite crea reservas reales y nadie las limpiaba: ver e2e/global-teardown.ts.
+  globalTeardown: './e2e/global-teardown.ts',
   // IMPORTANTE: correr SIEMPRE con el path → `npx playwright test e2e`. El comando pelado
   // (sin path) escanea de más (unit specs de src/, worktrees en .claude/, el proyecto hermano
   // BarberApp) y carga dos @playwright/test, corrompiendo el runner ("did not expect test()").

@@ -10,7 +10,9 @@
   border: 1px solid var(--line-strong); border-radius: var(--r);
   background: var(--paper); color: var(--ink); font: inherit; font-size: 0.95rem; cursor: pointer;
 }
-.plantilla-sel:focus { outline: none; border-color: var(--court); }
+/* Sin `outline: none`: el borde del color del club es un realce y no el indicador de foco (ver
+   config-shared.scss para los numeros). El anillo lo pinta la regla global `:focus-visible`. */
+.plantilla-sel:focus { border-color: var(--court); }
 .plantilla-row .marca-opt { font-size: 0.82rem; flex: 1 1 240px; }
 .color-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .color-swatch {
@@ -21,7 +23,7 @@
   height: 46px; width: 130px; padding: 0 14px; border: 1px solid var(--line-strong);
   border-radius: var(--r); font-size: 0.95rem;
 }
-.color-hex:focus { outline: none; border-color: var(--court); }
+.color-hex:focus { border-color: var(--court); }
 
 .logo-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .logo-box {

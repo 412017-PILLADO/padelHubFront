@@ -44,7 +44,10 @@ main { max-width: 1120px; margin-inline: auto; padding: 12px clamp(16px, 4vw, 24
 }
 .cfg-tab:hover { background: var(--surface); color: var(--ink); }
 .cfg-tab.on { background: var(--court); border-color: var(--court); color: var(--ink-on-accent, #fff); }
-.cfg-tab:focus-visible { outline: 2px solid var(--court); outline-offset: 2px; }
+/* El color sale de `--anillo-foco` (ver `styles.scss`) y no de `--court` crudo: el color del club
+   pelado da 2,07:1 con el naranja del demo y 1,32 con un amarillo sobre las superficies claras del
+   panel. Esta regla existe sólo por la GEOMETRÍA (offset 2px, que la tab pide por su relleno). */
+.cfg-tab:focus-visible { outline: 2px solid var(--anillo-foco); outline-offset: 2px; }
 
 /* Horario, Descanso, Turno/duraciones y Bloqueos: ver tabs/tab-agenda/tab-agenda.scss.
    Precios y Precio por horario: ver tabs/tab-precios/tab-precios.scss.

@@ -12,10 +12,79 @@
    En la B el flujo es uno de los paneles de vidrio nocturno, el mismo que las tarjetas de info: esa
    receta ya no se escribe acá, vive una sola vez en `_vidrio.scss` y este archivo la incluye. El
    radio es lo único que difiere a propósito — 28px el panel del flujo, 20px la tarjeta.
+
+   Además del contrato `--flow-*`, acá vive `--anillo-foco`: no lo consume el flujo sino la regla
+   `:focus-visible` GLOBAL de `styles.scss`, y es de capa 2 igual que todo lo demás de este archivo.
    =================================================================== */
 @use 'vidrio';
 
 :host {
+  /* EL ANILLO DE FOCO DE B. El default de plataforma (`styles.scss`) mezcla el color del club hacia
+     la tinta del sistema, que es lo correcto sobre superficie clara y acá sería lo contrario:
+     oscurecer sobre el telón nocturno hace desaparecer el anillo. Sobre esta cáscara hay que
+     ACLARAR. Medido con los cinco clubes extremos, contra la peor de las cuatro superficies de B
+     (papel, superficie, vidrio del panel y bloque suave):
+
+       club            anillo `--court`   anillo de acá
+       casi negro #111        1,02:1          3,62:1   ← de invisible a legible
+       teal    #0a8a99        3,13:1          5,73:1
+       fucsia  #FF2D95        3,78:1          5,70:1
+       amarillo #FFD400       6,33:1          7,19:1
+       casi blanco #fff       7,52:1          7,52:1
+
+     Con un club casi negro el anillo de plataforma no es tenue: es un halo NEGRO alrededor del
+     control, que se lee como un agujero y no como foco. Es la falla de accesibilidad más cara de la
+     cáscara (WCAG 2.4.7 y 1.4.11), porque el recorrido por teclado es el único que no tiene plan B.
+
+     El acento se ACLARA en vez de reemplazarse: el anillo sigue siendo del color del club (fucsia da
+     rosa, teal da celeste), sólo que subido hasta donde la superficie oscura lo deja ver. Un anillo
+     blanco fijo habría sido más simple y habría borrado la marca.
+
+     ESTO ERA UN `:host ::ng-deep :focus-visible` Y YA NO LO ES. Era la segunda excepción de
+     encapsulación del producto, y la primera de dos cáscaras copiándose la misma fórmula con el polo
+     dado vuelta. Declarar el TOKEN alcanza porque las propiedades personalizadas se HEREDAN: la
+     regla sigue siendo una sola y global, y este valor la alcanza en todo el subárbol de
+     `<app-shell-b>` sin `::ng-deep` y sin nombrar la plantilla adentro del flujo. Por lo mismo queda
+     acotado igual de bien que antes: los dos modales (arrepentimiento y política) y la pill del
+     preview cuelgan de `<app-landing>`, NO de esta cáscara, así que heredan el default claro de
+     plataforma — que es lo correcto, se pintan sobre superficies claras.
+
+     OJO · HAY UNA ISLA CLARA QUE SÍ ESTÁ ADENTRO, y para ella aclarar sería lo contrario de lo
+     correcto: el popover del calendario. `booking-flow.html:52-53` monta el `<p-datepicker [inline]>`
+     DENTRO de `.cal.open` (sin `appendTo="body"`), o sea colgando de esta cáscara, y su panel es
+     blanco puro — los componentes de PrimeNG se pintan sobre superficies claras del sistema en todas
+     las plantillas (decisión anotada en `core/branding/tenant-colors.ts`). Sobre blanco, este anillo
+     mediría 2,25:1 con teal, 2,30 con fucsia y 1,26 con amarillo.
+
+     NO PASA, y está medido, no supuesto: las cuatro paradas de teclado del popover (las dos flechas
+     de mes y los selectores de mes y de año) conservan el `:focus-visible` PROPIO de PrimeNG,
+     `1px solid` con su `--p-focus-ring-color` — 6,22:1 las flechas, 4,90 / 3,65 / 1,61 / 17,96 /
+     1,24 los selectores según el club. Las celdas de día no son focusables (la grilla no entra al
+     orden de tabulación), así que no hay una quinta parada.
+
+     Y ACÁ EL TOKEN MEJORA ALGO, no sólo ahorra una excepción. Antes esto era un empate de
+     ESPECIFICIDAD —`[nghost] :focus-visible` (0,2,0) contra `.p-datepicker-select-month:focus-visible`
+     (0,2,0)— que resolvía el ORDEN de carga, o sea que dependía de cómo se inyecta hoy el tema de
+     una librería que no es nuestra. Ahora la única regla nuestra es la global, que es
+     `:focus-visible` pelado (0,1,0): PrimeNG le gana por ESPECIFICIDAD y ya no necesita ganar por
+     orden. Queda una sola manera de darlo vuelta, y es la de siempre: **`cssLayer: true` en
+     `providePrimeNG`** (`app.config.ts`, hoy sin esa opción), porque una regla EN capa pierde contra
+     una SIN capa sin importar ni especificidad ni orden. Por eso hay un test que afirma que la
+     opción sigue sin estar (`app.config.spec.ts`), y su mensaje de error apunta acá.
+
+     Si algún día se activa, la salida es más simple que la que pedía este comentario cuando era una
+     regla: no hay que reescribir ningún `:focus-visible`, alcanza con volver a declarar el TOKEN en
+     esa zona — `:host ::ng-deep .cal { --anillo-foco: color-mix(in srgb, var(--court) 55%, #000); }`,
+     que es la misma maniobra que hace `a-afiche` con su afiche. Lo que NO es salida es un
+     `:not(.cal *)`: un `:not()` complejo no soportado invalida la regla ENTERA.
+
+     EL `outline-offset`: la regla vieja bajaba de los 3px de plataforma a 2px. Ni el comentario que
+     la acompañaba —que es todo lo de arriba— ni el reporte del audit que la escribió (Task B8, que
+     sólo lo registra como valor computado) dan un motivo; el offset no entra en ninguna cuenta de
+     contraste y `outline-offset` ni siquiera es parte del shorthand `outline`. Se deja caer a
+     propósito: B vuelve a los 3px de plataforma, como A, C y E. */
+  --anillo-foco: color-mix(in srgb, var(--court) 60%, #fff);
+
   /* Los cinco tokens de vidrio (fondo translúcido + blur + borde luminoso + brillo especular
      interno) los emite el mixin, que es su único origen: acá sólo se elige el radio. El porqué de
      cada valor está documentado en `_vidrio.scss`. */

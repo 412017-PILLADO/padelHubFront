@@ -15,7 +15,10 @@
   border: 1px solid var(--line-strong); border-radius: var(--r);
   background: var(--paper); color: var(--ink);
   font: 500 0.95rem var(--body); padding: 10px 12px; margin-bottom: 10px;
-  &:focus-visible { outline: 2px solid var(--court); outline-offset: 1px; }
+  /* El color sale de `--anillo-foco` y no de `--court` crudo (misma razón que la regla global de
+     `styles.scss`). El modal cuelga de `<app-landing>`, fuera de toda cáscara, así que hereda el
+     default de plataforma aunque la plantilla sea la nocturna — y está bien: es una caja clara. */
+  &:focus-visible { outline: 2px solid var(--anillo-foco); outline-offset: 1px; }
 }
 /* Honeypot anti-bot: mismo patrón que el form de reserva (ver landing.scss). Duplicado acá porque
    el componente es autosuficiente. */

@@ -289,6 +289,30 @@ export class BookingStore {
    *  por transición si llega a re-ejecutarse más de una vez para el mismo estado. */
   private ultimoEstadoAtendido: 'inicial' | 'cargando' | 'ok' | 'error' = 'inicial';
 
+  /**
+   * Generación del pedido de disponibilidad en curso. Cada llamada a `loadAvailability()` se lleva
+   * un número; cuando vuelve la respuesta, si ya no es la última, se descarta. Sin esto, cambiar de
+   * día rápido dejaba que la respuesta VIEJA llegara después y repintara la grilla con los turnos
+   * del día que el visitante ya abandonó — en los e2e salía como un "element detached from the DOM"
+   * al clickear confirmar.
+   */
+  private pedidoSlots = 0;
+
+  /**
+   * true en cuanto el visitante elige un día a mano. `initDefaultDay()` calcula un DEFAULT (el
+   * primero de hoy/mañana/pasado con disponibilidad) con un forkJoin de 3 sondas que puede resolver
+   * DESPUÉS del primer click: sin esta bandera, ese default tardío le pisaba el día elegido, la
+   * grilla y `slotsLoaded`, y encima sin spinner que tape el cambio (initDefaultDay no toca
+   * `loadingSlots`). Misma regla que `duracionElegida` aplica para la duración: un default no pisa
+   * una elección explícita.
+   *
+   * Campo común y NO una lectura de `selectedDay()`: el forkJoin sale del `effect()` del
+   * constructor, así que leer un signal ahí lo volvería dependencia del effect y cada `selectDay()`
+   * lo dispararía entero de nuevo (initDefaultDay otra vez, toast de error repetido). Es la misma
+   * trampa que documenta `duracionElegida` — no convertirlo en signal ni en `computed`.
+   */
+  private diaElegido = false;
+
   constructor() {
     // El fetch de config (ClubStore.cargar()) es async: la duración default y el día inicial del
     // flujo de reserva dependen de que la config ya haya llegado (o haya fallado), así que se
@@ -329,6 +353,9 @@ export class BookingStore {
         .pipe(catchError(() => of([] as Slot[])))
     );
     forkJoin(probes$).subscribe((results) => {
+      // Llegó tarde: el visitante ya eligió día a mano mientras las sondas estaban en vuelo, y su
+      // elección gana (ver diaElegido). Lectura de un campo común, no de un signal.
+      if (this.diaElegido) return;
       const idx = results.findIndex((slots) => slots.some((s) => s.disponible));
       const chosenIdx = idx !== -1 ? idx : 0;
       this.selectedDay.set(startOfDay(candidates[chosenIdx]));
@@ -357,6 +384,7 @@ export class BookingStore {
   }
 
   selectDay(date: Date): void {
+    this.diaElegido = true;
     const day = startOfDay(date);
     this.selectedDay.set(day);
     this.calOpen.set(false);
@@ -387,16 +415,22 @@ export class BookingStore {
   }
 
   private loadAvailability(day: Date): void {
+    const pedido = ++this.pedidoSlots;
     this.loadingSlots.set(true);
     this.slotsLoaded.set(false);
     this.slots.set([]);
     this.booking.disponibilidad(this.apiFecha(day), this.duracion()).subscribe({
       next: (slots) => {
+        // Llegó tarde: ya hay un pedido más nuevo en vuelo, esta respuesta es de otro día.
+        if (pedido !== this.pedidoSlots) return;
         this.slots.set(slots);
         this.loadingSlots.set(false);
         this.slotsLoaded.set(true);
       },
       error: () => {
+        // La guarda va también acá: un error viejo apagaba el spinner del pedido nuevo y encima
+        // mostraba un toast por un día que el visitante ya no tiene en pantalla.
+        if (pedido !== this.pedidoSlots) return;
         this.slots.set([]);
         this.loadingSlots.set(false);
         this.slotsLoaded.set(true);

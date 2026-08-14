@@ -96,19 +96,21 @@ const VIDRIO = colorMix(declaracion(HOJA_VIDRIO, '\\$superficie'), '_vidrio.scss
 /** El bloque suave: `--flow-soft-surface: color-mix(in srgb, var(--court) N%, var(--surface))`. */
 const SUAVE = colorMix(declaracion(HOJA_TOKENS, '--flow-soft-surface'), '_tokens.scss · --flow-soft-surface');
 /**
- * El anillo de foco: `outline: 2px solid color-mix(in srgb, var(--court) N%, #fff)`.
+ * El anillo de foco: `--anillo-foco: color-mix(in srgb, var(--court) N%, #fff)`.
  *
- * El selector va ANCLADO a `:host ::ng-deep :focus-visible` y no a un `:focus-visible` suelto. La
- * razón: la salida documentada en shell.scss —para cuando el empate con el foco propio de PrimeNG
- * se dé vuelta— es una regla dedicada `.cal :focus-visible` que vuelve a oscurecer el anillo sobre
- * el panel blanco del datepicker. Un regex sin anclar toma el PRIMER bloque que matchee: si esa
- * regla se escribiera más arriba en la hoja, este spec pasaría a medir el anillo del calendario
- * contra las superficies oscuras de B y seguiría verde. Es el único de los parsers de este archivo
- * que podía fallar en SILENCIO en vez de tirar.
+ * El anillo sale de `--anillo-foco`, token de capa 2, y ya NO de un `:host ::ng-deep :focus-visible`
+ * en `shell.scss`: el `:focus-visible` global de `styles.scss` lo consume, así que la cáscara
+ * declara el color y no vuelve a escribir la regla. Lo que este spec exige no cambió — cambió de
+ * dónde se lee.
+ *
+ * El `:` pegado en `--anillo-foco\s*:` es lo que evita matchear un token que apenas lo prefije, y
+ * `declaracion()` toma la ÚLTIMA declaración: si algún día la cáscara declara el token dos veces
+ * (por ejemplo una zona propia, como hace `a-afiche` con su afiche), el que gana en el `:host` es
+ * el que este spec tiene que medir.
  */
 const ANILLO = colorMix(
-  /:host\s+::ng-deep\s+:focus-visible\s*\{[^}]*?outline\s*:\s*([^;]+);/.exec(HOJA_SHELL)?.[1] ?? null,
-  'shell.scss · el outline del `:host ::ng-deep :focus-visible`',
+  declaracion(HOJA_TOKENS, '--anillo-foco'),
+  '_tokens.scss · el valor de `--anillo-foco`',
 );
 
 /**
@@ -255,7 +257,7 @@ describe('plantilla B · el anillo de foco sobrevive a cualquier color de club',
     ['casi negro', '#111111'],
     ['casi blanco', '#ffffff'],
   ];
-  /** El `outline` del `:focus-visible` de shell.scss, con su % y su segundo término leídos de ahí. */
+  /** El valor de `--anillo-foco` de `_tokens.scss`, con su % y su segundo término leídos de ahí. */
   const anilloDe = (club: string) => mezcla(rgb(club), ANILLO.pct, rgb(ANILLO.b));
   const peorRatio = (tinta: Rgb, club: string) =>
     Math.min(...Object.values(superficiesDe(club)).map((f) => contraste(tinta, f)));
