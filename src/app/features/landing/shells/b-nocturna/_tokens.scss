@@ -154,4 +154,11 @@
      tinta sobre la misma superficie), no porque hoy difieran. */
   --flow-accent-ink: color-mix(in srgb, var(--court) 55%, var(--ink));
   --flow-accent-line: color-mix(in srgb, var(--court) 55%, var(--ink));
+
+  /* EL FILO DEL CTA · la nocturna no lo usa. Su CTA se apoya sobre el telón oscuro, donde el color
+     del club crudo es de lo más luminoso de la pantalla: el botón tiene silueta de sobra sin borde
+     —que es justo lo que NO pasa sobre las superficies claras—. Y el secundario de B ya está gastado
+     en los dos reflectores: la firma de esta plantilla es LUZ, no estructura (spec §6). `none` es el
+     valor de la A, o sea lo que el fallback del flujo ya resolvía. */
+  --flow-cta-edge: none;
 }

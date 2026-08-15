@@ -45,4 +45,10 @@
      separados porque las dos familias van a divergir cuando alguna plantilla lo necesite. */
   --flow-accent-ink: var(--court);
   --flow-accent-line: var(--court);
+
+  /* EL FILO DEL CTA · la C no lo usa. Su secundario es ACENTO PUNTUAL (spec §6) y no estructura, y
+     su CTA vive pegado a la barra inferior del recap: un borde ahí competiría con el canto de la
+     propia barra, que es el límite que esta plantilla ya dibuja. `none` es el valor de la A, o sea
+     exactamente lo que el fallback del flujo ya resolvía. */
+  --flow-cta-edge: none;
 }

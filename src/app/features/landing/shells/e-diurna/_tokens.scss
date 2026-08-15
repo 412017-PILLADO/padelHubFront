@@ -125,4 +125,10 @@
      separados porque las dos familias van a divergir cuando alguna plantilla lo necesite. */
   --flow-accent-ink: var(--court);
   --flow-accent-line: var(--court);
+
+  /* EL FILO DEL CTA · la diurna no lo usa: su secundario es LUZ (el radial del campo de color, spec
+     §6) y su CTA cae adentro del vidrio, que ya trae borde especular y brillo de canto propios.
+     Meterle un filo al botón sería una segunda estructura adentro del único panel de la plantilla.
+     `none` es el valor de la A, o sea lo que el fallback del flujo ya resolvía. */
+  --flow-cta-edge: none;
 }

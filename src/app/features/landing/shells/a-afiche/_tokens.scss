@@ -52,4 +52,10 @@
      separados porque las dos familias van a divergir cuando alguna plantilla lo necesite. */
   --flow-accent-ink: var(--court);
   --flow-accent-line: var(--court);
+
+  /* EL FILO DEL CTA · la A no lo usa: su botón de confirmar es una mancha de color a sangre, y el
+     afiche de al lado ya es toda la estructura que la plantilla tiene para dar. `none` es lo que el
+     fallback del flujo ya resolvía —la A ES el default—, así que declararlo no mueve un píxel; está
+     escrito porque el contrato pide los diecisiete y quien avisa es el test, no la pantalla. */
+  --flow-cta-edge: none;
 }

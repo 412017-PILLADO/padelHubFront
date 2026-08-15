@@ -65,6 +65,33 @@
    encima, y de esa pareja ya se ocupa `decidirTinta()` en la capa 3. Tampoco el resplandor del
    botón de confirmar, que es la sombra del propio relleno y tiene que seguir al relleno.
 
+   Y el DECIMOSÉPTIMO, el FILO DEL CTA:
+
+     --flow-cta-edge        el borde del botón de confirmar, como valor entero del atajo `border`
+                            (`2px solid <color>` o `none`).
+
+   Por qué hacía falta un token y no alcanzaba con `--flow-accent-line`: ese es el trazo del club
+   DENTRO del tablero (hover de chips, borde del paso hecho, contorno de la cancha elegida) y cae
+   sobre la superficie del flujo. El filo del CTA cae entre DOS superficies —el relleno del propio
+   botón por adentro y el tablero por afuera— y por eso puede querer otro color que el resto de los
+   trazos: en la D es el SECUNDARIO del club (spec §6, "el secundario como estructura"), que ningún
+   otro token del contrato transporta.
+
+   Y por qué el token es del CONTRATO y no una regla de la cáscara: `.confirm` vive acá adentro, así
+   que una cáscara que quiera vestirlo tendría que apuntar al DOM de este componente — justo lo que
+   la regla de abajo prohíbe. Mismo movimiento que hizo la E cuando el acento crudo se caía en una
+   superficie oscura: el que sabe sobre qué superficie cae el trazo es la cáscara, así que lo dice la
+   cáscara.
+
+   El default es `none` —el botón de la A no tiene borde— así que las cuatro cáscaras que no lo usan
+   declaran exactamente lo que el fallback ya resolvía y no se mueven un píxel.
+
+   NO ES DECORATIVO PARA TRES DE LAS SEIS PALETAS DE LA CASA. El relleno del CTA es `--court` crudo
+   sobre el tablero de la cáscara, y con el papel claro de A/C/D eso da 2,07:1 con el naranja (el
+   club real del demo), 1,32 con el amarillo y 1,08 con un club casi blanco: el botón NO TIENE
+   silueta contra su propia superficie, y lo único que lo delata es el texto de adentro. El filo es
+   lo que le devuelve el límite visible que el 1.4.11 pide (3:1 de componente).
+
    Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
    se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
 
@@ -373,7 +400,10 @@
 
 .confirm {
   height: 50px;
-  border: none;
+  /* El filo del CTA lo pone la plantilla (ver el contrato arriba). Sin token, el botón va a sangre
+     sobre su relleno, que es la A. Con `box-sizing: border-box` (styles.scss) el borde se come del
+     lado de adentro: los 50px de alto no se mueven. */
+  border: var(--flow-cta-edge, none);
   border-radius: var(--r);
   background: var(--court);
   color: var(--ink-on-accent, #fff);
@@ -383,7 +413,12 @@
   transition: background 0.16s ease, transform 0.16s ease;
 }
 .confirm:hover:not(:disabled) { background: var(--court-deep); transform: translateY(-1px); }
-.confirm:disabled { background: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
+/* Deshabilitado el filo se apaga CON el botón, igual que el resplandor: se lleva el color del propio
+   relleno gris, así que el borde sigue ocupando su lugar pero deja de señalar. Un filo vivo alrededor
+   de un botón muerto lo hace parecer accionable, y el CTA está deshabilitado hasta que hay turno y
+   datos — o sea la mayor parte de la visita. (En las cáscaras sin filo esta línea es inerte: sin
+   `border-style` no hay borde que colorear, así que no mueve un píxel.) */
+.confirm:disabled { background: var(--line-strong); border-color: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
 .confirm-hint { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-dim); text-align: center; }
 
 /* ===================== ÉXITO =====================
