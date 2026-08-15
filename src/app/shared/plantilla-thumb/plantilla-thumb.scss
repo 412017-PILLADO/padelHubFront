@@ -17,6 +17,14 @@
 :host {
   display: block;
 
+  /* EL CONTAINER VA ACÁ Y NO EN `.thumb`, y la diferencia es de vida o muerte: un elemento NO puede
+     consultarse a sí mismo. Con `container-type` en `.thumb`, sus descendientes sí lo consultaban,
+     pero las `cqi` de SUS PROPIAS propiedades (el padding de cada silueta) caían al container de más
+     arriba — que no existe — y terminaban resolviendo contra el VIEWPORT: medido, `padding: 8cqi`
+     daba **102px de padding adentro de una miniatura de 150px**, y las piezas quedaban aplastadas a
+     10×2. Ningún test lo veía: la miniatura seguía existiendo, con sus atributos y su silueta. */
+  container-type: inline-size;
+
   /* La superficie y la tinta de la miniatura. Son de la miniatura y no del sistema: acá adentro no
      hay texto de verdad, así que estos dos sólo tienen que separarse entre sí lo suficiente como
      para que las piezas se distingan a 120px de ancho. */
@@ -41,10 +49,10 @@
   border-radius: 10px;
   background: var(--th-paper);
   color: var(--th-ink);
-  /* Las medidas de adentro van en `cqi` (porcentaje del ancho del propio thumb): así la miniatura se
-     lee igual a 110px en la grilla del panel que a 220px en el carrusel de marketing, sin un solo
-     media query y sin dos juegos de tamaños que se desincronicen. */
-  container-type: inline-size;
+  /* Las medidas de adentro van en `cqi` (porcentaje del ancho del host): así la miniatura se lee
+     igual a 110px en la grilla del panel que a 220px en el carrusel de marketing, sin un solo media
+     query y sin dos juegos de tamaños que se desincronicen. El container lo declara el `:host` —ver
+     el comentario de arriba, que ahí estuvo el bug. */
 }
 
 /* Las piezas, en abstracto: la marca, el display, y el tablero del flujo con dos chips y el CTA. */

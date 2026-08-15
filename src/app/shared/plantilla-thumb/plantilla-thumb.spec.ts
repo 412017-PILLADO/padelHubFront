@@ -71,6 +71,23 @@ describe('plantilla-thumb · la miniatura de una plantilla', () => {
     expect(bloques.sort()).toEqual([...CODIGOS_CON_SHELL].sort());
   });
 
+  it('el container va en el :host y NO en .thumb', () => {
+    // Bug real, encontrado mirando la captura y no corriendo un test: un elemento NO puede
+    // consultarse a sí mismo. Con `container-type` en `.thumb`, sus descendientes sí lo consultaban,
+    // pero las `cqi` de sus PROPIAS propiedades —el padding de cada silueta— caían al container de
+    // más arriba, que no existe, y resolvían contra el VIEWPORT: `padding: 8cqi` daba 102px de
+    // padding adentro de una miniatura de 150px, y las piezas quedaban aplastadas a 10×2 px.
+    //
+    // Nada de esto rompía un test: la miniatura seguía existiendo, con su atributo, su esquema y su
+    // silueta distinta. Por eso el pin es de la HOJA y por eso está escrito el porqué.
+    const hostAbre = HOJA.indexOf(':host {');
+    const thumbAbre = HOJA.indexOf('.thumb {');
+    const posContainer = HOJA.indexOf('container-type');
+    expect(posContainer, 'la hoja ya no declara container-type').toBeGreaterThan(-1);
+    expect(posContainer).toBeGreaterThan(hostAbre);
+    expect(posContainer).toBeLessThan(thumbAbre);
+  });
+
   it('el color del club entra por token: la hoja lo USA y no lo DECLARA (capa 2, spec §5.1)', () => {
     // Si la hoja escribiera un hex, la miniatura mostraría el color de OTRO club. Y si DECLARARA
     // `--court`, sería una cáscara pisando la capa 3, que es la disciplina que este producto no rompe.
