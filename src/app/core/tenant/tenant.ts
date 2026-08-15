@@ -36,9 +36,16 @@ function currentHost(): string {
  *
  *   demo.padel-hub.com.ar → 'demo'   ·   padel-hub.com.ar → null
  *   demo.localhost        → 'demo'   ·   localhost        → null
+ *
+ * El dominio base se puede pasar por parámetro, y no es un adorno de testabilidad: con el default
+ * de `environment` el comportamiento de PRODUCCIÓN es imposible de verificar desde los tests, que
+ * corren con `baseDomain: 'localhost'`. Lo destapó `preview-url.spec.ts`, donde un host de
+ * producción daba `null` y el iframe del preview se habría ido a otro host.
  */
-export function tenantSubdomain(host: string = currentHost()): string | null {
-  const base = environment.baseDomain;
+export function tenantSubdomain(
+  host: string = currentHost(),
+  base: string = environment.baseDomain,
+): string | null {
   if (!host || host === base || host === `www.${base}`) return null;
   if (host.endsWith(`.${base}`)) {
     const sub = host.slice(0, host.length - base.length - 1);
@@ -48,8 +55,11 @@ export function tenantSubdomain(host: string = currentHost()): string | null {
 }
 
 /** Slug para el header `X-Tenant`: el subdominio real, o el fallback de dev en el apex. */
-export function currentTenantSlug(host: string = currentHost()): string {
-  return tenantSubdomain(host) ?? DEV_FALLBACK_SLUG;
+export function currentTenantSlug(
+  host: string = currentHost(),
+  base: string = environment.baseDomain,
+): string {
+  return tenantSubdomain(host, base) ?? DEV_FALLBACK_SLUG;
 }
 
 /**
