@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 import { BrandingService } from '../../../../../core/branding/branding.service';
+import { inkOnAccent } from '../../../../../core/branding/tenant-colors';
 import { CODIGOS_CON_SHELL, PLANTILLAS } from '../../../../../core/landing/plantillas';
+import { PlantillaThumbComponent } from '../../../../../shared/plantilla-thumb/plantilla-thumb';
 import { ConfigStateService } from '../../config-state.service';
 
 /** Pestaña "Tu club": marca (colores + logo + plantilla) y contacto/ubicación. Sin inputs/outputs:
@@ -13,7 +15,7 @@ import { ConfigStateService } from '../../config-state.service';
   selector: 'app-tab-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, PlantillaThumbComponent],
   templateUrl: './tab-club.html',
   styleUrl: './tab-club.scss',
 })
@@ -37,6 +39,18 @@ export class TabClubComponent {
     label: `${c} · ${PLANTILLAS[c].nombre}`,
     hint: PLANTILLAS[c].descripcion,
   }));
+
+  /**
+   * La tinta legible sobre el color que el dueño está eligiendo AHORA. Sale de `inkOnAccent()`, la
+   * misma función pura que decide la tinta del producto real (`core/branding/tenant-colors.ts`), y
+   * no de un `#fff` fijo: un club amarillo con texto blanco encima es ilegible, y las miniaturas de
+   * A y de E ponen texto sobre la masa de color.
+   *
+   * Va acá y no adentro de la miniatura porque la miniatura es CAPA 2 y no tiene por qué saber nada
+   * del color del club: se lo pone el contenedor, exactamente como se lo va a poner la sección de
+   * marketing (spec §8) desde sus swatches.
+   */
+  readonly tintaSobreColor = computed(() => inkOnAccent(this.st.marcaColor()));
 
   // ── Alias de signals/computed del servicio (mismo nombre que antes, sin `st.` en el template) ──
   readonly marcaColor = this.st.marcaColor;

@@ -29,14 +29,28 @@
       </div>
     </div>
 
-    <div class="marca-field">
-      <label class="marca-label">Plantilla de la landing</label>
-      <div class="plantilla-row">
-        <select class="plantilla-sel" [ngModel]="marcaPlantilla()" (ngModelChange)="setMarcaPlantilla($event)"
-          aria-label="Plantilla de la landing">
-          @for (p of plantillas; track p.value) { <option [value]="p.value">{{ p.label }} — {{ p.hint }}</option> }
-        </select>
-        <span class="marca-opt">Cambia el diseño de tu página pública. Se aplica al guardar.</span>
+    <div class="marca-field marca-field--ancho">
+      <label class="marca-label" id="lbl-plantilla">Plantilla de la landing</label>
+      <span class="marca-opt">Elegí cómo se ve tu página pública. Se aplica al guardar.</span>
+
+      <!-- El color va en el CONTENEDOR y no en el <html>: el resto del panel conserva la marca ya
+           aplicada mientras estas cuatro se repintan con lo que el dueño está eligiendo ahora, sin
+           guardar. Es la misma técnica que la spec §8 le pide a la sección de marketing, y por eso
+           la miniatura sirve para los dos sin una sola rama adentro. -->
+      <div class="galeria" role="radiogroup" aria-labelledby="lbl-plantilla"
+        [style.--court]="marcaColor()"
+        [style.--court-2]="marcaColorSecPicker()"
+        [style.--ink-on-accent]="tintaSobreColor()">
+        @for (p of plantillas; track p.value) {
+          <label class="gal-item" [class.sel]="marcaPlantilla() === p.value">
+            <input type="radio" name="plantilla" [value]="p.value"
+              [checked]="marcaPlantilla() === p.value"
+              (change)="setMarcaPlantilla(p.value)" />
+            <plantilla-thumb [codigo]="p.value" />
+            <span class="gal-nombre">{{ p.label }}</span>
+            <span class="gal-hint">{{ p.hint }}</span>
+          </label>
+        }
       </div>
     </div>
 
