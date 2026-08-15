@@ -1,0 +1,65 @@
+:host { display: block; margin-top: 22px; }
+
+.preview-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.marco-toggle {
+  display: inline-flex;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  overflow: hidden;
+
+  button {
+    padding: 6px 14px;
+    font: inherit;
+    font-size: 0.78rem;
+    border: 0;
+    background: transparent;
+    color: var(--ink-dim);
+    cursor: pointer;
+
+    &.on { background: var(--court); color: var(--ink-on-accent, #fff); }
+    /* El anillo va adentro (offset negativo) porque el toggle tiene `overflow: hidden` y uno hacia
+       afuera quedaría recortado — o sea invisible, que es la falla que este producto ya pagó. */
+    &:focus-visible { outline: 2px solid var(--anillo-foco); outline-offset: -3px; }
+  }
+}
+
+.marco {
+  display: grid;
+  justify-items: center;
+  overflow: hidden;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+
+  iframe {
+    border: 0;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 14px rgb(0 0 0 / 12%);
+  }
+}
+
+/* 390 es el ancho de teléfono con el que se revisó cada plantilla en las fases B, D y E: el preview
+   muestra exactamente lo que se revisó. */
+.marco--telefono iframe { width: 390px; height: 680px; }
+
+/* En escritorio el iframe se renderiza a 1280 y se ESCALA, en vez de achicarse a lo que entre en el
+   panel: un iframe angosto le haría creer al dueño que su landing de escritorio se ve como la de
+   mobile, que es justo la confusión que este preview existe para evitar. El `scale` mantiene el
+   layout de 1280 real y sólo lo muestra más chico. */
+.marco--escritorio iframe {
+  width: 1280px;
+  height: 800px;
+  transform: scale(0.5);
+  transform-origin: top center;
+  /* El `scale` no cambia el espacio que el elemento OCUPA: sin esto quedan 400px de aire abajo. */
+  margin-bottom: -400px;
+}

@@ -7,6 +7,7 @@ import { inkOnAccent } from '../../../../../core/branding/tenant-colors';
 import { CODIGOS_CON_SHELL, PLANTILLAS } from '../../../../../core/landing/plantillas';
 import { PlantillaThumbComponent } from '../../../../../shared/plantilla-thumb/plantilla-thumb';
 import { ConfigStateService } from '../../config-state.service';
+import { PreviewPlantillaComponent } from './preview-plantilla/preview-plantilla';
 
 /** Pestaña "Tu club": marca (colores + logo + plantilla) y contacto/ubicación. Sin inputs/outputs:
  *  el estado se comparte con el resto de la pantalla vía `ConfigStateService` (heredado por DI del
@@ -15,7 +16,7 @@ import { ConfigStateService } from '../../config-state.service';
   selector: 'app-tab-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, PlantillaThumbComponent],
+  imports: [FormsModule, PlantillaThumbComponent, PreviewPlantillaComponent],
   templateUrl: './tab-club.html',
   styleUrl: './tab-club.scss',
 })
