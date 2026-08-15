@@ -372,7 +372,7 @@ describe('plantilla A · el anillo de foco del afiche sobrevive a cualquier colo
  *
  * El filo es el PRIMARIO ARRIMADO A LA TINTA DE LA PÁGINA: el relleno del propio botón oscurecido,
  * o sea un canto de sí mismo y no una estructura agregada. Es la misma forma que ya usan el anillo de
- * la E, los dos acentos de la B y el filo de la D, y es deliberado que NO use `--court-2`: un club
+ * la E y los dos acentos de la B, y es deliberado que NO use `--court-2`: un club
  * puede no tener secundario cargado (el tenant demo de la plataforma no tiene), y derivar el filo del
  * primario —que siempre existe, incluso sin tenant, porque el `:root` de plataforma lo declara— deja
  * el caso resuelto por construcción en vez de por una rama de degradación.

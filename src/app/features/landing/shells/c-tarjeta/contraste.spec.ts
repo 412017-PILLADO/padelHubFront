@@ -4,8 +4,8 @@ import { resolve } from 'node:path';
 /**
  * EL FILO DEL CTA DE LA C, que es lo único que este archivo mide todavía.
  *
- * De las cinco cáscaras, C era la última sin `contraste.spec.ts` propio: A, B, D y E tienen el suyo y
- * los cuatro nacieron igual —una decisión de color que no vigilaba nadie—. Acá el disparador es el
+ * De las cuatro cáscaras, C era la última sin `contraste.spec.ts` propio: A, B y E tienen el suyo y
+ * los tres nacieron igual —una decisión de color que no vigilaba nadie—. Acá el disparador es el
  * botón de confirmar: `.confirm` es `background: var(--court)` crudo apoyado sobre el `--paper` de la
  * página, y con tres de las seis paletas de la casa el control más importante del producto no tiene
  * NINGUNA silueta contra su propia superficie (naranja del demo 2,07 · amarillo 1,32 · casi blanco

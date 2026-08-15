@@ -310,10 +310,10 @@ describe('plantilla B · el spec sigue leyendo las hojas que cree leer', () => {
  * es más difícil de ver leyendo la hoja, porque en B el fondo no es una constante — sube y baja con el
  * club, y el peor caso es justo donde relleno y fondo convergen.
  *
- * EL FILO ES EL PRIMARIO ARRIMADO A `--ink`, la misma FORMA que en las otras cuatro cáscaras y el
+ * EL FILO ES EL PRIMARIO ARRIMADO A `--ink`, la misma FORMA que en las otras tres cáscaras y el
  * mismo 50%. Lo que cambia es a dónde tira la tinta: el `--ink` de B es CLARO (#eef2f8), así que la
  * mezcla ACLARA en vez de oscurecer. Eso es lo que hace que una sola frase —"el color del club,
- * arrimado a la tinta de esta plantilla hasta que se lea"— sirva para las cinco: cada esquema pone su
+ * arrimado a la tinta de esta plantilla hasta que se lea"— sirva para las cuatro: cada esquema pone su
  * tinta y la mezcla va sola para el lado que hace falta.
  */
 describe('plantilla B · el filo del CTA le da al botón de confirmar un límite visible', () => {

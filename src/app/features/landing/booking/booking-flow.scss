@@ -74,8 +74,9 @@
    DENTRO del tablero (hover de chips, borde del paso hecho, contorno de la cancha elegida) y cae
    sobre la superficie del flujo. El filo del CTA cae entre DOS superficies —el relleno del propio
    botón por adentro y el tablero por afuera— y por eso puede querer otro color que el resto de los
-   trazos: en la D es el SECUNDARIO del club (spec §6, "el secundario como estructura"), que ningún
-   otro token del contrato transporta.
+   trazos: es el único que se mezcla contra la TINTA DE LA PLANTILLA y no contra la superficie del
+   tablero, y en la B —la oscura— esa misma mezcla ACLARA en vez de oscurecer. Ningún otro token del
+   contrato transporta eso.
 
    Y por qué el token es del CONTRATO y no una regla de la cáscara: `.confirm` vive acá adentro, así
    que una cáscara que quiera vestirlo tendría que apuntar al DOM de este componente — justo lo que
@@ -83,11 +84,19 @@
    superficie oscura: el que sabe sobre qué superficie cae el trazo es la cáscara, así que lo dice la
    cáscara.
 
-   El default es `none` —el botón de la A no tiene borde— así que las cuatro cáscaras que no lo usan
-   declaran exactamente lo que el fallback ya resolvía y no se mueven un píxel.
+   EL FALLBACK ES `none` Y HOY NO LO USA NINGUNA CÁSCARA. Nació como "el valor de la A" —el botón de
+   la A no tenía borde—, y con eso el token se podía declarar sin mover un píxel. Ya no es así: las
+   CUATRO declaran un filo real, cada una medida contra SU superficie, porque sin filo el CTA no
+   tiene límite visible contra su propio tablero — ver el párrafo de abajo.
+
+   O sea que el `none` sobrevive únicamente como fallback del `var()` en la regla de `.confirm`, y
+   describe la única configuración del producto que hoy no cumple el 1.4.11 ahí: el flujo SIN cáscara
+   que lo vista. No lo arregla un fallback —lo arreglan las cuatro declaraciones—, y se deja en `none`
+   a propósito: acá abajo no se sabe sobre qué superficie cae el trazo, que es justamente el motivo
+   por el que este token es de la cáscara.
 
    NO ES DECORATIVO PARA TRES DE LAS SEIS PALETAS DE LA CASA. El relleno del CTA es `--court` crudo
-   sobre el tablero de la cáscara, y con el papel claro de A/C/D eso da 2,07:1 con el naranja (el
+   sobre el tablero de la cáscara, y con el papel claro de A y C eso da 2,07:1 con el naranja (el
    club real del demo), 1,32 con el amarillo y 1,08 con un club casi blanco: el botón NO TIENE
    silueta contra su propia superficie, y lo único que lo delata es el texto de adentro. El filo es
    lo que le devuelve el límite visible que el 1.4.11 pide (3:1 de componente).

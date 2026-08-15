@@ -540,7 +540,7 @@ describe('plantilla E · el filo del CTA le da al botón de confirmar un límite
     // El que ata es el club más CLARO, el que más se parece al vidrio. Contra el vidrio de abajo el
     // 3:1 se cruza en N = 53,56% y contra la mitad montada con un club blanco en 54,35%; el 50% es el
     // techo del papel de A y C (51,72%) redondeado hacia abajo, o sea que E lo hereda con margen y
-    // las cinco cáscaras pueden decir el mismo número. La DIRECCIÓN importa: sobre superficie clara el
+    // las cuatro cáscaras pueden decir el mismo número. La DIRECCIÓN importa: sobre superficie clara el
     // lado peligroso es el del color crudo, no el de la tinta.
     expect(FILO, 'E no declara filo: no hay techo que pinear').not.toBeNull();
     const vidrioAbajo = sobre(rgb(SURFACE), VIDRIO.pct, rgb(PAPER));
