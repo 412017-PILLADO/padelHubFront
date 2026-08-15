@@ -55,6 +55,22 @@ export class ClubStore {
   /** `?color=%23RRGGBB` (hex `#RGB`/`#RRGGBB`, validado); cualquier otro valor → null. Nunca se
    *  inyecta el valor crudo en CSS sin pasar por este regex. */
   readonly previewColor = signal<string | null>(null);
+  /**
+   * `?color2=%23RRGGBB`: el secundario del preview. Existe por la galería del panel — su iframe
+   * tiene que poder mostrar el secundario SIN GUARDAR que el dueño está editando, o el preview
+   * miente sobre la mitad de la marca justo mientras la está tocando. Mismo formato y misma
+   * validación que `?color=`; sin él gana el secundario del tenant, que es lo correcto cuando nadie
+   * lo tocó.
+   */
+  readonly previewColorSec = signal<string | null>(null);
+  /**
+   * `?panel=1`: apaga el selector flotante de venta.
+   *
+   * Adentro del iframe del panel ese selector es un SEGUNDO control desincronizado del formulario:
+   * cambia lo que se ve sin tocar `marcaPlantilla`, así que el dueño elegiría ahí, vería una
+   * plantilla y guardaría otra. La herramienta de venta (sin este param) no se entera de nada.
+   */
+  readonly previewSinSelector = signal(false);
 
   /** Plantilla de landing elegida por el club, ya normalizada contra el registry (ver
    *  core/landing/plantillas.ts): un código que el catálogo no conozca cae en la default 'A', así
@@ -137,15 +153,26 @@ export class ClubStore {
     const tpl = (params.get('plantilla') ?? '').trim().toUpperCase();
     const validTpl = CODIGOS_CON_SHELL.find((c) => c === tpl) ?? null;
 
-    const color = params.get('color');
-    if (color) {
+    // La MISMA validación para los dos colores, factorizada a propósito: tener dos copias de esta
+    // regex es exactamente cómo el secundario podría terminar entrando sin validar. Un valor
+    // malformado (% suelto, un nombre de color, un hex corto raro) se ignora y el token queda null.
+    const leerHex = (raw: string | null): string | null => {
+      if (!raw) return null;
       try {
-        const decoded = decodeURIComponent(color);
-        if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(decoded)) this.previewColor.set(decoded);
+        const decoded = decodeURIComponent(raw);
+        return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(decoded) ? decoded : null;
       } catch {
-        // valor malformado (% suelto, etc.): ignoramos, previewColor queda null.
+        return null;
       }
-    }
+    };
+
+    const color = leerHex(params.get('color'));
+    if (color) this.previewColor.set(color);
+
+    const colorSec = leerHex(params.get('color2'));
+    if (colorSec) this.previewColorSec.set(colorSec);
+
+    this.previewSinSelector.set(params.get('panel') === '1');
 
     return validTpl;
   }
@@ -198,7 +225,10 @@ export class ClubStore {
     // decidirTinta en core/branding/tenant-colors.ts). Antes acá se leía `PLANTILLAS[...].inkHex` y
     // en la B —cáscara oscura, tinta clara— eso desactivaba la decisión de contraste entera.
     const color = this.previewColor() ?? cfg.tenant.colorPrimario;
-    applyTenantColors(this.doc.documentElement.style, color, cfg.tenant.colorSecundario);
+    // El secundario del preview pisa igual que el primario. Sin `?color2=` gana el del tenant, que
+    // es lo correcto: el dueño que no tocó el secundario tiene que ver el que ya tiene guardado.
+    const colorSec = this.previewColorSec() ?? cfg.tenant.colorSecundario;
+    applyTenantColors(this.doc.documentElement.style, color, colorSec);
   }
 
   /**

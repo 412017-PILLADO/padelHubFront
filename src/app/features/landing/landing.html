@@ -56,7 +56,10 @@
      Deja probar en vivo, sin persistir nada, las plantillas que tienen cáscara (ver
      core/landing/plantillas.ts: CODIGOS_CON_SHELL; landing.ts: opcionesPreview).
      =================================================================== -->
-@if (previewPlantilla(); as activa) {
+<!-- `!previewSinSelector()`: adentro del iframe de la galería del panel (`?panel=1`) este selector
+     sería un SEGUNDO control que cambia lo que se ve sin tocar el formulario — se elegiría una
+     plantilla y se guardaría otra. Ver club.store.ts · previewSinSelector. -->
+@if (!previewSinSelector() && previewPlantilla(); as activa) {
   <div class="tpl-pill" role="group" aria-label="Preview de plantilla">
     @for (opt of opcionesPreview; track opt.codigo) {
       <button type="button" class="tpl-opt" [class.on]="opt.codigo === activa"
