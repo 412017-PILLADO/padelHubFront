@@ -155,10 +155,45 @@
   --flow-accent-ink: color-mix(in srgb, var(--court) 55%, var(--ink));
   --flow-accent-line: color-mix(in srgb, var(--court) 55%, var(--ink));
 
-  /* EL FILO DEL CTA · la nocturna no lo usa. Su CTA se apoya sobre el telón oscuro, donde el color
-     del club crudo es de lo más luminoso de la pantalla: el botón tiene silueta de sobra sin borde
-     —que es justo lo que NO pasa sobre las superficies claras—. Y el secundario de B ya está gastado
-     en los dos reflectores: la firma de esta plantilla es LUZ, no estructura (spec §6). `none` es el
-     valor de la A, o sea lo que el fallback del flujo ya resolvía. */
-  --flow-cta-edge: none;
+  /* EL FILO DEL CTA · el límite visible del botón de confirmar.
+
+     LA MITAD DEL ARGUMENTO VIEJO ERA CIERTA Y LA OTRA MITAD NO SE HABÍA MEDIDO. Cierto: el secundario
+     de B está gastado en los dos reflectores, la firma de esta plantilla es LUZ y no estructura (spec
+     §6), así que el filo NO puede ser `--court-2` —eso es de D—. No medido: "sobre el telón oscuro el
+     color del club crudo es de lo más luminoso de la pantalla, el botón tiene silueta de sobra". Vale
+     para cinco de las seis paletas de la casa y falla justo en la que este esquema hace convergir. El
+     telón y el vidrio se DERIVAN del club (`--paper` y `--surface` de shell.scss lo mezclan contra una
+     base casi negra), así que fondo y relleno se mueven juntos:
+
+       club                   relleno crudo vs el vidrio del panel
+       teal #0a8a99                   4,02   ok
+       naranja #f89625                6,99   ok
+       amarillo #FFD400              10,30   ok
+       fucsia #FF2D95                 4,85   ok
+       casi blanco #ffffff           13,70   ok
+       casi negro #111111             1,02   NO PASA  ← el vidrio queda #0f141e y el relleno #111111
+
+     Es el mismo agujero que tenían A, C y E, con el club en el otro extremo del eje: allá lo perdían
+     los clubes pálidos contra el papel, acá lo pierde el oscuro contra el telón. WCAG 1.4.11 pide 3:1
+     para el límite de un componente, y ahí el botón más importante del producto no tiene ninguno.
+
+     EL COLOR ES EL PRIMARIO ARRIMADO A `--ink`, la misma receta y el mismo 50% que declaran A, C y E.
+     Lo que cambia es a dónde tira la tinta: el `--ink` de B es CLARO (#eef2f8, shell.scss), así que
+     acá la mezcla ACLARA en vez de oscurecer — igual que los dos acentos de arriba y el anillo de foco.
+     Eso es lo que hace que una sola frase sirva para las cinco cáscaras: "el color del club, arrimado a
+     la tinta de esta plantilla hasta que se lea", y cada esquema pone su tinta.
+
+     EL 50% ESTÁ BAJO UN TECHO MEDIDO Y ACÁ EL TECHO SE DA VUELTA: el que ata no es el club más claro
+     (ése es el caso de las superficies claras) sino el casi NEGRO, el que más se parece al telón. Con
+     él, `color-mix(--court N%, --ink)` cruza el 3:1 contra el vidrio en **N = 64,21%**; el 50% queda
+     abajo con margen. Con las seis, el filo contra el vidrio del panel: teal 7,91 · naranja 9,77 ·
+     amarillo 11,38 · fucsia 7,77 · casi blanco 12,94 · casi negro **4,76**. Seis de seis.
+
+     LA CARA DE ADENTRO se da vuelta también, y queda dicha: acá el filo es MÁS CLARO que el relleno, y
+     con un club claro los dos quedan cerca (1,06 con el casi blanco, 1,11 con el amarillo). No tiene
+     piso posible por el mismo motivo que en las claras, y no es lo que el 1.4.11 pide: pide el límite
+     contra el fondo, que es el que con el club casi negro no existía.
+
+     EL GROSOR es 1px, el mismo del borde del vidrio. */
+  --flow-cta-edge: 1px solid color-mix(in srgb, var(--court) 50%, var(--ink));
 }

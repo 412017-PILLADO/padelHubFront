@@ -9,11 +9,18 @@
    porque sería una segunda fuente de verdad: `booking/contrato-flow.spec.ts` lee los `var(--flow-…)`
    del flujo y verifica que esta cáscara los declare todos.
 
-   El flujo trae un fallback por token para no romperse si falta alguno, y ese fallback es justamente
-   lo que declara la A: la A es la plantilla default, así que "el flujo sin cáscara que lo vista" y
-   "el flujo en la A" son lo mismo. Se declaran igual, explícitos, para que el contrato se lea
-   completo en cada cáscara — y como el fallback ESCONDE al que falta (se ve como la A en vez de
-   romperse), el que avisa es el test, no la pantalla.
+   El flujo trae un fallback por token para no romperse si falta alguno, y ese fallback es —con UNA
+   excepción, abajo— lo que declara la A: la A es la plantilla default, así que "el flujo sin cáscara
+   que lo vista" y "el flujo en la A" son casi lo mismo. Se declaran igual, explícitos, para que el
+   contrato se lea completo en cada cáscara — y como el fallback ESCONDE al que falta (se ve como la A
+   en vez de romperse), el que avisa es el test, no la pantalla.
+
+   LA EXCEPCIÓN ES `--flow-cta-edge`, y conviene decirla acá arriba porque rompe la regla de lectura
+   de todo el archivo: A declara un filo y el fallback del flujo sigue siendo `none`. No es una
+   divergencia de gusto, es accesibilidad: sin filo el CTA no tiene límite visible con la mitad de las
+   paletas (ver el final del archivo). O sea que "el flujo sin cáscara que lo vista" es hoy la única
+   configuración del producto en la que ese botón no cumple el 1.4.11, y no la arregla un fallback —la
+   arregla que las cinco cáscaras declaren su filo, que es lo que pasa.
 
    La A no le pone caja al flujo: es la columna derecha del afiche, a sangre sobre el papel, y la
    única de las tres que scrollea internamente (el afiche izquierdo queda clavado al viewport).
@@ -53,9 +60,48 @@
   --flow-accent-ink: var(--court);
   --flow-accent-line: var(--court);
 
-  /* EL FILO DEL CTA · la A no lo usa: su botón de confirmar es una mancha de color a sangre, y el
-     afiche de al lado ya es toda la estructura que la plantilla tiene para dar. `none` es lo que el
-     fallback del flujo ya resolvía —la A ES el default—, así que declararlo no mueve un píxel; está
-     escrito porque el contrato pide los diecisiete y quien avisa es el test, no la pantalla. */
-  --flow-cta-edge: none;
+  /* EL FILO DEL CTA · el límite visible del botón de confirmar.
+
+     Estuvo en `none` —el valor de la A, o sea el fallback del flujo— hasta que se lo midió, y "una
+     mancha de color a sangre" resultó ser literal: `.confirm` es `background: var(--court)` crudo
+     sobre el papel de esta columna, y con tres de las seis paletas de la casa el botón más importante
+     del producto no tiene NINGUNA silueta contra su propia superficie. WCAG 1.4.11 le pide 3:1 al
+     límite de un componente:
+
+       club                   relleno crudo vs --paper
+       teal #0a8a99                   3,80   ok
+       casi negro #111111            17,46   ok
+       fucsia #FF2D95                 3,20   ok
+       naranja #f89625                2,07   NO PASA  ← el club real del demo
+       amarillo #FFD400               1,32   NO PASA
+       casi blanco #ffffff            1,08   NO PASA
+
+     EL COLOR ES EL PRIMARIO ARRIMADO A LA TINTA DE LA PÁGINA, o sea el relleno del propio botón
+     oscurecido: un canto de sí mismo y no una estructura agregada, que es lo único compatible con lo
+     que esta plantilla quiere decir (el afiche de al lado ya es toda la estructura que la A tiene para
+     dar). Es la misma forma que el anillo de la E, los dos acentos de la B y el filo de la D: "el
+     color del club, arrimado a la tinta de esta plantilla hasta que se lea".
+
+     EL 50% ES UN TECHO MEDIDO, no un gusto. El peor primario posible es el BLANCO (es el que más se
+     parece al papel): `color-mix(#fff N%, --ink)` cruza el 3:1 contra `--paper` en **N = 51,72%**, y
+     50 es ese techo redondeado hacia abajo. Con las seis, el filo contra el papel: teal 8,29 ·
+     naranja 5,80 · amarillo 4,22 · fucsia 7,96 · casi blanco **3,16** (el que ata) · casi negro
+     17,05. Seis de seis sobre el 3:1. Es el mismo 50% que declaran las otras cuatro cáscaras.
+
+     NO USA `--court-2`, Y ES A PROPÓSITO. El secundario sólo existe si el club lo cargó
+     (`applyTenantColors` lo BORRA del `:root` cuando no lo hay) y el tenant demo de la plataforma no
+     tiene, así que una receta con secundario necesita una rama de degradación —la de D, que cae a
+     tinta pura—. El primario siempre está, incluso sin tenant (lo declara el `:root` de plataforma),
+     así que acá ese caso no existe en vez de estar resuelto. La spec §6 le da al secundario de la A el
+     rol de estructura (filete); ese filete es la regla del afiche y no el borde de este botón — el
+     filo del CTA con secundario es de D, y sigue siendo suyo.
+
+     LA CARA DE ADENTRO (el filo contra el relleno) es floja por diseño y queda dicha: 2,18 con el
+     teal en reposo, 1,02 con un club casi negro. No tiene piso posible —lo que garantiza la silueta
+     sobre papel claro es acercarse a la tinta, y eso mismo aleja el filo de un relleno oscuro— y no es
+     lo que el 1.4.11 pide: pide el límite contra el fondo.
+
+     EL GROSOR es 1px, el hairline de plataforma. Con `box-sizing: border-box` (styles.scss) el borde
+     se come del lado de adentro y los 50px de alto del botón no se mueven. */
+  --flow-cta-edge: 1px solid color-mix(in srgb, var(--court) 50%, var(--ink));
 }

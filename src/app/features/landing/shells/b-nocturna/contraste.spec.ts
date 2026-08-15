@@ -51,6 +51,16 @@ const HOJA_SHELL = leerHoja('shell.scss');
 const HOJA_TOKENS = leerHoja('_tokens.scss');
 const HOJA_VIDRIO = leerHoja('_vidrio.scss');
 
+/**
+ * LA HOJA DEL FLUJO, que es la que PINTA el botón de confirmar: la cáscara no lo toca por DOM, lo
+ * viste por `--flow-cta-edge`. Es la única hoja que este archivo lee de FUERA de `DIR`, y va sin la
+ * guardia de `//` a propósito: `booking-flow.scss` los usa (es Sass idiomático en este repo) y de acá
+ * se saca una sola cosa muy acotada, el cuerpo de `.confirm`, con un regex que exige la forma.
+ */
+const HOJA_FLUJO = readFileSync(
+  resolve(process.cwd(), 'src/app/features/landing/booking/booking-flow.scss'), 'utf8',
+).replace(/\/\*[\s\S]*?\*\//g, '');
+
 /** Último valor declarado para una propiedad, o `null`. El `\\s*:` es lo que evita que `--ink`
  *  matchee `--ink-dim`, y que los `var(--ink)` (uso, no declaración) cuenten. */
 function declaracion(css: string, prop: string): string | null {
@@ -119,6 +129,43 @@ const ANILLO = colorMix(
  * puro es el techo de esa familia, así que fija la cota superior de todas las superficies de B.
  */
 const CLUB_PEOR = '#ffffff';
+
+const CONFIRM = /\.confirm\s*\{([^}]*)\}/.exec(HOJA_FLUJO)?.[1] ?? '';
+/** El relleno del CTA. Es `var(--court)` crudo, y es la razón por la que el filo tuvo que existir. */
+const RELLENO_CTA = declaracion(CONFIRM, 'background');
+/** Lo que el flujo hace con el token, o sea que el filo de la cáscara llega de verdad al borde. */
+const BORDE_CTA = declaracion(CONFIRM, 'border');
+
+/** El filo tal como lo declara esta cáscara: `<grosor> solid <color>`, o `none`. */
+const FILO_DECL = declaracion(HOJA_TOKENS, '--flow-cta-edge');
+/**
+ * LA RECETA DEL FILO, o `null` si la cáscara declara `none`.
+ *
+ * El `null` no es un caso degenerado que se pueda saltear: es el estado en el que B estuvo hasta esta
+ * tarea, y lo que las cuentas de abajo miden entonces es el RELLENO del botón contra el vidrio —que es
+ * literalmente el límite que el botón tiene cuando no dibuja ninguno—. O sea que volver el token a
+ * `none` no deja este archivo en verde por falta de datos: lo pone rojo con el 1,02 del club casi
+ * negro.
+ *
+ * OJO CON EL SEGUNDO POLO: en B la mezcla va hacia `var(--ink)`, que acá es CLARO (#eef2f8, declarado
+ * en `shell.scss`) y no el oscuro de plataforma. O sea que la misma receta que en A, C y E OSCURECE,
+ * acá ACLARA — que es exactamente lo que hace falta sobre un telón nocturno. Es el mismo movimiento
+ * que ya hacen los dos acentos de esta cáscara y su anillo de foco.
+ */
+const FILO = (() => {
+  if (FILO_DECL == null || FILO_DECL === 'none') return null;
+  const m = /^(\S+)\s+solid\s+(color-mix\(.+\))$/s.exec(FILO_DECL);
+  if (!m) throw new Error(
+    `b-nocturna/_tokens.scss declara \`--flow-cta-edge: ${FILO_DECL}\`, y este spec sólo sabe medir ` +
+    `\`<grosor> solid color-mix(…)\` o \`none\`. Si el filo estrena otra forma, la cuenta que lo ` +
+    `audite va acá adentro: el CTA está pintado con el color del club y no lo mide ninguna otra puerta.`);
+  const receta = colorMix(m[2], '_tokens.scss · --flow-cta-edge');
+  if (receta.a !== 'var(--court)' || receta.b !== 'var(--ink)') throw new Error(
+    `el filo de B ya no es el primario arrimado a la tinta de la nocturna, sino ` +
+    `\`color-mix(in srgb, ${receta.a} …%, ${receta.b})\`. El techo del 64,21% que este archivo pinea ` +
+    `se midió para \`var(--court)\` contra el \`--ink\` de B; con otros polos hay que medirlo de nuevo.`);
+  return { grosor: m[1], ...receta };
+})();
 
 // ── Aritmética WCAG ──────────────────────────────────────────────────────────
 type Rgb = [number, number, number];
@@ -248,6 +295,102 @@ describe('plantilla B · el spec sigue leyendo las hojas que cree leer', () => {
  * (`shell.scss`), así que es la única que se puede proteger desde acá. Sin él, un club casi negro
  * deja el recorrido por teclado sin ninguna señal: 1,02:1, un halo negro sobre fondo negro.
  */
+/**
+ * EL FILO DEL CTA · el límite visible del botón de confirmar.
+ *
+ * B ERA "EL CASO DEFENDIBLE" Y LA MEDICIÓN LA DESMINTIÓ, con una sola paleta de las seis. El relleno
+ * de `.confirm` es `--court` crudo y el vidrio del panel se DERIVA del mismo club (`--paper` y
+ * `--surface` son el club mezclado contra una base casi negra), así que las dos cosas se mueven
+ * juntas: con cinco clubes el botón tiene silueta de sobra —teal 4,02 · fucsia 4,85 · amarillo 10,30 ·
+ * casi blanco 13,70— y con un club CASI NEGRO el vidrio queda en `#0f141e`, el relleno en `#111111` y
+ * el botón desaparece: **1,02:1**, contra el 3:1 que WCAG 1.4.11 le pide al límite de un componente.
+ *
+ * Es el mismo agujero que A, C y E tenían sobre superficie clara, con el club en el otro extremo del
+ * eje: allá lo perdían los clubes pálidos contra el papel, acá lo pierde el oscuro contra el telón. Y
+ * es más difícil de ver leyendo la hoja, porque en B el fondo no es una constante — sube y baja con el
+ * club, y el peor caso es justo donde relleno y fondo convergen.
+ *
+ * EL FILO ES EL PRIMARIO ARRIMADO A `--ink`, la misma FORMA que en las otras cuatro cáscaras y el
+ * mismo 50%. Lo que cambia es a dónde tira la tinta: el `--ink` de B es CLARO (#eef2f8), así que la
+ * mezcla ACLARA en vez de oscurecer. Eso es lo que hace que una sola frase —"el color del club,
+ * arrimado a la tinta de esta plantilla hasta que se lea"— sirva para las cinco: cada esquema pone su
+ * tinta y la mezcla va sola para el lado que hace falta.
+ */
+describe('plantilla B · el filo del CTA le da al botón de confirmar un límite visible', () => {
+  /** Barra de COMPONENTE: un borde no es texto (WCAG 1.4.11). */
+  const PISO = 3;
+  /** Los cinco extremos del plan más el naranja del demo, que es el club que la plataforma shippea. */
+  const CLUBES: [string, string][] = [
+    ['teal de plataforma', '#0a8a99'],
+    ['naranja del demo', '#f89625'],
+    ['fucsia', '#FF2D95'],
+    ['amarillo', '#FFD400'],
+    ['casi negro', '#111111'],
+    ['casi blanco', '#ffffff'],
+  ];
+  /**
+   * El vidrio del panel de reserva, que es la superficie sobre la que el CTA está apoyado. Se saca de
+   * `superficiesDe()` por NOMBRE en vez de recalcularlo: si esa receta cambia, este bloque la sigue.
+   */
+  const vidrioDe = (club: string) => ({
+    'el vidrio del panel de reserva': superficiesDe(club)['el vidrio del panel de reserva'],
+  });
+  /** El filo, o —sin filo— el relleno del propio botón, que es el único límite que le queda. */
+  const filoDe = (club: string, pct = FILO?.pct ?? 0): Rgb =>
+    FILO == null ? rgb(club) : mezcla(rgb(club), pct, rgb(INK));
+
+  for (const [nombre, club] of CLUBES) {
+    it(`con un club ${nombre} el CTA llega a 3:1 contra el vidrio del panel`, () => {
+      expect(
+        porDebajoDe(PISO, filoDe(club), vidrioDe(club)),
+        `El botón de confirmar de la B no tiene límite visible con un club ${nombre} (${club}). En la ` +
+          `nocturna el relleno del CTA (\`var(--court)\` crudo) y el vidrio del panel se derivan del ` +
+          `MISMO color de club, así que con un club oscuro convergen y el botón se funde con el telón. ` +
+          `El único token que puede ponerle borde es \`--flow-cta-edge\` en b-nocturna/_tokens.scss.`,
+      ).toEqual([]);
+    });
+  }
+
+  it('el filo NO es decoración: con el club casi negro el CTA no tiene silueta propia', () => {
+    // Tripwire al revés, y el hallazgo que trajo a B a este arreglo. Es UNA paleta de las seis y no
+    // tres como en las claras, y por eso el test dice cuál: si algún día el vidrio dejara de derivarse
+    // del club —o el relleno dejara de ser el color crudo— el filo de B pasaría a ser un adorno y
+    // habría que discutirlo. El relleno se LEE de la hoja del flujo para que eso no se afirme de
+    // memoria.
+    expect(RELLENO_CTA).toBe('var(--court)');
+    const sinSilueta = CLUBES
+      .filter(([, c]) => contraste(rgb(c), superficiesDe(c)['el vidrio del panel de reserva']) < PISO)
+      .map(([nombre]) => nombre);
+    expect(sinSilueta).toEqual(['casi negro']);
+  });
+
+  it('el 50% está bajo el techo medido, y acá el que ata es el club casi NEGRO', () => {
+    // La cota se da vuelta respecto de las cáscaras claras: allá el techo lo pone el club más claro
+    // (el que más se parece al papel) y acá el más oscuro (el que más se parece al telón). Con el club
+    // casi negro el 3:1 se cruza en N = 64,21%; el 50% queda abajo con margen (4,76) y es el mismo
+    // número que declaran las otras cuatro. La DIRECCIÓN importa y es la INVERSA de A/C/E: acá el lado
+    // peligroso es el del color crudo también, pero "crudo" significa oscuro y no pálido.
+    expect(FILO, 'B no declara filo: no hay techo que pinear').not.toBeNull();
+    const vidrioNegro = superficiesDe('#111111')['el vidrio del panel de reserva'];
+    expect(contraste(filoDe('#111111', FILO!.pct), vidrioNegro)).toBeGreaterThanOrEqual(PISO);
+    expect(contraste(filoDe('#111111', 0.65), vidrioNegro)).toBeLessThan(PISO);
+  });
+
+  it('el filo se mezcla contra la tinta CLARA de B, o aclarar sería hundir', () => {
+    // El corazón de por qué B no puede copiar el valor de A y C tal cual: si el segundo polo fuera el
+    // `--ink` oscuro de plataforma, con un club casi negro el filo se iría MÁS al negro y el 1,02 se
+    // volvería peor todavía. `INK` acá se lee de `shell.scss`, que es donde B pisa el token.
+    expect(hexDe(HOJA_SHELL, '--ink')).toBe(INK);
+    expect(luminancia(rgb(INK))).toBeGreaterThan(0.5);
+    expect(FILO?.b).toBe('var(--ink)');
+  });
+
+  it('el flujo consume el token, o el filo de la cáscara no llega al botón', () => {
+    // Las cuentas de arriba miden un color; esto verifica que ese color se PINTE.
+    expect(BORDE_CTA).toBe('var(--flow-cta-edge, none)');
+  });
+});
+
 describe('plantilla B · el anillo de foco sobrevive a cualquier color de club', () => {
   /** Los cuatro extremos del plan más el blanco, que es el techo de las superficies. */
   const CLUBES: [string, string][] = [

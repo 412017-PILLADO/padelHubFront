@@ -139,6 +139,46 @@ function derivadoDelClub(prop: string): { pct: number; b: string } {
   return { pct: Number(m[1]) / 100, b: m[2] };
 }
 const COURT_SOFT = derivadoDelClub('--court-soft');
+
+/**
+ * LA HOJA DEL FLUJO, que es la que PINTA el botón de confirmar: la cáscara no lo toca por DOM, lo
+ * viste por `--flow-cta-edge`. Va por `leerArchivo` y no por `leerHoja` porque `booking-flow.scss`
+ * usa comentarios `//`; de acá sólo se saca el cuerpo de `.confirm`, con un regex que exige la forma.
+ */
+const HOJA_FLUJO = leerArchivo('src/app/features/landing/booking/booking-flow.scss');
+const CONFIRM = /\.confirm\s*\{([^}]*)\}/.exec(HOJA_FLUJO)?.[1] ?? '';
+/** El relleno del CTA. Es `var(--court)` crudo, y es la razón por la que el filo tuvo que existir. */
+const RELLENO_CTA = declaracion(CONFIRM, 'background');
+/** Lo que el flujo hace con el token, o sea que el filo de la cáscara llega de verdad al borde. */
+const BORDE_CTA = declaracion(CONFIRM, 'border');
+
+/** El filo tal como lo declara esta cáscara: `<grosor> solid <color>`, o `none`. */
+const FILO_DECL = declaracion(HOJA_TOKENS, '--flow-cta-edge');
+/**
+ * LA RECETA DEL FILO, o `null` si la cáscara declara `none`.
+ *
+ * El `null` no es un caso degenerado que se pueda saltear: es el estado en el que E estuvo hasta esta
+ * tarea, y lo que las cuentas de abajo miden entonces es el RELLENO del botón contra el vidrio —que
+ * es literalmente el límite que el botón tiene cuando no dibuja ninguno—. O sea que volver el token a
+ * `none` no deja este archivo en verde por falta de datos: lo pone rojo con los ratios reales.
+ *
+ * Sólo se sabe resolver la forma que tiene sentido acá; cualquier otra TIRA con el valor adentro del
+ * mensaje, que es lo correcto para un tripwire.
+ */
+const FILO = (() => {
+  if (FILO_DECL == null || FILO_DECL === 'none') return null;
+  const m = /^(\S+)\s+solid\s+(color-mix\(.+\))$/s.exec(FILO_DECL);
+  if (!m) throw new Error(
+    `e-diurna/_tokens.scss declara \`--flow-cta-edge: ${FILO_DECL}\`, y este spec sólo sabe medir ` +
+    `\`<grosor> solid color-mix(…)\` o \`none\`. Si el filo estrena otra forma, la cuenta que lo ` +
+    `audite va acá adentro: el CTA está pintado con el color del club y no lo mide ninguna otra puerta.`);
+  const receta = colorMix(m[2], 'e-diurna/_tokens.scss · --flow-cta-edge');
+  if (receta.a !== 'var(--court)' || receta.b !== 'var(--ink)') throw new Error(
+    `el filo de E ya no es el primario arrimado a la tinta de la página, sino ` +
+    `\`color-mix(in srgb, ${receta.a} …%, ${receta.b})\`. El techo del 50% que este archivo pinea se ` +
+    `midió para \`var(--court)\` contra \`var(--ink)\`; con otros polos hay que medirlo de nuevo.`);
+  return { grosor: m[1], ...receta };
+})();
 /** `--court-deep` sólo entra al tripwire del hover del pie: es la receta de la C, que en E no da. */
 const COURT_DEEP = derivadoDelClub('--court-deep');
 
@@ -431,6 +471,96 @@ describe('plantilla E · el pie', () => {
  * ruidoso, que es lo correcto. Este describe cubre el otro caso: que la forma siga siendo la misma
  * pero el término contra el que se mezcla deje de ser el que las fórmulas suponen.
  */
+/**
+ * EL FILO DEL CTA · el límite visible del botón de confirmar.
+ *
+ * `.confirm` es el control más importante del producto y hasta esta tarea no tenía NINGÚN límite en E:
+ * `--flow-cta-edge` valía `none` con el argumento de que "el CTA cae adentro del vidrio, que ya trae
+ * borde especular y brillo de canto propios". El argumento no se sostuvo medido: el borde especular es
+ * del PANEL, no del botón, y entre el relleno del botón y el vidrio que lo rodea no hay más límite que
+ * el canto del propio relleno. Contra el vidrio de la mitad de abajo del panel (`#fcfcfe`, casi
+ * blanco) eso da 2,19 con el naranja del demo, 1,40 con el amarillo y 1,02 con un club casi blanco,
+ * contra el 3:1 que WCAG 1.4.11 le pide al límite de un componente.
+ *
+ * El filo es el PRIMARIO ARRIMADO A LA TINTA DE LA PÁGINA, la misma receta que estrenó A y la misma
+ * FORMA que E ya usa para su anillo de foco y para `--flow-soft-ink-accent`: "el color del club,
+ * arrimado a la tinta de esta plantilla hasta que se lea". No usa `--court-2` a propósito — en E el
+ * secundario es LUZ (el radial del campo, spec §6) y darle además estructura sería sacarle su rol; y
+ * de paso el club sin secundario cargado (el tenant demo) no necesita rama aparte.
+ *
+ * SE MIDE CONTRA LAS DOS CARAS DEL VIDRIO aunque el botón sólo toque una. El panel está a caballo del
+ * borde del campo y el CTA cae al final del paso 3, o sea sobre el vidrio apoyado en el PAPEL; la
+ * mitad montada sobre el color es donde vive el encabezado del flujo, no el botón. Se pinea igual
+ * porque el filo la pasa con margen y porque si algún día el panel se acorta —o el CTA sube—, el que
+ * tiene que avisar es el test y no la pantalla.
+ */
+describe('plantilla E · el filo del CTA le da al botón de confirmar un límite visible', () => {
+  /** Barra de COMPONENTE: un borde no es texto (WCAG 1.4.11). */
+  const PISO = 3;
+  /**
+   * Los cinco extremos de arriba MÁS el naranja del demo. Es el único bloque del archivo que lo
+   * agrega, y no es un descuido de los otros: el naranja no es un extremo del white-label (no ata
+   * ninguna cota, el casi blanco lo domina) pero es el color que el tenant demo de la plataforma
+   * shippea hoy, así que su 2,19 es el número con el que este bloque empieza a existir.
+   */
+  const CLUBES_CTA: [string, string][] = [...CLUBES, ['naranja del demo', '#f89625']];
+
+  /** Las dos caras del vidrio del panel, que es la superficie sobre la que se apoya el botón. */
+  const vidrioDe = (club: string): Record<string, Rgb> => ({
+    'el vidrio sobre el papel (donde cae el CTA)': sobre(rgb(SURFACE), VIDRIO.pct, rgb(PAPER)),
+    'el vidrio sobre el campo (la mitad montada)': sobre(rgb(SURFACE), VIDRIO.pct, rgb(club)),
+  });
+  /** El filo, o —sin filo— el relleno del propio botón, que es el único límite que le queda. */
+  const filoDe = (club: string, pct = FILO?.pct ?? 0): Rgb =>
+    FILO == null ? rgb(club) : mezcla(rgb(club), pct, rgb(INK));
+
+  for (const [nombre, club] of CLUBES_CTA) {
+    it(`con un club ${nombre} el CTA llega a 3:1 contra el vidrio del panel`, () => {
+      expect(
+        porDebajoDe(PISO, filoDe(club), vidrioDe(club)),
+        `El botón de confirmar de la E no tiene límite visible con un club ${nombre} (${club}). ` +
+          `\`.confirm\` es \`background: var(--court)\` a sangre sobre el vidrio del panel, y el ` +
+          `borde especular del vidrio es del PANEL y no del botón. El único token que puede ponerle ` +
+          `borde es \`--flow-cta-edge\` en e-diurna/_tokens.scss: la cáscara no toca el CTA por DOM.`,
+      ).toEqual([]);
+    });
+  }
+
+  it('el filo NO es decoración: sin él, 3 de las 6 paletas dejan al CTA sin silueta', () => {
+    // Tripwire al revés. El relleno se LEE de la hoja del flujo: los números de arriba sólo valen
+    // mientras siga siendo el color CRUDO del club. Se mide contra el vidrio de abajo, que es la cara
+    // sobre la que el botón está apoyado de verdad.
+    expect(RELLENO_CTA).toBe('var(--court)');
+    const vidrioAbajo = sobre(rgb(SURFACE), VIDRIO.pct, rgb(PAPER));
+    const sinFilo = CLUBES_CTA.map(([, c]) => contraste(rgb(c), vidrioAbajo));
+    expect(sinFilo.filter((r) => r < PISO).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('el 50% es un TECHO medido: el peor primario posible es el BLANCO', () => {
+    // El que ata es el club más CLARO, el que más se parece al vidrio. Contra el vidrio de abajo el
+    // 3:1 se cruza en N = 53,56% y contra la mitad montada con un club blanco en 54,35%; el 50% es el
+    // techo del papel de A y C (51,72%) redondeado hacia abajo, o sea que E lo hereda con margen y
+    // las cinco cáscaras pueden decir el mismo número. La DIRECCIÓN importa: sobre superficie clara el
+    // lado peligroso es el del color crudo, no el de la tinta.
+    expect(FILO, 'E no declara filo: no hay techo que pinear').not.toBeNull();
+    const vidrioAbajo = sobre(rgb(SURFACE), VIDRIO.pct, rgb(PAPER));
+    expect(contraste(filoDe('#ffffff', FILO!.pct), vidrioAbajo)).toBeGreaterThanOrEqual(PISO);
+    expect(contraste(filoDe('#ffffff', 0.54), vidrioAbajo)).toBeLessThan(PISO);
+  });
+
+  it('el filo no toca el secundario, que en E es LUZ (spec §6)', () => {
+    // El radial del campo es el trabajo del secundario en esta plantilla. Un filo derivado de
+    // `--court-2` se lo sacaría, y además necesitaría una rama de degradación para el club que no
+    // cargó secundario (el tenant demo). Con el primario ese caso no existe en vez de estar resuelto.
+    expect(FILO_DECL).not.toContain('--court-2');
+  });
+
+  it('el flujo consume el token, o el filo de la cáscara no llega al botón', () => {
+    // Las cuentas de arriba miden un color; esto verifica que ese color se PINTE.
+    expect(BORDE_CTA).toBe('var(--flow-cta-edge, none)');
+  });
+});
+
 describe('plantilla E · el spec sigue leyendo las hojas que cree leer', () => {
   it('el vidrio del panel es `--surface` con alfa sobre lo que haya atrás', () => {
     expect([VIDRIO.a, VIDRIO.b]).toEqual(['var(--surface)', 'transparent']);
