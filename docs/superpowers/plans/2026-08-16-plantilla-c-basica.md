@@ -500,8 +500,12 @@ Crear `.superpowers/sdd/medir-lomo-c.mjs`:
  * desaparece. Se busca el porcentaje MÍNIMO de `--court` que deja las seis paletas por encima de 3:1
  * (WCAG 1.4.11, límite de un componente — el lomo es un elemento gráfico, no texto).
  */
+/* Los DOS tokens de plataforma, leídos de `src/styles.scss`. Copiarlos mal es fácil y caro: la
+   primera versión de este script traía `#10151f`, que es el `--th-ink` de las miniaturas del panel y
+   NO el `--ink` del sistema. La decisión no cambiaba (50% seguía siendo el corte) pero el ratio que
+   se anotaba en la hoja salía 0,04 alto. Si tocás esto, verificá contra styles.scss. */
 const PAPER = '#f4f6fb';
-const INK = '#10151f';
+const INK = '#11162b';
 
 /** Las seis de siempre. No inventar una paleta nueva. */
 const CLUBES = [
