@@ -37,7 +37,7 @@
 
 | Archivo | Responsabilidad | Tarea |
 |---|---|---|
-| `padelBack/src/main/resources/db/migration/V11__plantilla_explicita.sql` | congela la plantilla de los tenants que ya existen | 1 |
+| `padelBack/src/main/resources/db/migration/V18__plantilla_explicita.sql` | congela la plantilla de los tenants que ya existen | 1 |
 | `src/app/core/landing/plantillas.ts` | el registry: nombre de C y las dos funciones que caen en la default | 2 |
 | `src/app/features/landing/landing.html` | el `@default` del dispatcher | 3 |
 | `src/app/features/landing/shells/c-tarjeta/shell.html` | la estructura nueva: una columna | 4 |
@@ -55,7 +55,7 @@
 **Va primero, y el orden importa.** Si la default se mueve antes de esto, cualquier club que hoy no eligió plantilla se despierta con otra página. Después de esta migración, el cambio de default aplica **sólo a clubes nuevos**.
 
 **Files:**
-- Create: `padelBack/src/main/resources/db/migration/V11__plantilla_explicita.sql`
+- Create: `padelBack/src/main/resources/db/migration/V18__plantilla_explicita.sql`
 
 **Interfaces:**
 - Consume: la tabla `tenants`, columna `plantilla` (creada en `V10__plantilla.sql`).
@@ -71,7 +71,7 @@ Expected: la lista de tenants de desarrollo. Anotar cuáles tienen `plantilla` e
 
 - [ ] **Step 2: Escribir la migración**
 
-Crear `padelBack/src/main/resources/db/migration/V11__plantilla_explicita.sql`:
+Crear `padelBack/src/main/resources/db/migration/V18__plantilla_explicita.sql`:
 
 ```sql
 -- Congela la plantilla de los clubes que YA EXISTEN antes de que la default del producto pase de A
@@ -105,12 +105,16 @@ Y que Flyway la registró:
 ```bash
 docker exec padel-mysql mysql -uroot -proot padeldb -e "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank DESC LIMIT 3;"
 ```
-Expected: `11 · plantilla explicita · 1`.
+Expected: `18 · plantilla explicita · 1`.
+
+**Nota de la implementación real:** el plan decía V11 y esa versión ya estaba tomada — `main` del
+back llega hasta **V17**. La migración quedó como **V18**. Si estás leyendo esto para reproducir el
+trabajo, mirá el último `V*` del directorio antes de elegir número.
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add padelBack/src/main/resources/db/migration/V11__plantilla_explicita.sql
+git add padelBack/src/main/resources/db/migration/V18__plantilla_explicita.sql
 git commit -m "feat(tenants): congela la plantilla de los clubes existentes antes de mover la default"
 ```
 
@@ -177,7 +181,7 @@ En `plantillas.ts`, la fila de C:
  *
  * LA DEFAULT ES C DESDE EL 2026-08-16, y antes era A. El cambio es de producto, no de código: C es
  * la sobria, la que le sirve a un club que no quiere elegir. A los tenants que ya existían se les
- * escribió `'A'` explícito en la base antes de mover esto (migración `V11__plantilla_explicita.sql`),
+ * escribió `'A'` explícito en la base antes de mover esto (migración `V18__plantilla_explicita.sql`),
  * así que este cambio sólo alcanza a los clubes nuevos.
  */
 export function normalizarPlantilla(v: string | null | undefined): CodigoPlantilla {
@@ -808,7 +812,7 @@ En `plataforma.spec.ts`, el test de alta de club ya crea un tenant. Agregarle, d
 ```ts
   // La default del producto es C desde el 2026-08-16 (spec de la plantilla C básica, §5.1). Un club
   // recién creado tiene que salir en C. No sirve buscar "un tenant sin plantilla": la migración
-  // V11 le escribió 'A' explícito a todos los que ya existían, justamente para que a ninguno le
+  // V18 le escribió 'A' explícito a todos los que ya existían, justamente para que a ninguno le
   // cambiara la página.
   await page.goto(`http://${slug}.localhost:4400/`);
   await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C', { timeout: 10_000 });
