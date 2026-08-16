@@ -77,7 +77,10 @@
    nocturno de la B contrastaba MENOS que el `--ink-dim` del estado normal, o sea que los links se
    APAGABAN al pasar el mouse. Si venís a tocar uno de los dos bloques, no los vuelvas a juntar. */
 
-/* C sigue siendo clara: sobre su papel, `--court-deep` es el realce que siempre fue. Tal cual.
+/* C sigue siendo clara, pero el hover YA NO usa `--court-deep`: la nota de `a:hover`, quince líneas
+   más abajo, mide por qué se sacó (3 de 6 paletas de la casa abajo de AA y 5 de 6 peor que el
+   estado normal — el mouse empeoraba la lectura). Lo que sigue en este párrafo es la otra mitad de
+   la deuda, que es independiente de esa: el `opacity` heredado de los dos `<button>`.
 
    `opacity: 1` EN LOS DOS BOTONES, y no una tinta más oscura, porque el problema no era la tinta:
    `--ink-dim` sobre el papel de C mide 5,73:1 y le sobra. Lo que hundía a los dos botones era el
@@ -97,10 +100,16 @@
    el link se volvía más difícil de leer. Ahora va a la tinta plena, que siempre mejora contra el
    papel, y el color del club se reserva para el subrayado. */
 :host(.c-foot) a:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--court); }
+/* Mismo hover que `a:hover`, quince líneas arriba, y por el mismo motivo: es EXACTAMENTE la misma
+   deuda (mismo estado normal `--ink-dim`, mismo papel, mismo tamaño, mismos 3/6 abajo de AA y 5/6
+   peor que el reposo con `--court-deep`). Va a `--ink` sin agregar `text-decoration-color` porque,
+   a diferencia del `<a>`, estos dos `<button>` YA tienen subrayado en su regla base (línea 34 acá
+   arriba) — no hay nada que distinguir con el color del club, y es el mismo criterio con el que ya
+   se resuelve este mismo hover en B y en E (ver esos bloques: ahí tampoco le tocan la decoración). */
 :host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
-:host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
+:host(.c-foot) .arrep-link:hover { color: var(--ink); }
 :host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
-:host(.c-foot) .politica-link:hover { color: var(--court-deep); }
+:host(.c-foot) .politica-link:hover { color: var(--ink); }
 /* El © es lo ÚNICO del pie de C que se quedaba con el `--ink-faint` que `.c-foot` (shell.scss) le
    pone a todo el pie: los links ya lo pisan con `--ink-dim` acá arriba. Y `--ink-faint` sobre el
    papel de C da 2,43:1 medido en el navegador — abajo de AA a CUALQUIER ancho, no sólo en mobile
