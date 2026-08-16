@@ -1,12 +1,30 @@
 :host { display: block; }
 
+/* ── El reparto de la sección ──────────────────────────────────────────────────────────────────
+   Una grilla de 12 con dos filas, y NO un `auto-fit`: con auto-fit los tres bloques caían como dos
+   columnas altas más una fila ancha con las canchas apretadas a la izquierda, y quedaba media
+   pantalla vacía a la derecha. El ancho es del contenido, así que se reparte a mano:
+
+     fila 1 · cobrás como ya cobrás   → las 12, con los tres modos EN FILA (son hermanos, no una
+                                        lista: puestos uno abajo del otro se leían como pasos)
+     fila 2 · cuánto cobrás (5)  ·  tus canchas (7)   → las canchas piden más ancho porque son tres
+                                        figuras; las franjas son tres renglones y con 5 sobran. */
 .bloques {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: clamp(28px, 4vw, 48px);
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(28px, 3.5vw, 44px) clamp(24px, 3vw, 40px);
 }
 
-.bloque--ancho { grid-column: 1 / -1; }
+.bloque--cobros { grid-column: 1 / -1; }
+.bloque--precios { grid-column: span 5; }
+.bloque--canchas { grid-column: span 7; }
+
+/* El corte va en 720 y NO en 900: a 900 todavía entran cómodas las tres columnas, y apilarlas ahí
+   estiraba cada tarjeta a 810px con tres renglones de texto adentro — mucho peor que el problema que
+   se venía a arreglar. Abajo de 720 sí es la única forma. */
+@media (max-width: 720px) {
+  .bloque--precios, .bloque--canchas { grid-column: 1 / -1; }
+}
 
 .bl-titulo {
   margin: 0 0 8px;
@@ -24,12 +42,20 @@
 }
 
 /* ── Las tres formas de cobro ─────────────────────────────────────────────────────────────────── */
+/* Los tres modos van EN FILA en escritorio: son tres opciones hermanas entre las que el club elige
+   una, y apiladas se leían como tres pasos de un proceso. Abajo de 900 se apilan, que ahí sí es la
+   única forma. */
 .cobros {
   display: grid;
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+@media (max-width: 720px) {
+  .cobros { grid-template-columns: 1fr; }
 }
 
 .cobro-card {
@@ -90,9 +116,20 @@
    Misma receta que las cards del paso "Elegí cancha" (booking-flow.scss): piso claro, líneas, y el
    material dibujado con `inset box-shadow`. Acá son figuras, no botones — el visitante no elige
    nada, sólo ve cómo se ven. */
+/* `auto-fit` con máximo `1fr` —y no un tope fijo de 168px— para que las tres figuras LLENEN el ancho
+   que su bloque tiene: con el tope fijo quedaban chicas y apretadas a la izquierda, con aire muerto
+   al costado. `auto-fit` (no `auto-fill`) colapsa las tracks vacías, así el reparto se calcula sólo
+   sobre las tres que existen — es la misma decisión, y por el mismo motivo, que las cards del paso
+   "Elegí cancha". En pantallas angostas se acomodan solas en dos filas. */
 .canchas {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 168px));
+  /* TRES columnas fijas que ENCOGEN, no un `auto-fit` que envuelve: son tres variantes de la misma
+     cosa y se comparan de un vistazo, así que partirlas 2+1 deja una huérfana abajo — pasaba a 900,
+     donde el bloque no da para tres de 200. El `minmax(0, 200px)` es un techo, no un ancho: en
+     escritorio caen en ~197 y llenan su columna; más angosto se achican juntas.
+     En teléfono el bloque pasa a ancho completo y tres no entran: ahí sí se envuelven (abajo). */
+  grid-template-columns: repeat(3, minmax(0, 200px));
+  justify-content: start;
   gap: 14px;
   margin: 0;
   padding: 0;
@@ -197,3 +234,15 @@
 
 .cf-nombre { font-size: 0.84rem; font-weight: 700; color: #16233f; }
 .cf-techo { font-size: 0.74rem; color: #4c5878; }
+
+/* En teléfono el bloque ya es de ancho completo y tres canchas no entran: forzadas quedaban en
+   107px, más angostas que el pulgar que las mira. Se acomodan en dos filas.
+   VA AL FINAL DEL ARCHIVO A PROPÓSITO: escrita más arriba —donde están las otras reglas de
+   teléfono— perdía contra la regla base de `.canchas`, que tiene la misma especificidad y viene
+   después. Se descubrió midiendo: la media query estaba puesta y no hacía nada. */
+@media (max-width: 720px) {
+  /* DOS columnas explícitas, no `auto-fit`: con un máximo de track fijo (200px) el auto-fit calcula
+     las pistas contra el mínimo y acá le daba UNA sola, o sea las tres canchas apiladas a lo largo.
+     Dos es lo que entra bien en un teléfono (168px cada una a 390) y deja la tercera abajo. */
+  .canchas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
