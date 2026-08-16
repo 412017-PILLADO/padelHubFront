@@ -115,7 +115,7 @@ export class BookingService {
    * del HTML** y la devuelva de forma SÍNCRONA en el primer render.
    *
    * Sin esto el componente vuelve a nacer en el browser con `config = null` → la landing cae a la
-   * plantilla por defecto (A) hasta que termina un segundo fetch, y el club ve el layout cambiar
+   * plantilla por defecto (C) hasta que termina un segundo fetch, y el club ve el layout cambiar
    * solo (medido: ~600ms de plantilla equivocada). Además ahorra ese request duplicado.
    *
    * La clave se consume una sola vez (`remove`): un refetch posterior en la misma sesión (ej. tras

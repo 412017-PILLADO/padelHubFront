@@ -37,8 +37,8 @@ describe('el selector de plantillas del panel', () => {
   });
 
   it('no ofrece plantillas del catálogo que todavía no tienen cáscara', () => {
-    // La D está en el catálogo porque el back la acepta, pero `shellDePlantilla()` la manda a la A:
-    // un dueño que la eligiera vería la plantilla A y pensaría que se rompió algo.
+    // La D está en el catálogo porque el back la acepta, pero `shellDePlantilla()` la manda a la C:
+    // un dueño que la eligiera vería la plantilla C y pensaría que se rompió algo.
     const ofrecidos = new Set(crearTab().plantillas.map((p) => p.value as string));
     const sinCascara = CODIGOS_PLANTILLA.filter((c) => !(c in DIR_SHELL));
     for (const codigo of sinCascara) {

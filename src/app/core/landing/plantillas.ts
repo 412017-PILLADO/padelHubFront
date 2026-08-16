@@ -41,7 +41,7 @@ export const CODIGOS_PLANTILLA: readonly CodigoPlantilla[] =
 /**
  * Códigos que hoy tienen cáscara propia y en qué carpeta de `features/landing/shells/` vive cada
  * una. El catálogo lista las cinco porque el back ya acepta las cinco, pero la cáscara de D todavía
- * no existe: hasta entonces `shellDePlantilla()` la manda a la A.
+ * no existe: hasta entonces `shellDePlantilla()` la manda a la C (ver su docblock).
  *
  * Es un MAPA y no una lista suelta porque el nombre de la carpeta hacía falta en dos lugares y
  * estaba escrito a mano en los dos: `plantillas.spec.ts` (que va a leer la hoja de cada cáscara para

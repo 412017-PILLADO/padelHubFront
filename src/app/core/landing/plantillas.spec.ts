@@ -144,6 +144,7 @@ describe('registry de plantillas', () => {
   it('las plantillas sin cáscara se dibujan con la default', () => {
     expect(CODIGOS_CON_SHELL).toEqual(['A', 'B', 'C', 'E']);
     expect(normalizarPlantilla('D')).toBe('D');
+    expect(normalizarPlantilla('b')).toBe('B'); // case-insensitive: el back puede mandar minúsculas
     expect(shellDePlantilla('D')).toBe('C');
     expect(shellDePlantilla('E')).toBe('E'); // E ya tiene cáscara propia
     expect(shellDePlantilla('b')).toBe('B');
