@@ -197,9 +197,8 @@ describe('plantilla C · el filo del CTA le da al botón de confirmar un límite
   /**
    * La única superficie que el filo toca por afuera. C no le pone caja al flujo
    * (`--flow-surface: transparent`) y su `:host` es `--paper`, así que el botón está apoyado
-   * directamente sobre el papel de la página. El rail es `--surface` (#ffffff), que es más CLARO: un
-   * filo oscuro contrasta MÁS ahí (3,42 en el peor caso contra 3,16 acá), así que el papel es la cota
-   * y no hace falta medir las dos.
+   * directamente sobre el papel de la página. Desde la Task 4 la cáscara es una sola columna sin
+   * rail: no queda ninguna otra superficie de fondo en la hoja, así que el papel es la única cota.
    */
   const PAPEL = { 'el papel de la página (:host)': rgb(PAPER) };
 
@@ -259,8 +258,10 @@ describe('plantilla C · el filo del CTA le da al botón de confirmar un límite
     // propia y que el host de la cáscara es el papel. Si C le diera superficie al flujo —una tarjeta
     // blanca, por ejemplo— el filo caería sobre otra cosa y estos números medirían un fondo que no se
     // pinta. (Blanco sería MÁS fácil, pero el que avisa tiene que ser el test y no la suerte.)
+    // Desde la Task 4 `background` sólo se declara una vez en toda la hoja (en `:host`): sin rail no
+    // queda otra superficie que pise el papel, así que el último y el único valor coinciden.
     expect(declaracion(HOJA_TOKENS, '--flow-surface')).toBe('transparent');
-    expect(declaracion(HOJA_SHELL, 'background')).toBe('var(--surface)');
+    expect(declaracion(HOJA_SHELL, 'background')).toBe('var(--paper)');
     expect(/:host\s*\{[^}]*background:\s*var\(--paper\)/.test(HOJA_SHELL)).toBe(true);
   });
 

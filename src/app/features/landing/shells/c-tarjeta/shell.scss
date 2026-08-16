@@ -1,62 +1,80 @@
-/* ===================================================================
-   PLANTILLA C · Minimalista — rail claro con hairlines, mucho blanco, mono; el color del tenant
-   aparece solo como acento (marca + item activo). El acceso al panel va abajo, discreto.
+/* ==================================================================================================
+   PLANTILLA C · BÁSICA
 
-   Salió tal cual del bloque `.tpl-c` de landing.scss: `.tpl-c` era el div que envolvía la
-   plantilla y ahora es el host de esta cáscara, así que esas reglas pasan a `:host`.
-   =================================================================== */
-/* Los tokens --flow-* con los que esta cáscara viste al flujo de reserva. */
+   La sobria del catálogo, y desde el 2026-08-16 la plantilla POR DEFECTO: la que le toca a un club
+   que no quiere elegir. Blanco, hairlines, cero decoración.
+
+   EL COLOR DEL CLUB NO ES MASA ACÁ, y ésa es su identidad. Entra sólo como el LOMO (la banda del
+   borde, ver más abajo) y como acento en lo que el visitante toca. Es la única de las cuatro que no
+   usa el primario como bloque: A lo pone de masa a la izquierda, B tiñe el telón, E arma un campo
+   entero. Si algún día C llena algo grande de color, deja de ser C.
+
+   UNA SOLA COLUMNA, LA MISMA EN TODOS LOS ANCHOS. No hay `display: contents` ni reordenamientos por
+   breakpoint como en A y en la C vieja: la estructura de escritorio y la de teléfono son la misma y
+   sólo cambian las medidas. Es lo que hace de C la cáscara más simple de mantener, y es a propósito
+   —es la default: la que más veces se va a dibujar y la que menos tiene que sorprender.
+   ================================================================================================== */
 @use 'tokens';
-/* `display: block` es lo único que se agrega al mudar la regla: el `.tpl-c` de antes era un <div>
-   (bloque por defecto) y el host es un elemento desconocido, que por defecto es inline. Los dos
-   breakpoints de más abajo lo pisan (flex / grid) y cubren todo el rango, así que no cambia nada
-   visible — está para que la regla base siga significando lo mismo que significaba. */
-:host { display: block; min-height: 100svh; background: var(--paper); color: var(--ink); }
-.c-rail { background: var(--surface); border-right: 1px solid var(--line);
-  padding: 26px 22px; display: flex; flex-direction: column; gap: 24px; }
-.c-brandline { display: flex; align-items: center; gap: 10px; min-width: 0; }
-/* Lo que C le ajusta al tamaño de la marca vive en brand-mark.ts (`:host-context(.c-brandline)`). */
-/* Nombre al lado del logo: si no entra en una línea, baja a dos (antes se recortaba con ellipsis
-   y en el rail angosto quedaba "Padel Hu…"). `anywhere` para que un nombre de una sola palabra
-   larguísima corte en vez de desbordar el rail de 280px. */
-.c-brandname { min-width: 0; font-size: 1.02rem; line-height: 1.15; color: var(--ink); overflow-wrap: anywhere; }
-.c-main { min-width: 0; display: flex; flex-direction: column;
-  padding: clamp(20px, 3vw, 40px) clamp(16px, 3vw, 40px) clamp(24px, 4vw, 44px);
-  gap: clamp(20px, 4vw, 36px); }
-.c-book { width: 100%; max-width: 920px; scroll-margin-top: 16px; }
-/* Lo que C le pinta al flujo (ir a sangre, sin padding propio, y sin el nombre del club en el
-   encabezado) lo declara `_tokens.scss` como tokens --flow-*. Ninguna regla de esta cáscara apunta
-   al DOM del `<app-booking-flow>`. */
-.c-info { width: 100%; max-width: 920px; display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 14px; scroll-margin-top: 16px; }
-/* Lo que C le pinta a las tarjetas de info vive en club-info.scss (`:host-context(.tpl-c)`). */
-/* El footer respira arriba y abajo: en desktop es la última fila de la grilla y quedaba pegado al
-   borde inferior de la ventana (el margin de la fila no le daba aire propio). */
-.c-foot { margin-top: 8px; padding: 20px 0 clamp(22px, 3vw, 34px); border-top: 1px solid var(--line);
-  color: var(--ink-faint); }
 
-@media (min-width: 900px) {
-  /* Dos columnas: el rail (marca + info del club) ocupa las dos filas de la izquierda; la reserva
-     y el footer se apilan a la derecha. El rail scrollea solo si su info no entra. */
-  :host { display: grid; grid-template-columns: 280px 1fr; grid-template-rows: 1fr auto; }
-  .c-rail { grid-column: 1; grid-row: 1 / -1; position: sticky; top: 0; height: 100svh; overflow-y: auto; }
-  .c-main { grid-column: 2; grid-row: 1; }
-  .c-foot { grid-column: 2; grid-row: 2; margin: 0 clamp(16px, 3vw, 40px); }
-  /* En el rail angosto la info va apilada, una card por fila. (El horario, que también se apila,
-     vive en club-info.scss con `:host-context(.c-rail)`.) */
-  .c-rail .c-info { grid-template-columns: 1fr; }
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  background: var(--paper);
+  color: var(--ink);
 }
-@media (max-width: 899px) {
-  /* El rail se disuelve y sus hijos pasan a ser hermanos de la reserva, para poder ordenarlos:
-     marca (banda superior) → reserva → info → footer. Mismo truco que la plantilla A. */
-  :host { display: flex; flex-direction: column; }
-  .c-rail { display: contents; }
-  .c-brandline {
-    order: 1; background: var(--surface); border-bottom: 1px solid var(--line);
-    padding: 14px 16px;
-  }
-  .c-main { order: 2; }
-  .c-rail .c-info { order: 3; padding: 0 clamp(16px, 3vw, 40px); }
-  /* El aire de abajo ya lo pone el padding del footer; acá solo el margen lateral. */
-  .c-foot { order: 4; margin: 0 clamp(16px, 3vw, 40px); }
+
+/* El ancho de lectura. Todo lo que es contenido se alinea contra esta misma medida, así la página
+   tiene una sola columna óptica de arriba abajo. */
+.c-head,
+.c-main,
+.c-foot {
+  width: 100%;
+  max-width: 860px;
+  margin-inline: auto;
+  padding-inline: clamp(18px, 4vw, 32px);
+}
+
+.c-head {
+  padding-block: clamp(20px, 3vw, 34px) clamp(16px, 2.5vw, 26px);
+}
+
+.c-brandline {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* `anywhere` para que un nombre de una sola palabra larguísima corte en vez de desbordar. */
+.c-brandname {
+  min-width: 0;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  line-height: 1.15;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.c-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(26px, 4vw, 44px);
+  padding-bottom: clamp(28px, 4vw, 48px);
+}
+
+.c-book { scroll-margin-top: 16px; }
+
+/* La info del club, abajo de la reserva: la reserva es a lo que el visitante vino. */
+.c-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  scroll-margin-top: 16px;
+}
+
+.c-foot {
+  padding-block: 20px clamp(22px, 3vw, 34px);
+  border-top: 1px solid var(--line);
+  color: var(--ink-faint);
 }

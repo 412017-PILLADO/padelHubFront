@@ -7,8 +7,8 @@ import { ClubInfoComponent } from '../../club/club-info';
 import { LandingFooterComponent } from '../../club/landing-footer';
 
 /**
- * Cáscara de la plantilla C (compacta tipo app): rail claro con la marca y la info del club a la
- * izquierda, la reserva ocupando la columna principal.
+ * Cáscara de la plantilla C (básica): una sola columna centrada — marca, reserva, info del club y
+ * pie, en ese orden y sin rail lateral (Task 4: el rail se sentía panel de admin).
  *
  * El `<div class="tpl-c">` que envolvía todo en `landing.html` es ahora el host (`host: { class }`):
  * los e2e siguen viendo `.tpl-c`, y `club-info.scss` la sigue usando como ancestro
