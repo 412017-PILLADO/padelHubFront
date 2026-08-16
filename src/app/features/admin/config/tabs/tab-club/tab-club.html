@@ -42,9 +42,9 @@
         [style.--court-2]="marcaColorSecPicker()"
         [style.--ink-on-accent]="tintaSobreColor()">
         @for (p of plantillas; track p.value) {
-          <label class="gal-item" [class.sel]="marcaPlantilla() === p.value">
+          <label class="gal-item" [class.sel]="plantillaDibujada() === p.value">
             <input type="radio" name="plantilla" [value]="p.value"
-              [checked]="marcaPlantilla() === p.value"
+              [checked]="plantillaDibujada() === p.value"
               (change)="setMarcaPlantilla(p.value)" />
             <plantilla-thumb [codigo]="p.value" />
             <span class="gal-nombre">{{ p.label }}</span>
@@ -54,7 +54,7 @@
       </div>
 
       <!-- Las miniaturas contestan "cuál elijo"; esto contesta "cómo queda de verdad". -->
-      <app-preview-plantilla [plantilla]="marcaPlantilla()" [color]="marcaColor()"
+      <app-preview-plantilla [plantilla]="plantillaDibujada()" [color]="marcaColor()"
         [colorSec]="marcaColorSec()" />
     </div>
 

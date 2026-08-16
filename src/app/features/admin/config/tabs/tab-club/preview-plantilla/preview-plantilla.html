@@ -10,5 +10,8 @@
 
 <div class="marco" [class.marco--telefono]="marco() === 'telefono'"
   [class.marco--escritorio]="marco() === 'escritorio'">
-  <iframe [src]="src()" title="Vista previa de tu página de reserva"></iframe>
+  <!-- `loading="lazy"`: el preview es una landing ENTERA y vive abajo del pliegue. Sin esto, abrir
+       la pestaña "Tu club" arrastra una carga completa de la landing aunque el dueño sólo venga a
+       cambiar el WhatsApp — y se nota: fue lo que empujó los dos e2e del panel arriba de los 30s. -->
+  <iframe [src]="src()" loading="lazy" title="Vista previa de tu página de reserva"></iframe>
 </div>

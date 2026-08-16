@@ -35,7 +35,13 @@
      apunte al control real —Playwright, un test de accesibilidad, un lector de pantalla con modo
      táctil— se queda sin blanco. Con `inset: 0` el input ES la superficie de la tarjeta: invisible,
      enfocable y clickeable. */
-  input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+  /* `z-index: 1` NO es decorativo: `.thumb` (dentro de `plantilla-thumb`) declara
+     `position: relative`, así que es un elemento POSICIONADO y va después en el DOM — se pinta
+     ENCIMA del input aunque el input sea `absolute`. Sin esto, el centro de la tarjeta lo recibe la
+     miniatura y el radio nunca se puede clickear en el centro: a mano no se nota porque el `<label>`
+     igual lo activa, pero cualquier cosa que apunte al control real se cuelga esperando. Le costó
+     dos corridas de e2e a esta rama. */
+  input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
 
   &:hover { border-color: var(--court); }
   &.sel {
