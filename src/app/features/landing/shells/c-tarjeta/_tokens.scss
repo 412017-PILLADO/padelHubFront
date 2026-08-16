@@ -39,7 +39,12 @@
   /* Bloques suaves (seña, precio, íconos): el lavado del color del club sobre papel claro. */
   --flow-soft-surface: var(--court-soft);
   --flow-soft-ink: var(--ink-dim);
-  --flow-soft-ink-accent: var(--court-deep);
+  /* La tinta de acento sobre el bloque suave (precio, aviso de seña). NO es `--court-deep`, que es lo
+     que decía antes: medido contra el bloque suave, `--court-deep` queda abajo de AA en 4 de las 6
+     paletas de la casa y da 2,98:1 con el naranja del club del demo — o sea que el precio, que es
+     justo lo que el visitante viene a leer, no llegaba al mínimo.
+     El 40% es un TECHO medido (41,34%): más color y el peor club se cae. */
+  --flow-soft-ink-accent: color-mix(in srgb, var(--court) 40%, var(--ink));
 
   /* El acento como TRAZO (tinta/ícono y línea/borde). El color del club se usa crudo: sobre papel
      claro tiene contraste de sobra, incluso el club casi negro. Los dos valen lo mismo acá — están

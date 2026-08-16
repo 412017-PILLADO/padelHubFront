@@ -92,7 +92,11 @@
    había hecho E (ver su bloque más abajo, DIFERENCIA 1); con este bloque, las cuatro cáscaras lo
    tienen y no queda ninguna pendiente. */
 :host(.c-foot) a { color: var(--ink-dim); text-decoration: none; }
-:host(.c-foot) a:hover { color: var(--court-deep); }
+/* El hover ACLARA la lectura, no la empeora. Antes iba a `--court-deep` crudo y con 5 de las 6
+   paletas de la casa quedaba PEOR que el estado normal (`--ink-dim`): el visitante pasaba el mouse y
+   el link se volvía más difícil de leer. Ahora va a la tinta plena, que siempre mejora contra el
+   papel, y el color del club se reserva para el subrayado. */
+:host(.c-foot) a:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--court); }
 :host(.c-foot) .arrep-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
 :host(.c-foot) .arrep-link:hover { color: var(--court-deep); }
 :host(.c-foot) .politica-link { color: var(--ink-dim); font-family: inherit; opacity: 1; }
