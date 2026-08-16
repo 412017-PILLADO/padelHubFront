@@ -49,6 +49,12 @@
   border-radius: 10px;
   background: var(--th-paper);
   color: var(--th-ink);
+  /* EL FILO DE LA MINIATURA. Las siluetas claras (C y E) llenan la mitad de arriba y dejan papel
+     abajo, así que sobre una página del mismo papel la tarjeta parece CORTADA a media altura — se
+     ve en marketing, donde no hay una tarjeta contenedora que la enmarque como en el panel. Va como
+     `inset box-shadow` y no como `border` para no mover ni un píxel de la geometría de adentro. Es
+     el mismo 1.4.11 que le faltaba al CTA: un elemento claro sobre fondo claro necesita límite. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--th-ink) 14%, transparent);
   /* Las medidas de adentro van en `cqi` (porcentaje del ancho del host): así la miniatura se lee
      igual a 110px en la grilla del panel que a 220px en el carrusel de marketing, sin un solo media
      query y sin dos juegos de tamaños que se desincronicen. El container lo declara el `:host` —ver

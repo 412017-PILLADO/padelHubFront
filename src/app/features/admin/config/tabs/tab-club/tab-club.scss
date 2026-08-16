@@ -28,10 +28,14 @@
   transition: border-color 0.15s ease, background 0.15s ease;
 
   /* El radio nativo se queda en el DOM —trae el teclado, el agrupamiento y el nombre accesible sin
-     escribir un solo handler— pero no se dibuja: lo que se ve es la miniatura. Va con
-     `position: absolute` y NO con `display: none`, porque un radio en `display: none` no es
-     enfocable y se llevaría puesto todo el recorrido por teclado. */
-  input { position: absolute; opacity: 0; width: 0; height: 0; }
+     escribir un solo handler— pero no se dibuja: lo que se ve es la miniatura.
+     NO va con `display: none`, porque un radio así no es enfocable y se llevaría puesto todo el
+     recorrido por teclado. Y NO va con `width/height: 0`: un elemento sin caja no tiene DÓNDE ser
+     clickeado, y aunque el `<label>` que lo envuelve igual lo activa, cualquier herramienta que
+     apunte al control real —Playwright, un test de accesibilidad, un lector de pantalla con modo
+     táctil— se queda sin blanco. Con `inset: 0` el input ES la superficie de la tarjeta: invisible,
+     enfocable y clickeable. */
+  input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
 
   &:hover { border-color: var(--court); }
   &.sel {

@@ -1,0 +1,92 @@
+:host { display: block; }
+
+/* La zona que lleva el color del club de muestra. Todo lo que se repinta vive adentro; afuera,
+   marketing conserva el teal de plataforma. */
+.marca-zona { display: block; }
+
+/* ── Los swatches ─────────────────────────────────────────────────────────────────────────────── */
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.sw {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+
+  /* El radio nativo se queda —trae el teclado y el grupo— pero no se dibuja. No va con
+     `display: none` (no sería enfocable) ni con `width/height: 0` (un elemento sin caja no tiene
+     dónde ser clickeado, y todo lo que apunte al control real se queda sin blanco). Con `inset: 0`
+     el input ES la superficie del swatch. */
+  input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+
+  &:hover { transform: scale(1.06); }
+  &.on { border-color: var(--ink); }
+  /* Del token de PLATAFORMA: el anillo del color crudo del club llegó a medir 1,00:1, y acá encima
+     el swatch ES del color del club, así que un anillo de ese mismo color sería invisible siempre. */
+  &:has(input:focus-visible) { outline: 2px solid var(--anillo-foco); outline-offset: 3px; }
+}
+
+.sw-punto {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  /* Un club casi blanco quedaría como un swatch invisible sobre el papel: el borde le da silueta.
+     Es el mismo 1.4.11 que le faltaba al CTA. */
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 12%);
+}
+
+/* ── El carrusel ──────────────────────────────────────────────────────────────────────────────── */
+.carrusel {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(150px, 1fr);
+  gap: 18px;
+  margin: 0;
+  padding: 0 0 6px;
+  list-style: none;
+  /* Se recorre con el pulgar y cada miniatura queda encajada (spec §8). En escritorio entran las
+     cuatro y el snap no molesta; en el teléfono es la única forma cómoda de verlas. */
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.carr-item {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  scroll-snap-align: center;
+}
+
+.carr-nombre {
+  margin-top: 4px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.carr-desc {
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--ink-dim);
+}
+
+@media (max-width: 720px) {
+  /* En el teléfono tienen que entrar DOS Y PICO, no dos exactas. Medido a 390: con `minmax(160px,
+     62%)` el ancho resuelto era 160 y las dos primeras ocupaban 338 de los 350 disponibles — la
+     tercera arrancaba fuera y no se veía NADA de ella. O sea que la sección decía "cuatro diseños"
+     y mostraba dos, que es peor que no tener carrusel. Con 43% entran dos y asoma la tercera, que
+     es lo único que invita a arrastrar. */
+  .carrusel { grid-auto-columns: 43%; }
+}

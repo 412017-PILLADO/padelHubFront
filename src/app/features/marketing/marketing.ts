@@ -9,6 +9,8 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { MarcaDemoComponent } from './marca-demo/marca-demo';
+
 interface Feature {
   icon: 'globe' | 'grid' | 'bell' | 'chart';
   title: string;
@@ -32,7 +34,7 @@ interface AgendaRow {
   selector: 'app-marketing',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, MarcaDemoComponent],
   templateUrl: './marketing.html',
   styleUrl: './marketing.scss',
 })
@@ -40,6 +42,7 @@ export class MarketingLanding {
   // ── Navegación ───────────────────────────────────────────────────
   readonly navLinks = [
     { label: 'Producto', href: '#producto' },
+    { label: 'Tu marca', href: '#tu-marca' },
     { label: 'Cómo funciona', href: '#como-funciona' },
     { label: 'Contacto', href: '#contacto' },
   ];
