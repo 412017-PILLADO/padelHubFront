@@ -125,4 +125,42 @@
      separados porque las dos familias van a divergir cuando alguna plantilla lo necesite. */
   --flow-accent-ink: var(--court);
   --flow-accent-line: var(--court);
+
+  /* EL FILO DEL CTA · el límite visible del botón de confirmar.
+
+     Estuvo en `none` con dos argumentos, y de los dos sobrevivió UNO. El que sobrevive: el secundario
+     de E es LUZ (el radial del campo de color, spec §6), así que el filo NO puede ser `--court-2` —eso
+     es de D—. El que se cayó medido: "el CTA cae adentro del vidrio, que ya trae borde especular y
+     brillo de canto propios". El borde especular es del PANEL y está a varios cientos de píxeles del
+     botón; entre el relleno del CTA y el vidrio que lo rodea no hay más límite que el canto del propio
+     relleno, que es `var(--court)` crudo. Contra el vidrio de la mitad de abajo del panel (`#fcfcfe`,
+     casi blanco, que es donde el botón cae de verdad — el anillo de más arriba y `_vidrio.scss` lo
+     redondean a `#fcfcff`; es un punto de 255 en el azul y no mueve ningún ratio de estas tablas):
+
+       club                   relleno crudo vs el vidrio
+       teal #0a8a99                   4,02   ok
+       casi negro #111111            18,45   ok
+       fucsia #FF2D95                 3,39   ok
+       naranja #f89625                2,19   NO PASA  ← el club real del demo
+       amarillo #FFD400               1,40   NO PASA
+       casi blanco #ffffff            1,02   NO PASA
+
+     Y la mitad MONTADA del panel es peor todavía —ahí el vidrio se apoya sobre el campo, o sea sobre el
+     club, así que fondo y relleno se mueven juntos: teal 2,80 · fucsia 2,29—. El CTA no cae ahí (ahí
+     vive el encabezado del flujo), pero el contraste.spec pinea las dos caras: si el panel se acorta o
+     el botón sube, el que tiene que avisar es el test.
+
+     EL COLOR ES EL PRIMARIO ARRIMADO A LA TINTA DE LA PÁGINA, la misma FORMA que E ya usa para su
+     anillo de foco y para `--flow-soft-ink-accent` de más arriba, y la misma receta y el mismo 50% que
+     declaran A, B y C. El 50% es un TECHO medido: el peor primario es el BLANCO y cruza el 3:1 en
+     N = 53,56% contra el vidrio de abajo (51,72% contra el papel liso de A y C, que es la cota que
+     manda para el número compartido). Con las seis, el filo contra el vidrio de abajo: teal 8,76 ·
+     naranja 6,12 · amarillo 4,46 · fucsia 8,41 · casi blanco 3,34 · casi negro 18,01; y contra la
+     mitad montada, 6,10 · 4,93 · 4,04 · 5,68 · 3,42 · 9,25. Doce de doce sobre el 3:1.
+
+     No depende de `--court-2` y por eso el club sin secundario cargado (el tenant demo) no necesita
+     rama aparte. La cara de ADENTRO (el filo contra el relleno) es floja por diseño —2,18 con el teal,
+     1,02 con un club casi negro— y no tiene piso posible; la que el 1.4.11 pide es la de afuera. El
+     GROSOR es 1px, el mismo del borde especular del vidrio. */
+  --flow-cta-edge: 1px solid color-mix(in srgb, var(--court) 50%, var(--ink));
 }

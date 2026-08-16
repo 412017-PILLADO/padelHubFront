@@ -45,4 +45,39 @@
      separados porque las dos familias van a divergir cuando alguna plantilla lo necesite. */
   --flow-accent-ink: var(--court);
   --flow-accent-line: var(--court);
+
+  /* EL FILO DEL CTA · el límite visible del botón de confirmar.
+
+     Estuvo en `none` con dos argumentos, y de los dos sobrevivió UNO. El que sobrevive: el secundario
+     de C es ACENTO PUNTUAL (spec §6) y no estructura, así que el filo NO puede ser `--court-2` —eso es
+     de D—. El que se cayó medido: "un borde acá competiría con el canto de la barra del recap". El
+     canto del recap es `1px solid var(--line)` (#e4e8f1, 1,08:1 contra el papel: un hairline que
+     apenas se insinúa) y el filo del CTA mide 3,16 como mínimo, o sea que no compite con esa línea —la
+     domina—. Y lo que había abajo no era un botón con límite sobrio sino un botón SIN límite: `.confirm`
+     es `background: var(--court)` crudo sobre el `--paper` de la página, y con tres de las seis paletas
+     de la casa eso no llega al 3:1 que WCAG 1.4.11 le pide al límite de un componente:
+
+       club                   relleno crudo vs --paper
+       teal #0a8a99                   3,80   ok
+       casi negro #111111            17,46   ok
+       fucsia #FF2D95                 3,20   ok
+       naranja #f89625                2,07   NO PASA  ← el club real del demo
+       amarillo #FFD400               1,32   NO PASA
+       casi blanco #ffffff            1,08   NO PASA
+
+     EL COLOR ES EL PRIMARIO ARRIMADO A LA TINTA DE LA PÁGINA: el relleno del propio botón oscurecido,
+     un canto de sí mismo. Es la misma receta y el mismo 50% que declaran A, B y E —"el color del club,
+     arrimado a la tinta de esta plantilla hasta que se lea"— y deja el secundario libre para el trabajo
+     que la spec le da acá. El 50% es un TECHO medido: el peor primario es el BLANCO (el que más se
+     parece al papel) y cruza el 3:1 en N = 51,72%. Contra el papel: teal 8,29 · naranja 5,80 · amarillo
+     4,22 · fucsia 7,96 · casi blanco 3,16 (el que ata) · casi negro 17,05.
+
+     Sobre el rail (`--surface`, blanco) el mismo filo mide 3,42, o sea que el papel es la cota y no
+     hace falta medir las dos superficies: un filo oscuro contrasta MÁS contra blanco.
+
+     No depende de `--court-2` y por eso no tiene rama de degradación: el primario existe siempre,
+     incluso sin tenant cargado. La cara de ADENTRO (el filo contra el relleno) es floja por diseño
+     —2,18 con el teal, 1,02 con un club casi negro— y no tiene piso posible; la que el 1.4.11 pide es
+     la de afuera. El GROSOR es 1px, el hairline de plataforma, el mismo con el que C separa todo. */
+  --flow-cta-edge: 1px solid color-mix(in srgb, var(--court) 50%, var(--ink));
 }

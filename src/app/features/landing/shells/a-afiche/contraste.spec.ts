@@ -120,6 +120,55 @@ function declaracion(cuerpos: string[], prop: string): string | null {
 const AFICHE = cuerposDeRegla(HOJA_SHELL, '\\.poster-brand');
 const HOST_A = cuerposDeRegla(HOJA_SHELL, ':host');
 
+/**
+ * LOS `--flow-*` CON LOS QUE A VISTE AL FLUJO. Este archivo no los leía hasta el filo del CTA: el
+ * anillo del afiche vive en `shell.scss` y la columna derecha era "superficie de plataforma, la mide
+ * styles.spec". Lo segundo sigue siendo cierto para el FONDO de la columna y dejó de serlo para el
+ * botón de confirmar, que está pintado con el color del club y no con ninguna superficie de sistema.
+ */
+const HOJA_TOKENS = leerHoja(`${DIR}/_tokens.scss`);
+const HOST_TOKENS = cuerposDeRegla(HOJA_TOKENS, ':host');
+/**
+ * La hoja del flujo, que es la que PINTA el CTA: la cáscara no lo toca por DOM. Va por `leerArchivo`
+ * y no por `leerHoja` porque `booking-flow.scss` usa comentarios `//`, que son Sass idiomático en
+ * este repo; de acá sólo se saca el cuerpo de `.confirm`, con un regex que exige la forma.
+ */
+const HOJA_FLUJO = leerArchivo('src/app/features/landing/booking/booking-flow.scss');
+const CONFIRM = /\.confirm\s*\{([^}]*)\}/.exec(HOJA_FLUJO)?.[1] ?? '';
+/** El relleno del CTA. Es `var(--court)` crudo, y es la razón por la que el filo tuvo que existir. */
+const RELLENO_CTA = declaracion([CONFIRM], 'background');
+/** Lo que el flujo hace con el token, o sea que el filo de la cáscara llega de verdad al borde. */
+const BORDE_CTA = declaracion([CONFIRM], 'border');
+
+/** El filo tal como lo declara esta cáscara: `<grosor> solid <color>`, o `none`. */
+const FILO_DECL = declaracion(HOST_TOKENS, '--flow-cta-edge');
+/**
+ * LA RECETA DEL FILO, o `null` si la cáscara declara `none`.
+ *
+ * El `null` no es un caso degenerado que se pueda saltear: es el estado en el que A estuvo hasta
+ * esta tarea, y lo que las cuentas de abajo miden entonces es el RELLENO del botón contra el papel
+ * —que es literalmente el límite que el botón tiene cuando no dibuja ninguno—. O sea que borrar el
+ * token no deja este archivo en verde por falta de datos: lo pone rojo con 2,07 · 1,32 · 1,08.
+ *
+ * Sólo se sabe resolver la forma que tiene sentido acá; cualquier otra TIRA con el valor adentro del
+ * mensaje. Un `#e11d48` a mano o una receta inventada tienen que hacer ruido y no colarse por una
+ * rama que las mida mal.
+ */
+const FILO = (() => {
+  if (FILO_DECL == null || FILO_DECL === 'none') return null;
+  const m = /^(\S+)\s+solid\s+(color-mix\(.+\))$/s.exec(FILO_DECL);
+  if (!m) throw new Error(
+    `a-afiche/_tokens.scss declara \`--flow-cta-edge: ${FILO_DECL}\`, y este spec sólo sabe medir ` +
+    `\`<grosor> solid color-mix(…)\` o \`none\`. Si el filo estrena otra forma, la cuenta que lo ` +
+    `audite va acá adentro: el CTA está pintado con el color del club y no lo mide ninguna otra puerta.`);
+  const receta = colorMix(m[2], 'a-afiche/_tokens.scss · --flow-cta-edge');
+  if (receta.a !== 'var(--court)' || receta.b !== 'var(--ink)') throw new Error(
+    `el filo de A ya no es el primario arrimado a la tinta de la página, sino ` +
+    `\`color-mix(in srgb, ${receta.a} …%, ${receta.b})\`. El techo del 50% que este archivo pinea se ` +
+    `midió para \`var(--court)\` contra \`var(--ink)\`; con otros polos hay que medirlo de nuevo.`);
+  return { grosor: m[1], ...receta };
+})();
+
 /** El anillo de la ZONA afiche, tal como lo declara `shell.scss`. */
 const ANILLO_AFICHE = declaracion(AFICHE, '--anillo-foco');
 
@@ -140,6 +189,8 @@ function hexDelRoot(prop: string): string {
   return v;
 }
 const INK = hexDelRoot('--ink');
+/** El papel de la columna derecha: A no le pone fondo, así que se ve el del host de la landing. */
+const PAPER = hexDelRoot('--paper');
 /** El club, la punta oscura y la tinta que se pintan cuando el tenant NO cargó color. */
 const COURT_DEFAULT = hexDelRoot('--court');
 const COURT_DEEP_DEFAULT = hexDelRoot('--court-deep');
@@ -215,6 +266,16 @@ function porDebajoDe(umbral: number, tinta: Rgb, fondos: Record<string, Rgb>): s
     .filter(([, ratio]) => ratio < umbral)
     .map(([nombre, ratio]) => `${nombre}: ${ratio.toFixed(2)}:1 (<${umbral})`);
 }
+
+/**
+ * EL LÍMITE VISIBLE DEL CTA para un club dado, resuelto desde lo que declara la cáscara.
+ *
+ * Con filo es el color del filo; SIN filo es el relleno del propio botón, porque cuando no hay borde
+ * el límite del componente ES el canto del relleno y eso es exactamente lo que WCAG 1.4.11 mide.
+ * Esa rama es la que hace que este bloque tenga puerta y no sólo documentación.
+ */
+const filoDe = (club: string, pct = FILO?.pct ?? 0): Rgb =>
+  FILO == null ? rgb(club) : mezcla(rgb(club), pct, rgb(INK));
 
 /** El peor ratio de una tinta sobre las dos puntas del afiche. */
 const peorEnElAfiche = (tinta: Rgb, club: string) =>
@@ -297,6 +358,81 @@ describe('plantilla A · el anillo de foco del afiche sobrevive a cualquier colo
       ...CLUBES.map(([, c]) => peorEnElAfiche(anilloDePlataforma(c), c)));
     expect(conElToken).toBeGreaterThan(conElDefault);
     expect(conElToken).toBeGreaterThanOrEqual(UMBRAL);
+  });
+});
+
+/**
+ * EL FILO DEL CTA · el límite visible del botón de confirmar.
+ *
+ * `.confirm` es el control más importante del producto y hasta esta tarea no tenía NINGÚN límite en A:
+ * `--flow-cta-edge` valía `none`, así que el botón era una mancha de `--court` crudo sobre el papel
+ * de la columna. Con tres de las seis paletas de la casa eso deja al botón sin silueta —naranja del
+ * demo 2,07 · amarillo 1,32 · casi blanco 1,08, contra el 3:1 que WCAG 1.4.11 le pide al límite de
+ * un componente— y lo único que lo delata es el texto de adentro.
+ *
+ * El filo es el PRIMARIO ARRIMADO A LA TINTA DE LA PÁGINA: el relleno del propio botón oscurecido,
+ * o sea un canto de sí mismo y no una estructura agregada. Es la misma forma que ya usan el anillo de
+ * la E y los dos acentos de la B, y es deliberado que NO use `--court-2`: un club
+ * puede no tener secundario cargado (el tenant demo de la plataforma no tiene), y derivar el filo del
+ * primario —que siempre existe, incluso sin tenant, porque el `:root` de plataforma lo declara— deja
+ * el caso resuelto por construcción en vez de por una rama de degradación.
+ *
+ * LO QUE ESTE BLOQUE NO PUEDE PROBAR: la cara de ADENTRO del filo, contra el relleno del botón. El
+ * filo se deriva del relleno, así que esa cara es floja por diseño (2,18 con el teal en reposo, 1,02
+ * con un club casi negro) y no tiene piso posible: cualquier receta que garantice la silueta contra
+ * una superficie clara tiene que acercarse a la tinta, y acercarse a la tinta la aleja de un relleno
+ * oscuro. La que WCAG pide es la de AFUERA, que es la que le devuelve el límite al botón.
+ */
+describe('plantilla A · el filo del CTA le da al botón de confirmar un límite visible', () => {
+  /** La única superficie que el filo toca por afuera: A no le pone fondo a la columna del flujo. */
+  const PAPEL = { 'el papel de la columna del flujo': rgb(PAPER) };
+
+  for (const [nombre, club] of CLUBES) {
+    it(`con un club ${nombre} el CTA llega a 3:1 contra el papel de la columna`, () => {
+      expect(
+        porDebajoDe(UMBRAL, filoDe(club), PAPEL),
+        `El botón de confirmar de la A no tiene límite visible con un club ${nombre} (${club}). ` +
+          `\`.confirm\` es \`background: var(--court)\` a sangre sobre el papel de la columna, y el ` +
+          `único token que puede ponerle borde es \`--flow-cta-edge\` en a-afiche/_tokens.scss: la ` +
+          `cáscara no toca el CTA por DOM. WCAG 1.4.11 pide 3:1 para el límite de un componente.`,
+      ).toEqual([]);
+    });
+  }
+
+  it('el filo NO es decoración: sin él, 3 de las 6 paletas dejan al CTA sin silueta', () => {
+    // Tripwire al revés, y el que justifica todo el bloque. El relleno se LEE de la hoja del flujo:
+    // los tres números de arriba sólo valen mientras siga siendo el color CRUDO del club, así que si
+    // alguien lo cambia esto se cae en vez de seguir citando una tabla de memoria. Y si algún día el
+    // relleno pasara 3:1 con las seis, el filo pasaría a ser un adorno y habría que discutirlo.
+    expect(RELLENO_CTA).toBe('var(--court)');
+    const sinFilo = CLUBES.map(([, c]) => contraste(rgb(c), rgb(PAPER)));
+    expect(sinFilo.filter((r) => r < UMBRAL).length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('el 50% es un TECHO medido: el peor primario posible es el BLANCO', () => {
+    // El primario se arrima a la tinta hasta que se lea, y el que ata es el más CLARO —el que más se
+    // parece al papel—: `color-mix(#fff N%, --ink)` cruza el 3:1 contra `--paper` en N = 51,72%. 50
+    // es ese techo redondeado hacia abajo. Subirlo deja sin filo a los clubes de primario claro;
+    // bajarlo apaga el matiz del club sin necesidad. La DIRECCIÓN importa: sobre superficie clara el
+    // lado peligroso es el del color crudo, no el de la tinta.
+    expect(FILO, 'A no declara filo: no hay techo que pinear').not.toBeNull();
+    expect(contraste(filoDe('#ffffff', FILO!.pct), rgb(PAPER))).toBeGreaterThanOrEqual(UMBRAL);
+    expect(contraste(filoDe('#ffffff', 0.52), rgb(PAPER))).toBeLessThan(UMBRAL);
+  });
+
+  it('el filo no depende del secundario, así que el tenant demo no tiene caso aparte', () => {
+    // `--court-2` sólo existe si el club cargó un secundario: `applyTenantColors` lo BORRA del
+    // `:root` cuando no lo hay, y el tenant demo de la plataforma es justamente así. Derivar el filo
+    // del PRIMARIO evita la rama de degradación entera —no hay "sin secundario el filo cae a X" que
+    // medir— y por eso está pineado: es la simplificación que se ve más natural de deshacer.
+    expect(FILO_DECL).not.toContain('--court-2');
+  });
+
+  it('el flujo consume el token, o el filo de la cáscara no llega al botón', () => {
+    // Las cuentas de arriba miden un color; esto verifica que ese color se PINTE. Si `.confirm`
+    // volviera a `border: none` fijo —como estaba antes de que el token existiera—, A podría declarar
+    // el filo más contrastado del mundo y el botón seguiría a sangre.
+    expect(BORDE_CTA).toBe('var(--flow-cta-edge, none)');
   });
 });
 
