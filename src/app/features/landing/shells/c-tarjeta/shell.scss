@@ -22,6 +22,41 @@
   min-height: 100svh;
   background: var(--paper);
   color: var(--ink);
+
+  /* ── EL LOMO · la firma de C ────────────────────────────────────────────────────────────────
+     Una banda vertical delgada del color del club, pegada al borde izquierdo, de arriba abajo. Como
+     el lomo de un libro. Es la firma porque cumple las tres cosas que una firma necesita acá: está
+     siempre (todos los anchos, todo el scroll), no le come espacio al contenido —que es lo que
+     "básica" pide— y no se pisa con ninguna otra (A es masa a la izquierda, B es telón oscuro con
+     luz, E es campo de color arriba con vidrio a caballo).
+
+     NO SE DIBUJA CON `--court` CRUDO, y esto es una restricción dura, no una preferencia: con un
+     club casi blanco una banda del color crudo sobre `--paper` desaparece, y con ella desaparece lo
+     único que hace a C ser C. Es el mismo modo de falla que hundió a la plantilla D. El color va
+     llevado hacia la tinta hasta un piso medido de 3:1 contra el papel con las seis paletas de la
+     casa (WCAG 1.4.11: el lomo es un elemento gráfico, no texto).
+     PORCENTAJE MEDIDO: 50% de `--court` — peor caso casi blanco, 3,29:1. Pineado en
+     `contraste.spec.ts`. Ver `.superpowers/sdd/medir-lomo-c.mjs` para reproducir la medición. */
+  --c-lomo-ancho: clamp(6px, 0.8vw, 11px);
+  --c-lomo-color: color-mix(in srgb, var(--court) 50%, var(--ink));
+}
+
+:host::before {
+  content: '';
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--c-lomo-ancho);
+  /* Degradado hacia su versión clara: le da al lomo la profundidad de un canto real sin agregar una
+     segunda idea. `--court-2` cae al primario si el club no tiene secundario. */
+  background: linear-gradient(
+    180deg,
+    var(--c-lomo-color),
+    color-mix(in srgb, var(--court-2, var(--court)) 55%, var(--paper))
+  );
+  z-index: 3;
+  pointer-events: none;
 }
 
 /* El ancho de lectura. Todo lo que es contenido se alinea contra esta misma medida, así la página
@@ -32,7 +67,9 @@
   width: 100%;
   max-width: 860px;
   margin-inline: auto;
-  padding-inline: clamp(18px, 4vw, 32px);
+  /* El lado izquierdo le deja lugar al lomo (`::before` en `:host`, fijo sobre el borde); el
+     derecho no tiene nada que esquivar y mantiene la medida original. */
+  padding-inline: calc(var(--c-lomo-ancho) + clamp(14px, 3.5vw, 28px)) clamp(18px, 4vw, 32px);
 }
 
 .c-head {

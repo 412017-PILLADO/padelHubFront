@@ -258,10 +258,14 @@ describe('plantilla C · el filo del CTA le da al botón de confirmar un límite
     // propia y que el host de la cáscara es el papel. Si C le diera superficie al flujo —una tarjeta
     // blanca, por ejemplo— el filo caería sobre otra cosa y estos números medirían un fondo que no se
     // pinta. (Blanco sería MÁS fácil, pero el que avisa tiene que ser el test y no la suerte.)
-    // Desde la Task 4 `background` sólo se declara una vez en toda la hoja (en `:host`): sin rail no
-    // queda otra superficie que pise el papel, así que el último y el único valor coinciden.
+    // Desde la Task 5 (el lomo) `background` SÍ se declara dos veces en la hoja: la de `:host` (el
+    // papel) y la del degradado de `:host::before` (la banda del borde). El `declaracion` genérico
+    // toma el ÚLTIMO valor del archivo entero, así que hay que acotarlo al bloque `:host { … }` solo
+    // —sin nested `{}` adentro, así que el primer `}` cierra el bloque— para seguir leyendo la
+    // superficie que el botón pisa, y no el degradado del lomo.
+    const HOST_BLOCK = /:host\s*\{([^}]*)\}/.exec(HOJA_SHELL)?.[1] ?? '';
     expect(declaracion(HOJA_TOKENS, '--flow-surface')).toBe('transparent');
-    expect(declaracion(HOJA_SHELL, 'background')).toBe('var(--paper)');
+    expect(declaracion(HOST_BLOCK, 'background')).toBe('var(--paper)');
     expect(/:host\s*\{[^}]*background:\s*var\(--paper\)/.test(HOJA_SHELL)).toBe(true);
   });
 
