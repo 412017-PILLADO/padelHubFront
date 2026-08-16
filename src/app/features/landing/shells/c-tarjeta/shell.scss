@@ -35,8 +35,20 @@
      único que hace a C ser C. Es el mismo modo de falla que hundió a la plantilla D. El color va
      llevado hacia la tinta hasta un piso medido de 3:1 contra el papel con las seis paletas de la
      casa (WCAG 1.4.11: el lomo es un elemento gráfico, no texto).
-     PORCENTAJE MEDIDO: 50% de `--court` — peor caso casi blanco, 3,29:1. Pineado en
-     `contraste.spec.ts`. Ver `.superpowers/sdd/medir-lomo-c.mjs` para reproducir la medición. */
+     PORCENTAJE MEDIDO: 50% de `--court` — peor caso casi blanco, 3,26:1 contra `--paper` mezclando
+     con `--ink`, la tinta real de la plataforma: `#11162b` en `src/styles.scss:11`. Una medición
+     previa usó `#10151f`, la tinta de OTRO componente, y por eso daba 3,29.
+     El 3,26 no es el único número que sale de esta cuenta, y conviene decir por qué se elige ése: sin
+     redondear, mezclar los canales del `color-mix` da 3,2668 (→3,27); redondeando esa mezcla a 8 bits
+     por canal ANTES de medir el contraste —que es lo que el navegador hace de verdad al pintar el
+     lomo— da 3,2605 (→3,26). Se pinea 3,26 porque es el color que el visitante ve. Si reproducís la
+     cuenta y te da 3,27, no está mal: es la versión sin redondeo, no otra medición. Ver
+     `.superpowers/sdd/medir-lomo-c.mjs` para reproducir (el script todavía tiene la tinta vieja,
+     `#10151f`, sin actualizar).
+     TODAVÍA NO HAY TEST QUE LO PINEE: `contraste.spec.ts` de esta cáscara hoy sólo mide el filo del
+     CTA (`--flow-cta-edge`) y no toca `--c-lomo-color` ni `--c-lomo-ancho`. Agregar ese pin es tarea
+     de un paso posterior; hasta entonces nada impide que alguien afloje este 50% sin que un test se
+     entere. */
   --c-lomo-ancho: clamp(6px, 0.8vw, 11px);
   --c-lomo-color: color-mix(in srgb, var(--court) 50%, var(--ink));
 }
