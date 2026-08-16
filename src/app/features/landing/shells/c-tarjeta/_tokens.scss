@@ -26,8 +26,9 @@
   --flow-padding: 0;
   --flow-padding-mobile: 0;
 
-  /* El nombre ya vive junto al logo en el rail: en el encabezado de la reserva sería la misma marca
-     dos veces (solo en C — A y B lo resuelven distinto, ahí la marca está en el afiche/héroe). */
+  /* El nombre ya vive junto al logo en el encabezado de la página (`.c-head` / `.c-brandline`): en
+     el encabezado de la reserva sería la misma marca dos veces (solo en C — A y B lo resuelven
+     distinto, ahí la marca está en el afiche/héroe). */
   --flow-marca-display: none;
 
   /* El estado seleccionado se marca sólo con el color del club: sin halo. El halo es la firma de la
@@ -72,8 +73,9 @@
      parece al papel) y cruza el 3:1 en N = 51,72%. Contra el papel: teal 8,29 · naranja 5,80 · amarillo
      4,22 · fucsia 7,96 · casi blanco 3,16 (el que ata) · casi negro 17,05.
 
-     Sobre el rail (`--surface`, blanco) el mismo filo mide 3,42, o sea que el papel es la cota y no
-     hace falta medir las dos superficies: un filo oscuro contrasta MÁS contra blanco.
+     La C es una sola columna sobre `--paper`, sin rail ni ninguna otra caja: no queda otra superficie
+     de fondo en la hoja, así que el papel no es la peor entre varias sino la única, y por eso es la
+     cota.
 
      No depende de `--court-2` y por eso no tiene rama de degradación: el primario existe siempre,
      incluso sin tenant cargado. La cara de ADENTRO (el filo contra el relleno) es floja por diseño
