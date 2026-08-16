@@ -1,0 +1,116 @@
+<!-- La cancha vista de arriba, la misma del paso "Elegí cancha" del flujo de reserva: las dos líneas
+     de saque, la central y la red. Se redeclara acá porque el símbolo del flujo vive en la ruta de
+     la landing y nunca coexiste con marketing. -->
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <symbol id="court-mk" viewBox="0 0 75 100">
+      <line x1="7" y1="18" x2="68" y2="18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.85" fill="none" />
+      <line x1="7" y1="82" x2="68" y2="82" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.85" fill="none" />
+      <line x1="37.5" y1="18" x2="37.5" y2="82" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.7" fill="none" />
+      <line x1="5" y1="50" x2="70" y2="50" stroke="currentColor" stroke-width="1.8" stroke-opacity="0.62" stroke-dasharray="3 2.6" fill="none" />
+    </symbol>
+  </defs>
+</svg>
+
+<div class="demos">
+
+  <!-- ══ Cómo cobrás ═══════════════════════════════════════════════════════════════════════════ -->
+  <section class="demo">
+    <div class="demo-intro">
+      <h3 class="bl-titulo">Cobrás como ya cobrás</h3>
+      <p class="bl-lead">Con seña o sin seña. Y si pedís seña, por transferencia o por Mercado Pago.
+        Elegí una y mirá qué pasa con el turno.</p>
+
+      <div class="opciones" role="radiogroup" aria-label="Cómo cobrás">
+        @for (m of modos; track m.clave) {
+          <label class="opt" [class.on]="cobro().clave === m.clave">
+            <input type="radio" name="cobro" [value]="m.clave" [checked]="cobro().clave === m.clave"
+              (change)="elegirCobro(m)" />
+            <span class="opt-txt">{{ m.titulo }}</span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <div class="resultado">
+      <p class="res-eyebrow">La reserva queda</p>
+      <p class="res-estado" [class]="'tono-' + cobro().tono">
+        <span class="res-dot" aria-hidden="true"></span>{{ cobro().estado }}
+      </p>
+
+      <dl class="res-detalle">
+        <dt>Lo que hacés vos</dt>
+        <dd>{{ cobro().vos }}</dd>
+        <dt>Lo que ve el jugador</dt>
+        <dd class="res-jugador">{{ cobro().jugador }}</dd>
+      </dl>
+    </div>
+  </section>
+
+  <!-- ══ Cuánto cobrás ═════════════════════════════════════════════════════════════════════════ -->
+  <section class="demo">
+    <div class="demo-intro">
+      <h3 class="bl-titulo">Y cobrás lo que corresponde</h3>
+      <p class="bl-lead">Un precio general por hora, o uno <strong>por cancha</strong> si no todas
+        valen lo mismo. Encima, franjas horarias con un porcentaje. Elegí una hora.</p>
+
+      <div class="opciones" role="radiogroup" aria-label="Franja horaria">
+        @for (f of franjas; track f.hora) {
+          <label class="opt" [class.on]="franja().hora === f.hora">
+            <input type="radio" name="franja" [value]="f.hora" [checked]="franja().hora === f.hora"
+              (change)="elegirFranja(f)" />
+            <span class="opt-txt mono">{{ f.hora }}</span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <div class="resultado">
+      <p class="res-eyebrow">{{ franja().cuando }}</p>
+      <p class="res-precio">{{ precio() }}</p>
+      <p class="res-cuenta">
+        <span class="mono">{{ precioBase }}</span> por hora
+        <span class="res-pct" [class.cero]="franja().pct === 0">{{ pctFranja() }}</span>
+      </p>
+      <p class="res-nota">Cada turno paga según su hora, sin que toques nada.</p>
+    </div>
+  </section>
+
+  <!-- ══ Tus canchas ═══════════════════════════════════════════════════════════════════════════ -->
+  <section class="demo">
+    <div class="demo-intro">
+      <h3 class="bl-titulo">Y tus canchas son tus canchas</h3>
+      <p class="bl-lead">Cargás cada una con su pared y si es techada o descubierta. El jugador la ve
+        así cuando elige — o pide "cualquiera disponible" y le asignamos una libre.</p>
+
+      <div class="opciones" role="radiogroup" aria-label="Tipo de pared">
+        @for (p of paredes; track p.clase) {
+          <label class="opt" [class.on]="pared().clase === p.clase">
+            <input type="radio" name="pared" [value]="p.clase" [checked]="pared().clase === p.clase"
+              (change)="elegirPared(p)" />
+            <span class="opt-txt">{{ p.nombre }}</span>
+          </label>
+        }
+      </div>
+
+      <label class="techo-sw" [class.on]="techada()">
+        <input type="checkbox" name="techada" [checked]="techada()" (change)="alternarTecho()" />
+        <span class="techo-txt">{{ techada() ? 'Techada' : 'Descubierta' }}</span>
+      </label>
+    </div>
+
+    <div class="resultado resultado--cancha">
+      <div class="cancha-fig" [class]="pared().clase">
+        <svg class="court-svg" viewBox="0 0 75 100" aria-hidden="true"><use href="#court-mk" /></svg>
+        @if (techada()) { <span class="glow" aria-hidden="true"></span> }
+        @else { <span class="sky" aria-hidden="true"></span> }
+      </div>
+      <div class="cf-datos">
+        <p class="res-eyebrow">Así la ve el jugador</p>
+        <p class="cf-nombre">{{ pared().nombre }} · {{ techada() ? 'Techada' : 'Descubierta' }}</p>
+        <p class="res-nota">En el paso "Elegí cancha", junto al resto de las tuyas y con el color
+          que le pongas.</p>
+      </div>
+    </div>
+  </section>
+</div>

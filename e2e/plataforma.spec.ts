@@ -60,26 +60,30 @@ test('owner: cambia la plantilla de su landing desde la config', async ({ page }
   await loginAsOwner(page);
   await gotoAgenda(page);
 
-  const sel = page.locator('.plantilla-sel');
-  await expect(sel).toBeVisible({ timeout: 15_000 });
-  // La marca ya no tiene botón propio: la persiste el Guardar único de la savebar (como el resto).
+  // El `<select>` de plantillas se reemplazó por la galería de miniaturas (spec §7). Lo que este
+  // test cubre no cambió —el estado sin guardar y la persistencia al recargar—, sólo cambió el
+  // control con el que se elige: ahora son radios abajo de cada miniatura.
+  const galeria = page.locator('.galeria');
+  await expect(galeria).toBeVisible({ timeout: 15_000 });
   const guardar = page.locator('.save-btn');
+  const elegida = () => page.locator('.gal-item.sel plantilla-thumb');
+
   // Se guarda la plantilla REAL del club para restaurarla: forzar 'A' al final le cambiaba el
   // diseño de la landing a quien hubiera elegido B o C (el test corre contra el tenant de demo,
   // que es el que se usa para mostrar el producto).
-  const original = (await sel.inputValue()) || 'A';
+  const original = (await elegida().getAttribute('data-tpl')) ?? 'A';
   // Si ya estaba en B, probamos con C: el test necesita un valor distinto para detectar el cambio.
   const destino = original === 'B' ? 'C' : 'B';
   try {
-    await sel.selectOption(destino);
+    await galeria.locator(`input[type="radio"][value="${destino}"]`).check();
     await expect(page.locator('.savebar .sv')).toHaveText('Cambios sin guardar');
     await guardar.click();
     await expect(page.locator('.savebar .sv')).toHaveText('Todo guardado', { timeout: 15_000 });
-    // Confirma persistencia: al recargar la config, el select vuelve en el destino.
+    // Confirma persistencia: al recargar la config, la miniatura marcada es la del destino.
     await page.reload();
-    await expect(page.locator('.plantilla-sel')).toHaveValue(destino, { timeout: 15_000 });
+    await expect(elegida()).toHaveAttribute('data-tpl', destino, { timeout: 15_000 });
   } finally {
-    await page.locator('.plantilla-sel').selectOption(original);
+    await page.locator(`.galeria input[type="radio"][value="${original}"]`).check();
     await page.locator('.save-btn').click();
     await expect(page.locator('.savebar .sv')).toHaveText('Todo guardado', { timeout: 15_000 });
   }

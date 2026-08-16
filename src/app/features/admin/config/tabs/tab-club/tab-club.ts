@@ -1,10 +1,17 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MessageService } from 'primeng/api';
 
 import { BrandingService } from '../../../../../core/branding/branding.service';
-import { CODIGOS_CON_SHELL, PLANTILLAS } from '../../../../../core/landing/plantillas';
+import { inkOnAccent } from '../../../../../core/branding/tenant-colors';
+import {
+  CODIGOS_CON_SHELL,
+  PLANTILLAS,
+  shellDePlantilla,
+} from '../../../../../core/landing/plantillas';
+import { PlantillaThumbComponent } from '../../../../../shared/plantilla-thumb/plantilla-thumb';
 import { ConfigStateService } from '../../config-state.service';
+import { PreviewPlantillaComponent } from './preview-plantilla/preview-plantilla';
 
 /** Pestaña "Tu club": marca (colores + logo + plantilla) y contacto/ubicación. Sin inputs/outputs:
  *  el estado se comparte con el resto de la pantalla vía `ConfigStateService` (heredado por DI del
@@ -13,7 +20,7 @@ import { ConfigStateService } from '../../config-state.service';
   selector: 'app-tab-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, PlantillaThumbComponent, PreviewPlantillaComponent],
   templateUrl: './tab-club.html',
   styleUrl: './tab-club.scss',
 })
@@ -37,6 +44,35 @@ export class TabClubComponent {
     label: `${c} · ${PLANTILLAS[c].nombre}`,
     hint: PLANTILLAS[c].descripcion,
   }));
+
+  /**
+   * La tinta legible sobre el color que el dueño está eligiendo AHORA. Sale de `inkOnAccent()`, la
+   * misma función pura que decide la tinta del producto real (`core/branding/tenant-colors.ts`), y
+   * no de un `#fff` fijo: un club amarillo con texto blanco encima es ilegible, y las miniaturas de
+   * A y de E ponen texto sobre la masa de color.
+   *
+   * Va acá y no adentro de la miniatura porque la miniatura es CAPA 2 y no tiene por qué saber nada
+   * del color del club: se lo pone el contenedor, exactamente como se lo va a poner la sección de
+   * marketing (spec §8) desde sus swatches.
+   */
+  readonly tintaSobreColor = computed(() => inkOnAccent(this.st.marcaColor()));
+
+  /**
+   * Qué miniatura sale marcada. **No es `marcaPlantilla()` crudo, y la diferencia es un caso real y
+   * no hipotético:** el tenant `demo` quedó guardado en `D`, la plantilla que el owner descartó y
+   * que ya no tiene cáscara. Con el valor crudo, NINGUNA de las cuatro matcheaba y la galería salía
+   * **sin nada seleccionado** — mientras la landing pública dibujaba la A, porque `shellDePlantilla()`
+   * la manda ahí. O sea que el panel no le decía al dueño qué está viendo su jugador.
+   *
+   * `shellDePlantilla()` es exactamente la función que decide qué cáscara se dibuja, así que marcar
+   * lo que ella devuelve es marcar LA VERDAD. El `<select>` viejo tenía el mismo agujero y lo
+   * mostraba como un desplegable en blanco.
+   *
+   * No se toca el valor guardado: mostrar A no lo persiste. Si el dueño guarda sin elegir, sigue
+   * guardado lo que había — reescribirle en silencio la plantilla al cargar la pantalla sería
+   * cambiarle un dato por haber entrado a mirar.
+   */
+  readonly plantillaDibujada = computed(() => shellDePlantilla(this.st.marcaPlantilla()));
 
   // ── Alias de signals/computed del servicio (mismo nombre que antes, sin `st.` en el template) ──
   readonly marcaColor = this.st.marcaColor;

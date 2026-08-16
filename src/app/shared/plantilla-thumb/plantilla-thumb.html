@@ -1,0 +1,14 @@
+<!-- El MISMO DOM para las cuatro: lo que cambia es la hoja. Así una plantilla no puede tener una
+     miniatura con piezas que otra no tiene, y la comparación entre las cuatro es honesta.
+
+     `aria-hidden`: la miniatura es decorativa. Quien nombra la plantilla es el <label> del radio que
+     la envuelve; un lector de pantalla enumerando seis <span> vacíos por plantilla no ayuda a nadie. -->
+<span class="thumb" [class]="claseSilueta()" aria-hidden="true">
+  <span class="th-marca"></span>
+  <span class="th-titulo"></span>
+  <span class="th-panel">
+    <span class="th-chip"></span>
+    <span class="th-chip"></span>
+    <span class="th-cta"></span>
+  </span>
+</span>

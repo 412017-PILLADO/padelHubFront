@@ -1,0 +1,29 @@
+<!-- El color va acá y no en el <html>: el resto de marketing conserva el teal de plataforma mientras
+     las cuatro miniaturas se repintan con el club que el visitante está probando (spec §8). -->
+<div class="marca-zona"
+  [style.--court]="elegido().primario"
+  [style.--court-2]="elegido().secundario"
+  [style.--ink-on-accent]="tinta()">
+
+  <div class="swatches" role="radiogroup" aria-label="Probá un color de club">
+    @for (c of clubes; track c.primario) {
+      <label class="sw" [class.on]="elegido().primario === c.primario" [title]="c.nombre">
+        <input type="radio" name="club-muestra" [value]="c.primario"
+          [checked]="elegido().primario === c.primario" (change)="elegir(c)"
+          [attr.aria-label]="c.nombre" />
+        <span class="sw-punto" [style.background]="c.primario" aria-hidden="true"></span>
+      </label>
+    }
+  </div>
+
+  <!-- Carrusel: en el teléfono se recorre con el pulgar y cada miniatura queda encajada. -->
+  <ul class="carrusel">
+    @for (p of plantillas; track p.codigo) {
+      <li class="carr-item">
+        <plantilla-thumb [codigo]="p.codigo" />
+        <span class="carr-nombre">{{ p.ficha.nombre }}</span>
+        <span class="carr-desc">{{ p.ficha.descripcion }}</span>
+      </li>
+    }
+  </ul>
+</div>

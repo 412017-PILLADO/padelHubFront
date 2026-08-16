@@ -1,0 +1,176 @@
+/* ==================================================================================================
+   MINIATURAS TOKENIZADAS · un afiche chico por plantilla (spec §7)
+
+   CAPA 2: acá se declaran la superficie y la tinta de la miniatura, y NO se declara ningún
+   `--court*`. El color del club lo pone el CONTENEDOR —el panel desde el formulario, marketing desde
+   sus swatches—, así que la misma hoja sirve para los dos consumidores sin una sola rama.
+
+   Las siluetas no son adorno: cada una es la firma de su plantilla reducida a lo que se reconoce de
+   un vistazo. Si se parecieran entre sí, la galería no ayudaría a elegir, que es su único trabajo.
+   Y son AFICHES, no la landing renderizada: el costado conocido está dicho en la spec, y el preview
+   vivo que va al lado es justamente lo que lo compensa.
+
+   EL SECUNDARIO ENTRA COMO `var(--court-2, var(--court))`: un club puede no tenerlo cargado (el
+   tenant demo de la plataforma no tiene), y caer al primario deja el caso resuelto por construcción
+   en vez de por una rama. Es la misma degradación que usan las cáscaras reales.
+   ================================================================================================== */
+:host {
+  display: block;
+
+  /* EL CONTAINER VA ACÁ Y NO EN `.thumb`, y la diferencia es de vida o muerte: un elemento NO puede
+     consultarse a sí mismo. Con `container-type` en `.thumb`, sus descendientes sí lo consultaban,
+     pero las `cqi` de SUS PROPIAS propiedades (el padding de cada silueta) caían al container de más
+     arriba — que no existe — y terminaban resolviendo contra el VIEWPORT: medido, `padding: 8cqi`
+     daba **102px de padding adentro de una miniatura de 150px**, y las piezas quedaban aplastadas a
+     10×2. Ningún test lo veía: la miniatura seguía existiendo, con sus atributos y su silueta. */
+  container-type: inline-size;
+
+  /* La superficie y la tinta de la miniatura. Son de la miniatura y no del sistema: acá adentro no
+     hay texto de verdad, así que estos dos sólo tienen que separarse entre sí lo suficiente como
+     para que las piezas se distingan a 120px de ancho. */
+  --th-paper: #f4f6fb;
+  --th-ink: #10151f;
+  --th-linea: color-mix(in srgb, var(--th-ink) 12%, var(--th-paper));
+}
+
+/* La B es la oscura. El esquema sale del REGISTRY y no de una lista acá: `plantillas.spec.ts` lo
+   tiene pineado contra la tinta que la hoja de cada cáscara declara de verdad, así que una plantilla
+   que cambie de esquema arrastra su miniatura sola. */
+:host([data-esquema='dark']) {
+  --th-paper: #0b0f17;
+  --th-ink: #eef2f8;
+}
+
+.thumb {
+  display: grid;
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  border-radius: 10px;
+  background: var(--th-paper);
+  color: var(--th-ink);
+  /* EL FILO DE LA MINIATURA. Las siluetas claras (C y E) llenan la mitad de arriba y dejan papel
+     abajo, así que sobre una página del mismo papel la tarjeta parece CORTADA a media altura — se
+     ve en marketing, donde no hay una tarjeta contenedora que la enmarque como en el panel. Va como
+     `inset box-shadow` y no como `border` para no mover ni un píxel de la geometría de adentro. Es
+     el mismo 1.4.11 que le faltaba al CTA: un elemento claro sobre fondo claro necesita límite. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--th-ink) 14%, transparent);
+  /* Las medidas de adentro van en `cqi` (porcentaje del ancho del host): así la miniatura se lee
+     igual a 110px en la grilla del panel que a 220px en el carrusel de marketing, sin un solo media
+     query y sin dos juegos de tamaños que se desincronicen. El container lo declara el `:host` —ver
+     el comentario de arriba, que ahí estuvo el bug. */
+}
+
+/* Las piezas, en abstracto: la marca, el display, y el tablero del flujo con dos chips y el CTA. */
+.th-marca  { width: 22cqi; height: 4cqi; border-radius: 2cqi; background: currentColor; opacity: 0.75; }
+.th-titulo { width: 68cqi; height: 9cqi; border-radius: 1.5cqi; background: currentColor; }
+.th-panel  { display: grid; gap: 3cqi; padding: 4cqi; border-radius: 3cqi; }
+.th-chip   { height: 5cqi; border-radius: 2.5cqi; background: color-mix(in srgb, var(--th-ink) 14%, transparent); }
+.th-cta    { height: 7cqi; border-radius: 2cqi; background: var(--court); }
+
+/* ── A · AFICHE: el afiche a la izquierda, la columna de reserva a la derecha ──────────────────────
+   Su firma es la marca grande y el corte vertical. El color es MASA en la mitad izquierda, y encima
+   cae la tinta legible que el contenedor calculó con `inkOnAccent()` — nunca un blanco fijo, que es
+   lo que dejaba el afiche ilegible con un club amarillo. */
+.t-a {
+  grid-template-columns: 1fr 1fr;
+  align-items: start;
+  gap: 0;
+
+  &::before { content: ''; position: absolute; inset: 0 50% 0 0; background: var(--court); }
+
+  .th-marca {
+    grid-area: 1 / 1;
+    position: relative;
+    margin: 6cqi 0 0 6cqi;
+    background: var(--ink-on-accent, #fff);
+    opacity: 0.85;
+  }
+  .th-titulo {
+    grid-area: 1 / 1;
+    position: relative;
+    align-self: end;
+    width: 34cqi;
+    height: 26cqi;
+    margin: 0 0 8cqi 6cqi;
+    background: var(--ink-on-accent, #fff);
+  }
+  .th-panel { grid-area: 1 / 2; align-content: start; margin: 8cqi 6cqi 0 0; }
+}
+
+/* ── B · NOCTURNA: telón oscuro con la luz de cancha ───────────────────────────────────────────────
+   Su firma es el RESPLANDOR, no un bloque de color: el club entra como luz sobre la noche, que es la
+   razón por la que esa firma es de la plantilla oscura y no de las claras. El derrame lejano usa el
+   secundario, igual que la cáscara real. */
+.t-b {
+  align-content: start;
+  gap: 4cqi;
+  padding: 8cqi 7cqi;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -18% -10% 45% -10%;
+    border-radius: 50%;
+    background: radial-gradient(closest-side, var(--court), var(--court-2, var(--court)) 45%, transparent 72%);
+    opacity: 0.6;
+  }
+
+  .th-marca, .th-titulo, .th-panel { position: relative; }
+  .th-panel {
+    background: color-mix(in srgb, var(--th-ink) 8%, transparent);
+    border: 0.6cqi solid color-mix(in srgb, var(--th-ink) 18%, transparent);
+  }
+}
+
+/* ── C · TARJETA: tipo app, todo apilado para el pulgar ────────────────────────────────────────────
+   Su firma es la pila de tarjetas con radios grandes y aire entre ellas. Sin masa de color: en C el
+   club aparece en los acentos, no en el fondo. */
+.t-c {
+  align-content: start;
+  gap: 3.5cqi;
+  padding: 7cqi 6cqi;
+
+  .th-marca  { width: 16cqi; }
+  .th-titulo { width: 52cqi; height: 7cqi; }
+  .th-panel {
+    gap: 3.5cqi;
+    background: color-mix(in srgb, var(--th-ink) 4%, transparent);
+    border: 0.5cqi solid var(--th-linea);
+    border-radius: 5cqi;
+  }
+  .th-chip {
+    height: 7cqi;
+    border-radius: 3.5cqi;
+    background: color-mix(in srgb, var(--th-ink) 8%, transparent);
+    border: 0.5cqi solid var(--th-linea);
+  }
+  .th-cta { border-radius: 3.5cqi; }
+}
+
+/* ── E · DIURNA: el vidrio a caballo del borde del campo ───────────────────────────────────────────
+   Su firma es el SOLAPE: el tablero pisa el canto del campo de color en vez de apoyarse abajo. El
+   campo lleva el radial del secundario, como la cáscara real. */
+.t-e {
+  align-content: start;
+  gap: 3cqi;
+  padding: 7cqi 6cqi 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 62% 0;
+    background: var(--court)
+      radial-gradient(120% 90% at 78% 0%, var(--court-2, var(--court)), transparent 70%);
+  }
+
+  .th-marca, .th-titulo { position: relative; background: var(--ink-on-accent, #fff); }
+  .th-titulo { width: 56cqi; height: 8cqi; }
+  .th-panel {
+    position: relative;
+    margin-top: 4cqi;
+    background: color-mix(in srgb, var(--th-paper) 82%, transparent);
+    border: 0.5cqi solid color-mix(in srgb, var(--th-ink) 10%, transparent);
+    backdrop-filter: blur(2px);
+  }
+}

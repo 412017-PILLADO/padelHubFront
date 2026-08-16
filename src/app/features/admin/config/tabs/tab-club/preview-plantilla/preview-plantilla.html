@@ -1,0 +1,17 @@
+<div class="preview-h">
+  <span class="marca-label">Así se ve tu página</span>
+  <div class="marco-toggle" role="group" aria-label="Ancho del preview">
+    <button type="button" [class.on]="marco() === 'telefono'"
+      [attr.aria-pressed]="marco() === 'telefono'" (click)="setMarco('telefono')">Teléfono</button>
+    <button type="button" [class.on]="marco() === 'escritorio'"
+      [attr.aria-pressed]="marco() === 'escritorio'" (click)="setMarco('escritorio')">Escritorio</button>
+  </div>
+</div>
+
+<div class="marco" [class.marco--telefono]="marco() === 'telefono'"
+  [class.marco--escritorio]="marco() === 'escritorio'">
+  <!-- `loading="lazy"`: el preview es una landing ENTERA y vive abajo del pliegue. Sin esto, abrir
+       la pestaña "Tu club" arrastra una carga completa de la landing aunque el dueño sólo venga a
+       cambiar el WhatsApp — y se nota: fue lo que empujó los dos e2e del panel arriba de los 30s. -->
+  <iframe [src]="src()" loading="lazy" title="Vista previa de tu página de reserva"></iframe>
+</div>

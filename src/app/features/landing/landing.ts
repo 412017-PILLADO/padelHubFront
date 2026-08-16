@@ -90,6 +90,9 @@ export class Landing {
   /** El texto de la política de cancelación sale de acá (`config()?.politicaCancelacion`). */
   readonly config = this.club.config;
   readonly previewPlantilla = this.club.previewPlantilla;
+  /** Con `?panel=1` el selector flotante no se dibuja: es el caso del iframe de la galería del
+   *  panel, donde sería un segundo control desincronizado del formulario (ver ClubStore). */
+  readonly previewSinSelector = this.club.previewSinSelector;
 
   /** Botones del selector flotante: la ficha completa del registry de cada plantilla previsualizable
    *  (el código pinta el botón, el nombre va de tooltip para quien está mostrando los diseños). */

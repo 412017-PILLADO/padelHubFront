@@ -4,16 +4,59 @@
 .marca { display: flex; flex-direction: column; gap: 24px; }
 .marca-label { display: block; font-weight: 600; font-size: 0.85rem; color: var(--court-deep); margin-bottom: 10px; }
 .marca-opt { font-weight: 400; color: var(--ink-faint); }
-.plantilla-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.plantilla-sel {
-  height: 46px; min-width: 280px; max-width: 100%; padding: 0 14px;
-  border: 1px solid var(--line-strong); border-radius: var(--r);
-  background: var(--paper); color: var(--ink); font: inherit; font-size: 0.95rem; cursor: pointer;
+/* ===== Galería de plantillas (spec §7) =====
+   Reemplaza al `<select>`: el dueño elige MIRANDO, no leyendo. El select ofrecía
+   "B · Nocturna — Oscura, luz de cancha" y el resto había que imaginárselo. */
+.marca-field--ancho .marca-opt { display: block; font-size: 0.82rem; margin-top: -4px; }
+
+.galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 14px;
+  margin-top: 12px;
 }
-/* Sin `outline: none`: el borde del color del club es un realce y no el indicador de foco (ver
-   config-shared.scss para los numeros). El anillo lo pinta la regla global `:focus-visible`. */
-.plantilla-sel:focus { border-color: var(--court); }
-.plantilla-row .marca-opt { font-size: 0.82rem; flex: 1 1 240px; }
+
+.gal-item {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+
+  /* El radio nativo se queda en el DOM —trae el teclado, el agrupamiento y el nombre accesible sin
+     escribir un solo handler— pero no se dibuja: lo que se ve es la miniatura.
+     NO va con `display: none`, porque un radio así no es enfocable y se llevaría puesto todo el
+     recorrido por teclado. Y NO va con `width/height: 0`: un elemento sin caja no tiene DÓNDE ser
+     clickeado, y aunque el `<label>` que lo envuelve igual lo activa, cualquier herramienta que
+     apunte al control real —Playwright, un test de accesibilidad, un lector de pantalla con modo
+     táctil— se queda sin blanco. Con `inset: 0` el input ES la superficie de la tarjeta: invisible,
+     enfocable y clickeable. */
+  /* `z-index: 1` NO es decorativo: `.thumb` (dentro de `plantilla-thumb`) declara
+     `position: relative`, así que es un elemento POSICIONADO y va después en el DOM — se pinta
+     ENCIMA del input aunque el input sea `absolute`. Sin esto, el centro de la tarjeta lo recibe la
+     miniatura y el radio nunca se puede clickear en el centro: a mano no se nota porque el `<label>`
+     igual lo activa, pero cualquier cosa que apunte al control real se cuelga esperando. Le costó
+     dos corridas de e2e a esta rama. */
+  input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
+
+  &:hover { border-color: var(--court); }
+  &.sel {
+    border-color: var(--court);
+    background: color-mix(in srgb, var(--court) 8%, transparent);
+  }
+
+  /* El anillo va sobre la tarjeta entera (el radio real mide 0×0) y sale del token de PLATAFORMA,
+     no del color del club: con un club de color claro el anillo del color crudo llegó a medir
+     1,00:1 — o sea invisible. Eso se pagó en la rama de cierre de deuda y no se vuelve atrás. */
+  &:has(input:focus-visible) { outline: 2px solid var(--anillo-foco); outline-offset: 3px; }
+}
+
+.gal-nombre { font-size: 0.82rem; font-weight: 600; color: var(--ink); }
+.gal-hint { font-size: 0.74rem; color: var(--ink-dim); line-height: 1.25; }
 .color-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .color-swatch {
   width: 46px; height: 46px; padding: 0; border: 1px solid var(--line-strong);
