@@ -1,0 +1,68 @@
+<!-- La cancha vista de arriba, la misma del paso "Elegí cancha" del flujo de reserva: las dos líneas
+     de saque, la central y la red. Se redeclara acá porque el símbolo del flujo vive en la ruta de
+     la landing y nunca coexiste con marketing. -->
+<svg width="0" height="0" style="position: absolute" aria-hidden="true">
+  <defs>
+    <symbol id="court-mk" viewBox="0 0 75 100">
+      <line x1="7" y1="18" x2="68" y2="18" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.85" fill="none" />
+      <line x1="7" y1="82" x2="68" y2="82" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.85" fill="none" />
+      <line x1="37.5" y1="18" x2="37.5" y2="82" stroke="currentColor" stroke-width="1.2" stroke-opacity="0.7" fill="none" />
+      <line x1="5" y1="50" x2="70" y2="50" stroke="currentColor" stroke-width="1.8" stroke-opacity="0.62" stroke-dasharray="3 2.6" fill="none" />
+    </symbol>
+  </defs>
+</svg>
+
+<div class="bloques">
+
+  <!-- ── Cómo cobrás ─────────────────────────────────────────────────────────────────────── -->
+  <article class="bloque">
+    <h3 class="bl-titulo">Cobrás como ya cobrás</h3>
+    <p class="bl-lead">Con seña o sin seña, y si pedís seña, por transferencia o por Mercado Pago.
+      Vos elegís; el turno se comporta distinto según lo que elijas.</p>
+
+    <ul class="cobros">
+      @for (m of modos; track m.clave) {
+        <li class="cobro-card" [class]="'c-' + m.clave">
+          <h4 class="cobro-titulo">{{ m.titulo }}</h4>
+          <p class="cobro-desc">{{ m.desc }}</p>
+          <p class="cobro-estado">{{ m.estado }}</p>
+        </li>
+      }
+    </ul>
+  </article>
+
+  <!-- ── Precios ─────────────────────────────────────────────────────────────────────────── -->
+  <article class="bloque">
+    <h3 class="bl-titulo">Y cobrás lo que corresponde</h3>
+    <p class="bl-lead">Un precio general por hora, o uno <strong>por cancha</strong> si no todas
+      valen lo mismo. Encima, <strong>franjas horarias</strong> con un porcentaje: la hora pico más
+      cara, el mediodía más barato. Cada turno paga según su hora.</p>
+
+    <ul class="franjas" aria-label="Ejemplo de franjas de precio">
+      <li class="franja"><span class="fr-hora mono">09–13</span><span class="fr-pct baja">−30%</span></li>
+      <li class="franja"><span class="fr-hora mono">13–19</span><span class="fr-pct base">base</span></li>
+      <li class="franja"><span class="fr-hora mono">19–23</span><span class="fr-pct sube">+20%</span></li>
+    </ul>
+  </article>
+
+  <!-- ── Canchas ─────────────────────────────────────────────────────────────────────────── -->
+  <article class="bloque bloque--ancho">
+    <h3 class="bl-titulo">Y tus canchas son tus canchas</h3>
+    <p class="bl-lead">Cargás cada una con su pared, si es techada o descubierta y su color. El
+      jugador las ve así cuando elige — o pide "cualquiera disponible" y le asignamos una libre.</p>
+
+    <ul class="canchas">
+      @for (p of paredes; track p.clase) {
+        <li class="cancha-fig" [class]="p.clase">
+          <svg class="court-svg" viewBox="0 0 75 100" aria-hidden="true"><use href="#court-mk" /></svg>
+          @if (p.techada) { <span class="glow" aria-hidden="true"></span> }
+          @else { <span class="sky" aria-hidden="true"></span> }
+          <span class="cf-pie">
+            <span class="cf-nombre">{{ p.nombre }}</span>
+            <span class="cf-techo">{{ p.techada ? 'Techada' : 'Descubierta' }}</span>
+          </span>
+        </li>
+      }
+    </ul>
+  </article>
+</div>

@@ -1,0 +1,199 @@
+:host { display: block; }
+
+.bloques {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: clamp(28px, 4vw, 48px);
+}
+
+.bloque--ancho { grid-column: 1 / -1; }
+
+.bl-titulo {
+  margin: 0 0 8px;
+  font-size: clamp(1.1rem, 1.6vw, 1.35rem);
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.bl-lead {
+  margin: 0 0 20px;
+  max-width: 52ch;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--ink-dim);
+}
+
+/* ── Las tres formas de cobro ─────────────────────────────────────────────────────────────────── */
+.cobros {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cobro-card {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--court);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.cobro-titulo { margin: 0 0 4px; font-size: 0.95rem; font-weight: 700; color: var(--ink); }
+.cobro-desc { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.5; color: var(--ink-dim); }
+
+/* El estado en el que nace la reserva es LA pregunta que un dueño hace primero, así que se separa
+   de la descripción en vez de quedar como una frase más adentro del párrafo. */
+.cobro-estado {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--court-deep);
+}
+
+/* ── Las franjas de precio ────────────────────────────────────────────────────────────────────── */
+.franjas {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.franja {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.fr-hora { font-size: 0.88rem; color: var(--ink-dim); }
+
+.fr-pct {
+  font-size: 0.84rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 999px;
+}
+/* Los tres estados de una franja. Los colores son de PLATAFORMA y no del club: acá no hay tenant,
+   y además "más caro / más barato" no es la marca de nadie, es información. */
+.fr-pct.sube { background: color-mix(in srgb, #b4522a 14%, transparent); color: #8a3d1e; }
+.fr-pct.baja { background: color-mix(in srgb, #1f7a4d 14%, transparent); color: #17603c; }
+.fr-pct.base { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink-dim); }
+
+/* ── Las canchas ──────────────────────────────────────────────────────────────────────────────
+   Misma receta que las cards del paso "Elegí cancha" (booking-flow.scss): piso claro, líneas, y el
+   material dibujado con `inset box-shadow`. Acá son figuras, no botones — el visitante no elige
+   nada, sólo ve cómo se ven. */
+.canchas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 168px));
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cancha-fig {
+  --floor: #e9eef8;
+  --floor-line: #93a4c6;
+  --concrete: #b4bcce;
+  --concrete-edge: #97a0b6;
+  --glass: rgba(150, 185, 235, 0.5);
+
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 12px;
+  background: var(--floor);
+  overflow: hidden;
+  box-shadow: 0 12px 26px -18px rgb(18 32 63 / 50%);
+}
+
+.court-svg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  color: var(--floor-line);
+}
+
+.glow, .sky { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+/* Techada: los dos reflectores. Descubierta: la luz del cielo entrando por arriba. */
+.glow {
+  background:
+    radial-gradient(52% 22% at 50% 27%, rgb(255 214 150 / 55%), transparent 70%),
+    radial-gradient(52% 22% at 50% 73%, rgb(255 214 150 / 48%), transparent 70%);
+}
+.sky { background: linear-gradient(180deg, rgb(150 180 220 / 20%), transparent 28%); }
+
+/* Los tres materiales. El `inset box-shadow` da el grosor de la pared, pero **lo que los distingue de
+   verdad es el reflejo**: sin los `::before`, cristal y mixta se ven idénticas — pasó, se vio en la
+   captura, y una sección que promete "tus canchas son tus canchas" con tres figuras iguales no
+   promete nada. Las reglas son las mismas de `booking-flow.scss`. */
+.mat-glass { box-shadow: inset 0 0 0 3px var(--glass), 0 10px 22px -12px rgb(70 115 195 / 55%); }
+/* Cristal: el vidrio devuelve luz en dos esquinas opuestas, y sólo en el marco (de ahí la máscara,
+   que recorta el relleno y deja nada más el borde). */
+.mat-glass::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  pointer-events: none;
+  padding: 4px;
+  background: linear-gradient(
+    135deg,
+    rgb(255 255 255 / 95%),
+    rgb(255 255 255 / 0%) 28%,
+    rgb(255 255 255 / 0%) 64%,
+    rgb(255 255 255 / 55%)
+  );
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.mat-concrete {
+  box-shadow: inset 0 0 0 6px var(--concrete), inset 0 0 0 7px var(--concrete-edge),
+    0 12px 26px -18px rgb(18 32 63 / 50%);
+}
+
+.mat-mixed {
+  box-shadow: inset 0 6px 0 var(--concrete), inset 0 -6px 0 var(--concrete),
+    inset 4px 0 0 var(--glass), inset -4px 0 0 var(--glass), 0 12px 26px -18px rgb(18 32 63 / 50%);
+}
+/* Mixta: muro arriba y abajo, cristal a los costados — así que el reflejo va SÓLO en los laterales,
+   que es lo que la separa de la de cristal entera. */
+.mat-mixed::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 70%),
+    rgb(255 255 255 / 0%) 13%,
+    rgb(255 255 255 / 0%) 87%,
+    rgb(255 255 255 / 55%)
+  );
+}
+
+.cf-pie {
+  position: absolute;
+  z-index: 2;
+  inset: auto 0 0 0;
+  display: grid;
+  gap: 1px;
+  padding: 8px 10px;
+  background: linear-gradient(180deg, transparent, rgb(233 238 248 / 92%) 45%);
+}
+
+.cf-nombre { font-size: 0.84rem; font-weight: 700; color: #16233f; }
+.cf-techo { font-size: 0.74rem; color: #4c5878; }
