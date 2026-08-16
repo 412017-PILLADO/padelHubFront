@@ -7,13 +7,29 @@
 /* ===== Galería de plantillas (spec §7) =====
    Reemplaza al `<select>`: el dueño elige MIRANDO, no leyendo. El select ofrecía
    "B · Nocturna — Oscura, luz de cancha" y el resto había que imaginárselo. */
+.marca-field--ancho {
+  /* La galería responde al ancho de SU BLOQUE, no al del viewport, y la diferencia es real: en
+     escritorio la config es de dos columnas, así que este bloque mide ~490px con la ventana en 1280
+     y ~680px con la ventana en 768. Un media query mira la ventana y se equivoca en los dos casos.
+     El `container-type` va acá, en el PADRE: un elemento no puede consultarse a sí mismo. */
+  container-type: inline-size;
+}
+
 .marca-field--ancho .marca-opt { display: block; font-size: 0.82rem; margin-top: -4px; }
 
+/* Dos columnas de base: cuatro miniaturas quieren 4 por fila o 2 por fila, NUNCA 3 — con `auto-fit`
+   caían 3+1 y la cuarta quedaba huérfana abajo. Se vio mirando el panel, no en un test. */
 .galeria {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
   margin-top: 12px;
+}
+
+/* Cuando el bloque da para las cuatro en una fila (con la preview de teléfono al lado, eso pasa
+   recién arriba de ~620px de BLOQUE), se ponen en fila y se comparan de un vistazo. */
+@container (min-width: 620px) {
+  .galeria { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 .gal-item {
