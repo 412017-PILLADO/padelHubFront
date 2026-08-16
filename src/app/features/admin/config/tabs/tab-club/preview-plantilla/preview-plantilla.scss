@@ -1,4 +1,12 @@
-:host { display: block; margin-top: 22px; }
+:host {
+  display: block;
+  margin-top: 22px;
+  /* El marco responde al ancho de SU PANEL, no al del viewport: en escritorio la config es de dos
+     columnas, así que este bloque mide ~490px con la ventana en 1280 y ~680px con la ventana en 768.
+     Un media query mira la ventana y se equivoca. Va en el `:host` —el padre— porque un elemento no
+     puede consultarse a sí mismo. */
+  container-type: inline-size;
+}
 
 .preview-h {
   display: flex;
@@ -47,19 +55,40 @@
   }
 }
 
-/* 390 es el ancho de teléfono con el que se revisó cada plantilla en las fases B, D y E: el preview
-   muestra exactamente lo que se revisó. */
-.marco--telefono iframe { width: 390px; height: 680px; }
+/* 390 es el ancho de teléfono con el que se revisó cada plantilla en las fases B, D y E. El `min()`
+   NO es cosmético: con 390 fijos, en un panel angosto (la config en un teléfono deja ~350) el
+   iframe se salía y el `overflow: hidden` del marco le CORTABA la mitad derecha — el dueño veía
+   "PADEL HU" y media pantalla de su propia landing. Se vio mirando el panel, no en un test.
+   Y sigue siendo un preview de teléfono honesto: 350px es un ancho de teléfono. */
+.marco--telefono iframe { width: min(390px, 100%); height: 680px; }
 
 /* En escritorio el iframe se renderiza a 1280 y se ESCALA, en vez de achicarse a lo que entre en el
    panel: un iframe angosto le haría creer al dueño que su landing de escritorio se ve como la de
    mobile, que es justo la confusión que este preview existe para evitar. El `scale` mantiene el
-   layout de 1280 real y sólo lo muestra más chico. */
+   layout de 1280 real y sólo lo muestra más chico.
+   Los dos márgenes negativos son la contrapartida obligatoria: `transform` NO cambia el espacio que
+   el elemento OCUPA, así que sin ellos quedaría el hueco de los 1280×800 sin escalar — aire abajo y
+   corte a la derecha. Salen de la misma `--k` para que no se puedan desincronizar. */
 .marco--escritorio iframe {
+  --k: 0.5;
   width: 1280px;
   height: 800px;
-  transform: scale(0.5);
-  transform-origin: top center;
-  /* El `scale` no cambia el espacio que el elemento OCUPA: sin esto quedan 400px de aire abajo. */
-  margin-bottom: -400px;
+  transform: scale(var(--k));
+  transform-origin: top left;
+  margin-right: calc(1280px * (var(--k) - 1));
+  margin-bottom: calc(800px * (var(--k) - 1));
+}
+
+/* La escala baja por pasos según el ancho del PANEL, y cada paso está elegido para que los 1280
+   escalados ENTREN JUSTO en el marco de ese tramo (1280 × k ≤ ancho útil). Sin esto el modo
+   escritorio se cortaba en un panel angosto; con pasos mal elegidos se va al otro extremo y queda
+   una maqueta diminuta con aire alrededor — pasó, medido: 307px dentro de un marco de 478. */
+@container (max-width: 760px) {
+  .marco--escritorio iframe { --k: 0.5; }
+}
+@container (max-width: 620px) {
+  .marco--escritorio iframe { --k: 0.36; }
+}
+@container (max-width: 460px) {
+  .marco--escritorio iframe { --k: 0.24; }
 }

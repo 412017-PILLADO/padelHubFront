@@ -412,6 +412,7 @@
   .nav {
     display: none;
   }
+
   .pulse {
     animation: none;
   }
@@ -799,4 +800,20 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+/* ══ EN MOBILE SE VAN LAS CUATRO CARDS DE FEATURES ════════════════════════════════════════════
+   Son cuatro frases genéricas —"Reservas online 24/7", "Agenda por cancha"— que en un teléfono
+   cuestan cuatro pantallazos de scroll antes de llegar a las secciones que sí MUESTRAN algo:
+   "Nos adaptamos" y "Tu marca". Desde que esas dos existen, estas cards repiten en abstracto lo
+   que ellas demuestran.
+
+   Con `display: none` y NO borrando el markup, a propósito: el contenido igual viaja en el HTML
+   servido, así que Google lo indexa y en escritorio se sigue viendo. Lo que se decide acá es el
+   orden de atención en una pantalla chica, no qué existe.
+
+   Y va AL FINAL DEL ARCHIVO, no adentro del bloque mobile de la línea 353, porque `.feat-grid` se
+   declara en la 605: misma especificidad, gana la de abajo. Escrita arriba no hacía nada — es la
+   TERCERA vez en esta sesión que este error aparece, y las tres se descubrió midiendo. */
+@media (max-width: 760px) {
+  .feat-grid { display: none; }
 }
