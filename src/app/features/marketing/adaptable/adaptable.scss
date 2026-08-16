@@ -1,29 +1,26 @@
 :host { display: block; }
 
-/* ── El reparto de la sección ──────────────────────────────────────────────────────────────────
-   Una grilla de 12 con dos filas, y NO un `auto-fit`: con auto-fit los tres bloques caían como dos
-   columnas altas más una fila ancha con las canchas apretadas a la izquierda, y quedaba media
-   pantalla vacía a la derecha. El ancho es del contenido, así que se reparte a mano:
-
-     fila 1 · cobrás como ya cobrás   → las 12, con los tres modos EN FILA (son hermanos, no una
-                                        lista: puestos uno abajo del otro se leían como pasos)
-     fila 2 · cuánto cobrás (5)  ·  tus canchas (7)   → las canchas piden más ancho porque son tres
-                                        figuras; las franjas son tres renglones y con 5 sobran. */
-.bloques {
+/* ── El ritmo de la sección ────────────────────────────────────────────────────────────────────
+   Tres bloques con la MISMA forma: intro con sus opciones a la izquierda, resultado a la derecha.
+   La repetición es lo que los hace leer como una sección y no como tres pegadas con cinta, que era
+   el problema de la versión anterior (tarjetas, filas y figuras: tres idiomas visuales). */
+.demos {
   display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: clamp(28px, 3.5vw, 44px) clamp(24px, 3vw, 40px);
+  gap: clamp(28px, 3.5vw, 44px);
 }
 
-.bloque--cobros { grid-column: 1 / -1; }
-.bloque--precios { grid-column: span 5; }
-.bloque--canchas { grid-column: span 7; }
+.demo {
+  display: grid;
+  grid-template-columns: 5fr 7fr;
+  gap: clamp(20px, 3vw, 40px);
+  align-items: start;
+  padding-bottom: clamp(28px, 3.5vw, 44px);
+  border-bottom: 1px solid var(--line);
+}
+.demo:last-child { padding-bottom: 0; border-bottom: none; }
 
-/* El corte va en 720 y NO en 900: a 900 todavía entran cómodas las tres columnas, y apilarlas ahí
-   estiraba cada tarjeta a 810px con tres renglones de texto adentro — mucho peor que el problema que
-   se venía a arreglar. Abajo de 720 sí es la única forma. */
-@media (max-width: 720px) {
-  .bloque--precios, .bloque--canchas { grid-column: 1 / -1; }
+@media (max-width: 860px) {
+  .demo { grid-template-columns: 1fr; }
 }
 
 .bl-titulo {
@@ -34,108 +31,204 @@
 }
 
 .bl-lead {
-  margin: 0 0 20px;
-  max-width: 52ch;
-  font-size: 0.98rem;
+  margin: 0 0 18px;
+  max-width: 46ch;
+  font-size: 0.96rem;
   line-height: 1.6;
   color: var(--ink-dim);
 }
 
-/* ── Las tres formas de cobro ─────────────────────────────────────────────────────────────────── */
-/* Los tres modos van EN FILA en escritorio: son tres opciones hermanas entre las que el club elige
-   una, y apiladas se leían como tres pasos de un proceso. Abajo de 900 se apilan, que ahí sí es la
-   única forma. */
-.cobros {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+/* ── El control, uno solo para los tres bloques ───────────────────────────────────────────────── */
+.opciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
-@media (max-width: 720px) {
-  .cobros { grid-template-columns: 1fr; }
+.opt {
+  position: relative;
+  padding: 8px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+
+  /* El radio nativo trae teclado, grupo y nombre accesible. `inset: 0` para que TENGA caja: un
+     control de 0×0 no se puede clickear, y aunque el `<label>` igual lo activa, todo lo que apunte
+     al control real se queda sin blanco (le costó dos corridas de e2e a la galería del panel). */
+  input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
+
+  &:hover { border-color: var(--court); }
+  &.on {
+    border-color: var(--court);
+    background: var(--court);
+    color: var(--ink-on-accent, #fff);
+  }
+  &:has(input:focus-visible) { outline: 2px solid var(--anillo-foco); outline-offset: 3px; }
 }
 
-.cobro-card {
-  padding: 14px 16px;
+.opt-txt { font-size: 0.86rem; font-weight: 600; }
+
+/* El techo es un estado de dos posiciones, no una opción entre tres: va como interruptor y no como
+   una cuarta píldora, para que no se lea como si fuera otro material de pared. */
+.techo-sw {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 7px 14px 7px 10px;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: var(--ink-dim);
+
+  input { position: absolute; inset: 0; z-index: 1; margin: 0; opacity: 0; cursor: pointer; }
+
+  &::before {
+    content: '';
+    width: 26px;
+    height: 15px;
+    border-radius: 999px;
+    background: var(--line-strong);
+    box-shadow: inset -11px 0 0 -1px var(--surface);
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+  }
+  &.on {
+    border-style: solid;
+    border-color: var(--court);
+    color: var(--ink);
+    &::before { background: var(--court); box-shadow: inset 11px 0 0 -1px var(--surface); }
+  }
+  &:has(input:focus-visible) { outline: 2px solid var(--anillo-foco); outline-offset: 3px; }
+}
+
+/* ── El resultado, también uno solo para los tres ─────────────────────────────────────────────── */
+.resultado {
+  padding: clamp(18px, 2.2vw, 26px);
   border: 1px solid var(--line);
-  border-left: 3px solid var(--court);
-  border-radius: 12px;
+  border-radius: 16px;
   background: var(--surface);
 }
 
-.cobro-titulo { margin: 0 0 4px; font-size: 0.95rem; font-weight: 700; color: var(--ink); }
-.cobro-desc { margin: 0 0 6px; font-size: 0.86rem; line-height: 1.5; color: var(--ink-dim); }
-
-/* El estado en el que nace la reserva es LA pregunta que un dueño hace primero, así que se separa
-   de la descripción en vez de quedar como una frase más adentro del párrafo. */
-.cobro-estado {
-  margin: 0;
-  font-size: 0.82rem;
+.res-eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.76rem;
   font-weight: 600;
-  color: var(--court-deep);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
 }
 
-/* ── Las franjas de precio ────────────────────────────────────────────────────────────────────── */
-.franjas {
-  display: grid;
-  gap: 8px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.franja {
+.res-estado {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface);
+  gap: 10px;
+  margin: 0 0 18px;
+  font-size: clamp(1.15rem, 1.9vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--ink);
 }
 
-.fr-hora { font-size: 0.88rem; color: var(--ink-dim); }
-
-.fr-pct {
-  font-size: 0.84rem;
-  font-weight: 700;
-  padding: 2px 10px;
+/* El punto dice si la reserva ya está cerrada o si falta algo. Los dos colores son de PLATAFORMA:
+   "confirmada" y "pendiente" son información del sistema, no la marca de ningún club. */
+.res-dot {
+  flex: none;
+  width: 11px;
+  height: 11px;
   border-radius: 999px;
 }
-/* Los tres estados de una franja. Los colores son de PLATAFORMA y no del club: acá no hay tenant,
-   y además "más caro / más barato" no es la marca de nadie, es información. */
-.fr-pct.sube { background: color-mix(in srgb, #b4522a 14%, transparent); color: #8a3d1e; }
-.fr-pct.baja { background: color-mix(in srgb, #1f7a4d 14%, transparent); color: #17603c; }
-.fr-pct.base { background: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink-dim); }
+.tono-ok .res-dot { background: #1f7a4d; box-shadow: 0 0 0 4px rgb(31 122 77 / 14%); }
+.tono-espera .res-dot { background: #b4842a; box-shadow: 0 0 0 4px rgb(180 132 42 / 16%); }
 
-/* ── Las canchas ──────────────────────────────────────────────────────────────────────────────
-   Misma receta que las cards del paso "Elegí cancha" (booking-flow.scss): piso claro, líneas, y el
-   material dibujado con `inset box-shadow`. Acá son figuras, no botones — el visitante no elige
-   nada, sólo ve cómo se ven. */
-/* `auto-fit` con máximo `1fr` —y no un tope fijo de 168px— para que las tres figuras LLENEN el ancho
-   que su bloque tiene: con el tope fijo quedaban chicas y apretadas a la izquierda, con aire muerto
-   al costado. `auto-fit` (no `auto-fill`) colapsa las tracks vacías, así el reparto se calcula sólo
-   sobre las tres que existen — es la misma decisión, y por el mismo motivo, que las cards del paso
-   "Elegí cancha". En pantallas angostas se acomodan solas en dos filas. */
-.canchas {
+.res-detalle {
   display: grid;
-  /* TRES columnas fijas que ENCOGEN, no un `auto-fit` que envuelve: son tres variantes de la misma
-     cosa y se comparan de un vistazo, así que partirlas 2+1 deja una huérfana abajo — pasaba a 900,
-     donde el bloque no da para tres de 200. El `minmax(0, 200px)` es un techo, no un ancho: en
-     escritorio caen en ~197 y llenan su columna; más angosto se achican juntas.
-     En teléfono el bloque pasa a ancho completo y tres no entran: ahí sí se envuelven (abajo). */
-  grid-template-columns: repeat(3, minmax(0, 200px));
-  justify-content: start;
-  gap: 14px;
+  gap: 4px;
   margin: 0;
-  padding: 0;
-  list-style: none;
+
+  dt {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  dd {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--ink-dim);
+  }
+  dd:last-child { margin-bottom: 0; }
 }
 
+/* ── El resultado de precio ───────────────────────────────────────────────────────────────────── */
+.res-precio {
+  margin: 0 0 6px;
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.res-cuenta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.88rem;
+  color: var(--ink-dim);
+}
+
+.res-pct {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--court) 14%, transparent);
+  color: var(--court-deep);
+
+  &.cero {
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+    color: var(--ink-dim);
+  }
+}
+
+.res-nota {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: var(--ink-faint);
+}
+
+/* ── El resultado de cancha ───────────────────────────────────────────────────────────────────── */
+/* La cancha va AL LADO de su dato y no encima: apilada, este panel quedaba casi el doble de alto que
+   los otros dos y con aire muerto a los costados — los tres bloques comparten forma, así que también
+   tienen que compartir peso. En una columna angosta se apilan. */
+.resultado--cancha {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 26px);
+}
+
+.cf-nombre {
+  margin: 0 0 8px;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+
+/* Misma receta que las cards del paso "Elegí cancha" (booking-flow.scss): piso claro, líneas, y el
+   material dibujado con `inset box-shadow`. Acá es una figura, no un botón: el visitante no elige
+   una cancha, elige CÓMO ES la cancha y la ve redibujarse. */
 .cancha-fig {
   --floor: #e9eef8;
   --floor-line: #93a4c6;
@@ -144,6 +237,10 @@
   --glass: rgba(150, 185, 235, 0.5);
 
   position: relative;
+  /* Ancho EXPLÍCITO y no `min(220px, 100%)`: la figura vive en una columna `auto`, cuyo ancho lo
+     define su contenido — y un contenido que se mide en `100%` de esa columna es circular, así que
+     colapsaba a poco más de nada (el panel medía 132px de alto contra los 230 del primero). */
+  width: clamp(130px, 15vw, 180px);
   aspect-ratio: 3 / 4;
   border-radius: 12px;
   background: var(--floor);
@@ -170,10 +267,9 @@
 }
 .sky { background: linear-gradient(180deg, rgb(150 180 220 / 20%), transparent 28%); }
 
-/* Los tres materiales. El `inset box-shadow` da el grosor de la pared, pero **lo que los distingue de
-   verdad es el reflejo**: sin los `::before`, cristal y mixta se ven idénticas — pasó, se vio en la
-   captura, y una sección que promete "tus canchas son tus canchas" con tres figuras iguales no
-   promete nada. Las reglas son las mismas de `booking-flow.scss`. */
+/* Los tres materiales. El `inset box-shadow` da el grosor de la pared, pero **lo que los distingue
+   de verdad es el reflejo**: sin los `::before`, cristal y mixta se ven idénticas — pasó, se vio en
+   la captura. Las reglas son las mismas de `booking-flow.scss`. */
 .mat-glass { box-shadow: inset 0 0 0 3px var(--glass), 0 10px 22px -12px rgb(70 115 195 / 55%); }
 /* Cristal: el vidrio devuelve luz en dos esquinas opuestas, y sólo en el marco (de ahí la máscara,
    que recorta el relleno y deja nada más el borde). */
@@ -222,27 +318,17 @@
   );
 }
 
-.cf-pie {
-  position: absolute;
-  z-index: 2;
-  inset: auto 0 0 0;
-  display: grid;
-  gap: 1px;
-  padding: 8px 10px;
-  background: linear-gradient(180deg, transparent, rgb(233 238 248 / 92%) 45%);
-}
-
-.cf-nombre { font-size: 0.84rem; font-weight: 700; color: #16233f; }
-.cf-techo { font-size: 0.74rem; color: #4c5878; }
-
-/* En teléfono el bloque ya es de ancho completo y tres canchas no entran: forzadas quedaban en
-   107px, más angostas que el pulgar que las mira. Se acomodan en dos filas.
-   VA AL FINAL DEL ARCHIVO A PROPÓSITO: escrita más arriba —donde están las otras reglas de
-   teléfono— perdía contra la regla base de `.canchas`, que tiene la misma especificidad y viene
-   después. Se descubrió midiendo: la media query estaba puesta y no hacía nada. */
-@media (max-width: 720px) {
-  /* DOS columnas explícitas, no `auto-fit`: con un máximo de track fijo (200px) el auto-fit calcula
-     las pistas contra el mínimo y acá le daba UNA sola, o sea las tres canchas apiladas a lo largo.
-     Dos es lo que entra bien en un teléfono (168px cada una a 390) y deja la tercera abajo. */
-  .canchas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* ══ LAS REGLAS DE PANTALLA ANGOSTA VAN ACÁ, AL FINAL DEL ARCHIVO ══════════════════════════════
+   Y no junto al bloque que modifican, que es donde uno las escribe por instinto: tienen la MISMA
+   especificidad que las reglas base, así que si van antes pierden y quedan de adorno. Ya pasó dos
+   veces en este archivo —la primera con las canchas en fila, la segunda con el ancho de la figura—
+   y las dos veces se descubrió MIDIENDO en el navegador, no leyendo la hoja. */
+@media (max-width: 520px) {
+  .resultado--cancha {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+  /* Apilada tiene el ancho entero del panel para ella, así que puede crecer. */
+  .cancha-fig { width: min(200px, 70%); }
 }
