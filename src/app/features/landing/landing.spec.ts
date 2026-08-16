@@ -113,20 +113,24 @@ describe('Landing — plantilla y cáscara', () => {
   it('un tenant en D dibuja la cáscara A y el host publica data-tpl="A"', () => {
     const host = montarLanding('D');
 
-    expect(host.querySelector('app-shell-a')).not.toBeNull();
+    // Un tenant en una plantilla sin cáscara (D) se dibuja con la DEFAULT, que desde el 2026-08-16
+    // es C. El host publica `data-tpl="C"` y no 'D': si publicara su propio código, las reglas de
+    // layout que enganchan por `[data-tpl]` no aplicarían. Ver shellDePlantilla().
+    expect(host.querySelector('app-shell-c')).not.toBeNull();
+    expect(host.querySelector('app-shell-a')).toBeNull();
     expect(host.querySelector('app-shell-b')).toBeNull();
-    expect(host.querySelector('app-shell-c')).toBeNull();
     expect(host.querySelector('app-shell-e')).toBeNull();
-    // Lo que hace que las reglas de la A enganchen:
-    expect(host.getAttribute('data-tpl')).toBe('A');
-    expect(host.querySelector('app-shell-a')!.classList).toContain(PLANTILLAS.A.claseShell);
+    // Lo que hace que las reglas de la C enganchen:
+    expect(host.getAttribute('data-tpl')).toBe('C');
+    expect(host.querySelector('app-shell-c')!.classList).toContain(PLANTILLAS.C.claseShell);
   });
 
   it('un código que el catálogo no conoce también cae en la A', () => {
     const host = montarLanding('ZZ');
 
-    expect(host.querySelector('app-shell-a')).not.toBeNull();
-    expect(host.getAttribute('data-tpl')).toBe('A');
+    expect(host.querySelector('app-shell-c')).not.toBeNull();
+    expect(host.querySelector('app-shell-a')).toBeNull();
+    expect(host.getAttribute('data-tpl')).toBe('C');
   });
 
   /**
