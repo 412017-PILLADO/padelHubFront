@@ -71,11 +71,26 @@ describe('registry de plantillas', () => {
     expect(PLANTILLAS.E.fuentes).toEqual(PLANTILLAS.B.fuentes);
   });
 
-  it('normaliza cualquier basura a la plantilla A', () => {
-    expect(normalizarPlantilla('b')).toBe('B');
-    expect(normalizarPlantilla('Z')).toBe('A');
-    expect(normalizarPlantilla(null)).toBe('A');
-    expect(normalizarPlantilla('')).toBe('A');
+  it('lo que el catálogo no conoce cae en la DEFAULT, que hoy es C', () => {
+    // La default dejó de ser A el 2026-08-16 (spec de la plantilla C básica, §5.1). Este test es el
+    // que lo dice: si alguien la mueve de vuelta sin querer, acá se entera.
+    expect(normalizarPlantilla('Z')).toBe('C');
+    expect(normalizarPlantilla(null)).toBe('C');
+    expect(normalizarPlantilla('')).toBe('C');
+    expect(normalizarPlantilla(undefined)).toBe('C');
+  });
+
+  it('un código que existe pero no tiene cáscara también cae en C', () => {
+    // 'D' está en el catálogo (el back la acepta) y no tiene cáscara: se dibuja la default.
+    expect(shellDePlantilla('D')).toBe('C');
+    expect(shellDePlantilla(null)).toBe('C');
+  });
+
+  it('C se llama Básica y no Tarjeta', () => {
+    // El nombre viejo describía una plantilla de cards apiladas que el owner descartó. Ofrecerle al
+    // dueño "Tipo app, para el pulgar" y darle otra cosa era el problema que abrió esta fase.
+    expect(PLANTILLAS.C.nombre).toBe('Básica');
+    expect(PLANTILLAS.C.descripcion).toBe('Sobria, el color justo');
   });
 
   it('arma la URL de Google Fonts con todas las familias', () => {
@@ -123,17 +138,17 @@ describe('registry de plantillas', () => {
   /**
    * `normalizarPlantilla` contesta "¿existe?" y `shellDePlantilla` "¿qué puedo dibujar?". Un tenant
    * en D existe (el back ya acepta los cinco códigos) pero todavía no tiene cáscara, así que se
-   * dibuja con la A — y el host tiene que publicar 'A', no 'D', o el `:host([data-tpl='A'])` de
-   * landing.scss no engancha y el afiche pierde su clamp de viewport.
+   * dibuja con la default (C desde el 2026-08-16) — y el host tiene que publicar 'C', no 'D', o el
+   * `:host([data-tpl='C'])` no engancha.
    */
-  it('las plantillas sin cáscara se dibujan con la A', () => {
+  it('las plantillas sin cáscara se dibujan con la default', () => {
     expect(CODIGOS_CON_SHELL).toEqual(['A', 'B', 'C', 'E']);
     expect(normalizarPlantilla('D')).toBe('D');
-    expect(shellDePlantilla('D')).toBe('A');
+    expect(shellDePlantilla('D')).toBe('C');
     expect(shellDePlantilla('E')).toBe('E'); // E ya tiene cáscara propia
     expect(shellDePlantilla('b')).toBe('B');
-    expect(shellDePlantilla('Z')).toBe('A');
-    expect(shellDePlantilla(null)).toBe('A');
+    expect(shellDePlantilla('Z')).toBe('C');
+    expect(shellDePlantilla(null)).toBe('C');
   });
 
   /** Todo código con cáscara tiene su carpeta en el mapa, y al revés: es la misma fuente. */

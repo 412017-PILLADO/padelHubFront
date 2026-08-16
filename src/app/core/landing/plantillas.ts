@@ -30,7 +30,7 @@ export interface Plantilla {
 export const PLANTILLAS: Readonly<Record<CodigoPlantilla, Plantilla>> = {
   A: { codigo: 'A', nombre: 'Afiche',   descripcion: 'Editorial, marca grande',   esquema: 'light', fuentes: ['Archivo', 'Hanken Grotesk', 'Space Mono'], claseShell: 'poster' },
   B: { codigo: 'B', nombre: 'Nocturna', descripcion: 'Oscura, luz de cancha',     esquema: 'dark',  fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-b' },
-  C: { codigo: 'C', nombre: 'Tarjeta',  descripcion: 'Tipo app, para el pulgar',  esquema: 'light', fuentes: ['Outfit', 'Inter'],                          claseShell: 'tpl-c' },
+  C: { codigo: 'C', nombre: 'Básica',   descripcion: 'Sobria, el color justo',    esquema: 'light', fuentes: ['Outfit', 'Inter'],                          claseShell: 'tpl-c' },
   D: { codigo: 'D', nombre: 'Cancha',   descripcion: 'Líneas y tablero',          esquema: 'light', fuentes: ['IBM Plex Sans', 'IBM Plex Mono'],           claseShell: 'tpl-d' },
   E: { codigo: 'E', nombre: 'Diurna',   descripcion: 'Clara, vidrio sobre color', esquema: 'light', fuentes: ['Anton', 'Inter Tight', 'JetBrains Mono'],   claseShell: 'tpl-e' },
 };
@@ -68,16 +68,23 @@ export type CodigoConShell = keyof typeof DIR_SHELL;
 export const CODIGOS_CON_SHELL: readonly CodigoConShell[] =
   Object.keys(DIR_SHELL) as CodigoConShell[];
 
-/** Normaliza a un código válido; cualquier cosa rara cae en la plantilla por defecto. */
+/**
+ * Normaliza a un código válido; cualquier cosa rara cae en la plantilla por defecto.
+ *
+ * LA DEFAULT ES C DESDE EL 2026-08-16, y antes era A. El cambio es de producto, no de código: C es
+ * la sobria, la que le sirve a un club que no quiere elegir. A los tenants que ya existían se les
+ * escribió `'A'` explícito en la base antes de mover esto (migración `V18__plantilla_explicita.sql`),
+ * así que este cambio sólo alcanza a los clubes nuevos.
+ */
 export function normalizarPlantilla(v: string | null | undefined): CodigoPlantilla {
   const up = (v ?? '').trim().toUpperCase();
-  return CODIGOS_PLANTILLA.some((c) => c === up) ? (up as CodigoPlantilla) : 'A';
+  return CODIGOS_PLANTILLA.some((c) => c === up) ? (up as CodigoPlantilla) : 'C';
 }
 
 /**
  * Qué cáscara termina dibujando un código. Es distinto de `normalizarPlantilla()`: ese contesta
  * "¿existe esta plantilla?" y a un tenant en D le devuelve 'D'; este contesta "¿qué puedo dibujar
- * hoy?" y a un tenant en D le devuelve 'A'.
+ * hoy?" y a un tenant en D le devuelve 'C'.
  *
  * La diferencia no es cosmética. El `data-tpl` del host de la landing es lo que engancha las reglas
  * de layout de cada plantilla: `landing.scss` clava el viewport del afiche con
@@ -88,7 +95,7 @@ export function normalizarPlantilla(v: string | null | undefined): CodigoPlantil
  */
 export function shellDePlantilla(v: string | null | undefined): CodigoPlantilla {
   const codigo = normalizarPlantilla(v);
-  return CODIGOS_CON_SHELL.some((c) => c === codigo) ? codigo : 'A';
+  return CODIGOS_CON_SHELL.some((c) => c === codigo) ? codigo : 'C';
 }
 
 /**
