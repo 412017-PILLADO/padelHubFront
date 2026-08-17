@@ -73,7 +73,7 @@ export class ClubStore {
   readonly previewSinSelector = signal(false);
 
   /** Plantilla de landing elegida por el club, ya normalizada contra el registry (ver
-   *  core/landing/plantillas.ts): un código que el catálogo no conozca cae en la default 'A', así
+   *  core/landing/plantillas.ts): un código que el catálogo no conozca cae en la default 'C', así
    *  el `data-tpl` del host nunca expone un valor inventado por el back. El preview
    *  (`?plantilla=`) pisa la del tenant sin persistir nada. */
   readonly plantilla = computed<CodigoPlantilla>(() =>

@@ -19,7 +19,20 @@ import {
  * vez de quedarse verde en silencio, que es lo que se quiere de un test que existe para vigilar.
  */
 function leerFuente(rel: string): string {
-  return readFileSync(resolve(process.cwd(), rel), 'utf8');
+  return sinComentarios(readFileSync(resolve(process.cwd(), rel), 'utf8'));
+}
+
+/**
+ * Le saca los comentarios de bloque a una hoja, igual que hace `contraste.spec.ts` con las suyas.
+ *
+ * No es prolijidad: `declaracionCss` parsea texto plano y se queda con la ÚLTIMA coincidencia, así
+ * que un comentario que escriba `--ink:` con los dos puntos pegados y esté DEBAJO de la declaración
+ * real le gana, y el test pasa a medir la luminancia de una frase en prosa. Ya rompió una vez y se
+ * esquivó reformulando el comentario, que es tapar el agujero del lado equivocado — las hojas de las
+ * cáscaras están llenas de prosa que cita justo estos tokens.
+ */
+function sinComentarios(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
 /**
@@ -71,11 +84,26 @@ describe('registry de plantillas', () => {
     expect(PLANTILLAS.E.fuentes).toEqual(PLANTILLAS.B.fuentes);
   });
 
-  it('normaliza cualquier basura a la plantilla A', () => {
-    expect(normalizarPlantilla('b')).toBe('B');
-    expect(normalizarPlantilla('Z')).toBe('A');
-    expect(normalizarPlantilla(null)).toBe('A');
-    expect(normalizarPlantilla('')).toBe('A');
+  it('lo que el catálogo no conoce cae en la DEFAULT, que hoy es C', () => {
+    // La default dejó de ser A el 2026-08-16 (spec de la plantilla C básica, §5.1). Este test es el
+    // que lo dice: si alguien la mueve de vuelta sin querer, acá se entera.
+    expect(normalizarPlantilla('Z')).toBe('C');
+    expect(normalizarPlantilla(null)).toBe('C');
+    expect(normalizarPlantilla('')).toBe('C');
+    expect(normalizarPlantilla(undefined)).toBe('C');
+  });
+
+  it('un código que existe pero no tiene cáscara también cae en C', () => {
+    // 'D' está en el catálogo (el back la acepta) y no tiene cáscara: se dibuja la default.
+    expect(shellDePlantilla('D')).toBe('C');
+    expect(shellDePlantilla(null)).toBe('C');
+  });
+
+  it('C se llama Básica y no Tarjeta', () => {
+    // El nombre viejo describía una plantilla de cards apiladas que el owner descartó. Ofrecerle al
+    // dueño "Tipo app, para el pulgar" y darle otra cosa era el problema que abrió esta fase.
+    expect(PLANTILLAS.C.nombre).toBe('Básica');
+    expect(PLANTILLAS.C.descripcion).toBe('Sobria, el color justo');
   });
 
   it('arma la URL de Google Fonts con todas las familias', () => {
@@ -123,17 +151,21 @@ describe('registry de plantillas', () => {
   /**
    * `normalizarPlantilla` contesta "¿existe?" y `shellDePlantilla` "¿qué puedo dibujar?". Un tenant
    * en D existe (el back ya acepta los cinco códigos) pero todavía no tiene cáscara, así que se
-   * dibuja con la A — y el host tiene que publicar 'A', no 'D', o el `:host([data-tpl='A'])` de
-   * landing.scss no engancha y el afiche pierde su clamp de viewport.
+   * dibuja con la default (C desde el 2026-08-16) — y el host tiene que publicar el código de la
+   * cáscara que SE DIBUJA, no el que el club eligió. La regla que lo obliga sigue siendo la de A
+   * (`:host([data-tpl='A'])` en landing.scss, el clamp de viewport del afiche): si el host publicara
+   * 'D' con una cáscara C abajo, o 'A' con otra cáscara, esas reglas se aplicarían a quien no las
+   * espera. C no tiene hoy una regla propia keyed por `[data-tpl]`, y no la necesita.
    */
-  it('las plantillas sin cáscara se dibujan con la A', () => {
+  it('las plantillas sin cáscara se dibujan con la default', () => {
     expect(CODIGOS_CON_SHELL).toEqual(['A', 'B', 'C', 'E']);
     expect(normalizarPlantilla('D')).toBe('D');
-    expect(shellDePlantilla('D')).toBe('A');
+    expect(normalizarPlantilla('b')).toBe('B'); // case-insensitive: el back puede mandar minúsculas
+    expect(shellDePlantilla('D')).toBe('C');
     expect(shellDePlantilla('E')).toBe('E'); // E ya tiene cáscara propia
     expect(shellDePlantilla('b')).toBe('B');
-    expect(shellDePlantilla('Z')).toBe('A');
-    expect(shellDePlantilla(null)).toBe('A');
+    expect(shellDePlantilla('Z')).toBe('C');
+    expect(shellDePlantilla(null)).toBe('C');
   });
 
   /** Todo código con cáscara tiene su carpeta en el mapa, y al revés: es la misma fuente. */
@@ -176,4 +208,24 @@ describe('registry de plantillas', () => {
       expect(PLANTILLAS[codigo].esquema).toBe(esClara(tintaQuePinta) ? 'dark' : 'light');
     }
   );
+
+  /**
+   * La puerta del parser, no del registry. El test de arriba mide lo que la hoja DECLARA, y eso
+   * depende de que un comentario no pueda hacerse pasar por una declaración.
+   *
+   * Probado en rojo: sin el `sinComentarios()` de `leerFuente`, el caso de abajo devuelve `#ffffff`
+   * —el hex que está en la prosa— en vez de `#11162b`, y el esquema de esa cáscara se reportaría
+   * invertido con la suite en verde.
+   */
+  it('un comentario que cita la propiedad no se lee como declaración', () => {
+    const hoja = `:host { --ink: #11162b; }
+      /* Nota: en un shell oscuro esto sería --ink: #ffffff, pero acá no. */`;
+
+    expect(declaracionCss(sinComentarios(hoja), '--ink')).toBe('#11162b');
+    // Sin pelar gana el comentario, porque `declaracionCss` se queda con la última coincidencia y
+    // corta en `;` o `}` — que en prosa no aparecen, así que se lleva la frase entera.
+    const crudo = declaracionCss(hoja, '--ink')!;
+    expect(crudo).not.toBe('#11162b');
+    expect(crudo.startsWith('#ffffff')).toBe(true);
+  });
 });

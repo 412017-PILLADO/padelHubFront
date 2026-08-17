@@ -141,6 +141,20 @@ for (const { slug, tpl, shell } of PLANTILLAS) {
       expect(arriba, 'el vidrio tiene que quedar por ENCIMA del campo en la zona de solape').toBe('vidrio');
     }
 
+    // El lomo es la firma de C: si no está, la plantilla perdió lo único que la hace distinta.
+    // Se lee sobre `.tpl-c` y no sobre `[data-tpl="C"]`: el `::before` del lomo es `:host::before`
+    // de `app-shell-c` (shell.scss), y ese host es quien lleva la clase `.tpl-c` — `[data-tpl]` en
+    // cambio vive en el host de `app-landing`, un elemento distinto que envuelve a la cáscara y no
+    // tiene ese pseudo-elemento. Medir sobre `[data-tpl="C"]` da `NaN` (ancho `auto`), no falso-verde.
+    if (tpl === 'C') {
+      const lomo = await page.evaluate(() => {
+        const cs = getComputedStyle(document.querySelector('.tpl-c')!, '::before');
+        return { ancho: parseFloat(cs.width), pos: cs.position };
+      });
+      expect(lomo.ancho).toBeGreaterThan(4);
+      expect(lomo.pos).toBe('fixed');
+    }
+
     await reservar(page, `${tpl}${String(Date.now()).slice(-4)}`);
   });
 }

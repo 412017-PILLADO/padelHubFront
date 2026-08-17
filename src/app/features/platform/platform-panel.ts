@@ -4,6 +4,11 @@ import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { environment } from '../../../environments/environment';
+import {
+  CODIGOS_CON_SHELL,
+  PLANTILLA_DEFAULT,
+  PLANTILLAS,
+} from '../../core/landing/plantillas';
 import { PlatformAuthService } from '../../core/platform/platform-auth.service';
 import {
   CrearTenantRequest,
@@ -33,12 +38,21 @@ export class PlatformPanelComponent {
   readonly createdCreds = signal<{ url: string; email: string; password: string } | null>(null);
   readonly credsCopied = signal(false);
 
-  /** Plantillas de landing disponibles (mismo flujo de reserva, distinto layout). */
-  readonly plantillas = [
-    { value: 'A', label: 'A · Poster', hint: 'Afiche a un lado + reserva (default)' },
-    { value: 'B', label: 'B · Hero centrado', hint: 'Marca grande centrada, más comercial' },
-    { value: 'C', label: 'C · Compacta (app)', hint: 'Barra lateral + grilla, va directo a reservar' },
-  ];
+  /**
+   * Plantillas de landing disponibles (mismo flujo de reserva, distinto layout). Derivada del
+   * registry, igual que la del panel del dueño.
+   *
+   * Era la 5ta copia escrita a mano de la misma constante, y la última que quedaba: ofrecía sólo
+   * A/B/C —o sea que desde acá no se podía dar de alta un club en E, que está construida y
+   * andando—, llamaba a la B "hero centrado" (lo que era antes de volverse la nocturna) y a la C
+   * "compacta (app), barra lateral + grilla", que es justo el rail que el rediseño le sacó. Encima
+   * marcaba a la A como "(default)", que dejó de ser cierto el 2026-08-16.
+   */
+  readonly plantillas = CODIGOS_CON_SHELL.map((c) => ({
+    value: c,
+    label: `${c} · ${PLANTILLAS[c].nombre}`,
+    hint: PLANTILLAS[c].descripcion,
+  }));
 
   // ── Alta ──
   readonly showForm = signal(false);
@@ -49,7 +63,7 @@ export class PlatformPanelComponent {
   readonly fOwnerPassword = signal('');
   readonly fColorPrimario = signal('#0a8a99');
   readonly fColorSecundario = signal<string | null>(null);
-  readonly fPlantilla = signal('A');
+  readonly fPlantilla = signal<string>(PLANTILLA_DEFAULT);
   readonly fDireccion = signal('');
   readonly fWhatsapp = signal('');
   readonly fHosts = signal('');
@@ -199,7 +213,7 @@ export class PlatformPanelComponent {
     this.fOwnerPassword.set('');
     this.fColorPrimario.set('#0a8a99');
     this.fColorSecundario.set(null);
-    this.fPlantilla.set('A');
+    this.fPlantilla.set(PLANTILLA_DEFAULT);
     this.fDireccion.set('');
     this.fWhatsapp.set('');
     this.fHosts.set('');
@@ -211,7 +225,7 @@ export class PlatformPanelComponent {
     this.eName.set(t.name);
     this.eColorPrimario.set(t.colorPrimario || '#0a8a99');
     this.eColorSecundario.set(t.colorSecundario);
-    this.ePlantilla.set(t.plantilla || 'A');
+    this.ePlantilla.set(t.plantilla || PLANTILLA_DEFAULT);
     this.eStatus.set(t.status);
   }
   cancelEdit(): void {

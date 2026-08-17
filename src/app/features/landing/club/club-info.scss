@@ -53,9 +53,3 @@
 /* PLANTILLA C · tarjeta plana, esquinas más chicas. */
 :host-context(.tpl-c) .ic-card { border-radius: 14px; }
 :host-context(.tpl-c) .ic-ic { background: color-mix(in srgb, var(--court) 10%, transparent); }
-
-@media (min-width: 900px) {
-  /* En el rail angosto de C el horario deja de ser día-a-la-izquierda / rango-a-la-derecha (parte
-     feo en 280px): se apila. */
-  :host-context(.c-rail) .ic-hours li { flex-direction: column; align-items: flex-start; gap: 2px; }
-}

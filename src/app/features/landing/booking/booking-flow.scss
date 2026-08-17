@@ -101,8 +101,13 @@
    silueta contra su propia superficie, y lo único que lo delata es el texto de adentro. El filo es
    lo que le devuelve el límite visible que el 1.4.11 pide (3:1 de componente).
 
-   Cada token trae como fallback el valor de la plantilla A (la default), así que una cáscara que
-   se olvide de declarar uno se ve como la A en ese aspecto en vez de romperse.
+   Cada token trae como fallback el valor de la plantilla A, así que una cáscara que se olvide de
+   declarar uno se ve como la A en ese aspecto en vez de romperse.
+
+   OJO CON UNA CONFUSIÓN FÁCIL: ese fallback es "el valor de la A", NO "el valor de la plantilla por
+   defecto". Desde el 2026-08-16 la default del producto es C y estos fallbacks siguen siendo los de
+   A a propósito — protegen a una cáscara que se olvidó de declarar un token, que es un problema
+   distinto de cuál plantilla se dibuja cuando el club no eligió ninguna.
 
    Regla del contrato: ninguna hoja de afuera apunta al DOM de este componente POR CLASE DE
    PLANTILLA, y esta hoja no nombra ninguna plantilla. Por eso la encapsulación volvió a ser la

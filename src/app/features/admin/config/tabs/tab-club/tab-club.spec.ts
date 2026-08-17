@@ -37,8 +37,8 @@ describe('el selector de plantillas del panel', () => {
   });
 
   it('no ofrece plantillas del catálogo que todavía no tienen cáscara', () => {
-    // La D está en el catálogo porque el back la acepta, pero `shellDePlantilla()` la manda a la A:
-    // un dueño que la eligiera vería la plantilla A y pensaría que se rompió algo.
+    // La D está en el catálogo porque el back la acepta, pero `shellDePlantilla()` la manda a la C:
+    // un dueño que la eligiera vería la plantilla C y pensaría que se rompió algo.
     const ofrecidos = new Set(crearTab().plantillas.map((p) => p.value as string));
     const sinCascara = CODIGOS_PLANTILLA.filter((c) => !(c in DIR_SHELL));
     for (const codigo of sinCascara) {
@@ -118,8 +118,9 @@ describe('la galería de plantillas del panel', () => {
   it('con una plantilla guardada SIN cáscara, marca la que se dibuja de verdad', () => {
     // Caso real, no hipotético: el tenant `demo` quedó guardado en 'D', la plantilla que el owner
     // descartó y que ya no tiene cáscara. Con el valor crudo ninguna de las cuatro matcheaba y la
-    // galería salía SIN NADA SELECCIONADO, mientras la landing pública dibujaba la A. El panel no
-    // le decía al dueño qué está viendo su jugador. Lo encontró el e2e, con la base real.
+    // galería salía SIN NADA SELECCIONADO, mientras la landing pública dibujaba la default (C desde
+    // el 2026-08-16). El panel no le decía al dueño qué está viendo su jugador. Lo encontró el e2e,
+    // con la base real.
     const fixture = montarTab();
     const estado = TestBed.inject(ConfigStateService);
     estado.marcaPlantilla.set('D');
@@ -128,7 +129,7 @@ describe('la galería de plantillas del panel', () => {
     const host = fixture.nativeElement as HTMLElement;
     const marcadas = [...host.querySelectorAll('.gal-item.sel plantilla-thumb')];
     expect(marcadas, 'ninguna miniatura quedó marcada').toHaveLength(1);
-    expect(marcadas[0].getAttribute('data-tpl')).toBe('A');
+    expect(marcadas[0].getAttribute('data-tpl')).toBe('C');
   });
 
   it('mostrar el fallback NO reescribe la plantilla guardada', () => {

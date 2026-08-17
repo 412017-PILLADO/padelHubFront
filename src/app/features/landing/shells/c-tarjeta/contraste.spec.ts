@@ -2,27 +2,36 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /**
- * EL FILO DEL CTA DE LA C, que es lo único que este archivo mide todavía.
+ * LA AUDITORÍA DE CONTRASTE DE C, la básica. Cuatro cuentas, cada una pineada contra la hoja que la
+ * declara:
  *
- * De las cuatro cáscaras, C era la última sin `contraste.spec.ts` propio: A, B y E tienen el suyo y
- * los tres nacieron igual —una decisión de color que no vigilaba nadie—. Acá el disparador es el
- * botón de confirmar: `.confirm` es `background: var(--court)` crudo apoyado sobre el `--paper` de la
- * página, y con tres de las seis paletas de la casa el control más importante del producto no tiene
- * NINGUNA silueta contra su propia superficie (naranja del demo 2,07 · amarillo 1,32 · casi blanco
- * 1,08, contra el 3:1 que WCAG 1.4.11 le pide al límite de un componente).
+ *   1. EL FILO DEL CTA. `.confirm` es `background: var(--court)` crudo apoyado sobre el `--paper` de
+ *      la página, y con tres de las seis paletas de la casa el control más importante del producto no
+ *      tiene NINGUNA silueta contra su propia superficie (naranja del demo 2,07 · amarillo 1,32 ·
+ *      casi blanco 1,08, contra el 3:1 que WCAG 1.4.11 le pide al límite de un componente).
+ *   2. EL LOMO, que es la firma de C (ver el comentario largo junto a `--c-lomo-color` en
+ *      shell.scss): la banda vertical del color del club, arrimada a la tinta hasta un piso medido de
+ *      3:1 contra el papel con las seis paletas.
+ *   3. QUE EL COLOR NO SEA MASA (spec §6.1): la hoja no puede llenar ninguna superficie grande con
+ *      `--court`, y capa 2 no puede declarar ningún `--court*` propio — eso es trabajo de plataforma.
+ *   4. LA TINTA DEL BLOQUE SUAVE (precio, aviso de seña): hasta esta tarea usaba `--court-deep`
+ *      crudo y caía abajo de AA con cuatro de las seis paletas.
  *
- * ESTE ARCHIVO NO ES UNA AUDITORÍA DE C, y conviene decirlo para que nadie lo lea como cobertura:
- * mide el filo del CTA y nada más. C no pisa ninguna superficie de plataforma (su `:host` es `--paper`
- * y su rail `--surface`, los dos tokens del sistema), así que sus textos y su anillo de foco caen
- * exactamente en el caso que `src/styles.spec.ts` ya mide contra las seis paletas. Lo que ese archivo
- * NO puede ver es el CTA, porque el CTA no está pintado con una superficie de sistema: está pintado
- * con el color del club.
+ * Este archivo nació midiendo sólo el filo del CTA (los tres primeros describes de abajo son de esa
+ * tarea) y esta tarea lo completa: hoy es la auditoría entera de C, no queda ninguna superficie propia
+ * sin medir. Desde la Task 4 la cáscara es UNA SOLA COLUMNA sobre `--paper`, sin rail ni ninguna otra
+ * caja de fondo — el `:host` es la única superficie que la hoja declara, así que el texto corriente y
+ * el anillo de foco caen exactamente en el caso que `src/styles.spec.ts` ya mide contra las seis
+ * paletas. Lo que ese archivo NO puede ver es lo que C pinta específicamente con el color del club, y
+ * eso es lo que miden las cuatro cuentas de acá.
  *
- * **Los valores no están copiados a mano**: el filo se lee de `_tokens.scss`, el relleno del botón de
- * la hoja del flujo y los hexes del `:root` de plataforma. Es la lección que la fase B pagó cara —una
- * versión de su `contraste.spec.ts` tenía las constantes duplicadas, y entonces revertir un token
- * dejaba los tests en verde: un tripwire que no puede fallar es peor que no tenerlo, porque se lee
- * como cobertura.
+ * **Los valores no están copiados a mano**: se leen de `_tokens.scss`, de `shell.scss`, del relleno
+ * del botón en la hoja del flujo, de los hexes del `:root` de plataforma y de `tenant-colors.ts` (de
+ * ahí sale `--court-soft`, que no vive en ninguna hoja de esta carpeta: lo escribe
+ * `applyTenantColors` en tiempo de ejecución). Es la lección que la fase B pagó cara —una versión de
+ * su `contraste.spec.ts` tenía las constantes duplicadas, y entonces revertir un token dejaba los
+ * tests en verde: un tripwire que no puede fallar es peor que no tenerlo, porque se lee como
+ * cobertura.
  *
  * La aritmética WCAG está duplicada de los otros cuatro `contraste.spec.ts` a propósito, igual que
  * ellos la duplican entre sí: cada uno lee SUS hojas y no depende de un helper que otro pueda
@@ -169,9 +178,16 @@ function contraste(a: Rgb, b: Rgb): number {
   const [l1, l2] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
   return (l1 + 0.05) / (l2 + 0.05);
 }
-/** `color-mix(in srgb, a <pct>%, b)`: en sRGB es la interpolación lineal de los canales. */
+/**
+ * `color-mix(in srgb, a <pct>%, b)`: en sRGB es la interpolación lineal de los canales, REDONDEADA a
+ * 8 bits por canal antes de devolver — que es lo que el navegador pinta de verdad (un canal de color
+ * no tiene fracciones de más). El redondeo no es cosmética: sin él, el lomo mide 3,2668:1 contra el
+ * papel con el club casi blanco (→3,27); redondeando antes de medir mide 3,2605:1 (→3,26), que es el
+ * número que documenta shell.scss junto al 50% de `--c-lomo-color`. Sin este redondeo el pin de acá y
+ * el comentario de la hoja discreparían por 0,01 sin que nadie supiera por qué.
+ */
 function mezcla(a: Rgb, pct: number, b: Rgb): Rgb {
-  return a.map((v, i) => v * pct + b[i] * (1 - pct)) as Rgb;
+  return a.map((v, i) => Math.round(v * pct + b[i] * (1 - pct))) as Rgb;
 }
 
 /** Las superficies que NO llegan al umbral, con su ratio. Un `toEqual([])` contra esto dice en el
@@ -197,9 +213,8 @@ describe('plantilla C · el filo del CTA le da al botón de confirmar un límite
   /**
    * La única superficie que el filo toca por afuera. C no le pone caja al flujo
    * (`--flow-surface: transparent`) y su `:host` es `--paper`, así que el botón está apoyado
-   * directamente sobre el papel de la página. El rail es `--surface` (#ffffff), que es más CLARO: un
-   * filo oscuro contrasta MÁS ahí (3,42 en el peor caso contra 3,16 acá), así que el papel es la cota
-   * y no hace falta medir las dos.
+   * directamente sobre el papel de la página. Desde la Task 4 la cáscara es una sola columna sin
+   * rail: no queda ninguna otra superficie de fondo en la hoja, así que el papel es la única cota.
    */
   const PAPEL = { 'el papel de la página (:host)': rgb(PAPER) };
 
@@ -259,8 +274,14 @@ describe('plantilla C · el filo del CTA le da al botón de confirmar un límite
     // propia y que el host de la cáscara es el papel. Si C le diera superficie al flujo —una tarjeta
     // blanca, por ejemplo— el filo caería sobre otra cosa y estos números medirían un fondo que no se
     // pinta. (Blanco sería MÁS fácil, pero el que avisa tiene que ser el test y no la suerte.)
+    // Desde la Task 5 (el lomo) `background` SÍ se declara dos veces en la hoja: la de `:host` (el
+    // papel) y la del degradado de `:host::before` (la banda del borde). El `declaracion` genérico
+    // toma el ÚLTIMO valor del archivo entero, así que hay que acotarlo al bloque `:host { … }` solo
+    // —sin nested `{}` adentro, así que el primer `}` cierra el bloque— para seguir leyendo la
+    // superficie que el botón pisa, y no el degradado del lomo.
+    const HOST_BLOCK = /:host\s*\{([^}]*)\}/.exec(HOJA_SHELL)?.[1] ?? '';
     expect(declaracion(HOJA_TOKENS, '--flow-surface')).toBe('transparent');
-    expect(declaracion(HOJA_SHELL, 'background')).toBe('var(--surface)');
+    expect(declaracion(HOST_BLOCK, 'background')).toBe('var(--paper)');
     expect(/:host\s*\{[^}]*background:\s*var\(--paper\)/.test(HOJA_SHELL)).toBe(true);
   });
 
@@ -270,6 +291,156 @@ describe('plantilla C · el filo del CTA le da al botón de confirmar un límite
     for (const prop of ['--paper', '--surface', '--ink', '--court']) {
       expect(declaracion(HOJA_SHELL, prop)).toBeNull();
       expect(declaracion(HOJA_TOKENS, prop)).toBeNull();
+    }
+  });
+});
+
+// ── El resto de la auditoría: el lomo, la masa y el bloque suave ────────────────────────────────
+
+/**
+ * El módulo de branding se lee SIN la guardia de `//`: es TypeScript y los tiene a montones, así que
+ * pasa por `leerArchivo` y no por `leerHoja`. No es una hoja de estilos, y de acá se saca una sola
+ * cosa muy específica (la receta de `--court-soft`), con un regex que exige la forma completa.
+ */
+const FUENTE_BRANDING = leerArchivo('src/app/core/branding/tenant-colors.ts');
+
+/** Un derivado del color del club que NO vive en ninguna hoja de esta carpeta: lo escribe
+ *  `applyTenantColors` en tiempo de ejecución, no una hoja que este spec pueda leer con `leerHoja`. */
+function derivadoDelClub(prop: string): { pct: number; b: string } {
+  const m = new RegExp(`${prop}'\\]\\s*=\\s*\`color-mix\\(in srgb,\\s*\\$\\{c\\}\\s*([\\d.]+)%,\\s*(#[0-9a-f]{3,6})\\)\``, 'i')
+    .exec(FUENTE_BRANDING);
+  if (!m) throw new Error(`tenant-colors.ts ya no deriva ${prop} con un color-mix literal`);
+  return { pct: Number(m[1]) / 100, b: m[2] };
+}
+/** `--flow-soft-surface: var(--court-soft)` en _tokens.scss: el fondo del bloque suave es el color
+ *  del club lavado, `color-mix(in srgb, <club> 12%, #fff)`. */
+const COURT_SOFT = derivadoDelClub('--court-soft');
+
+/**
+ * Las seis paletas de la casa, en hex plano. Son las mismas de `.superpowers/sdd/medir-lomo-c.mjs`
+ * —el script que midió el 50% de `--c-lomo-color`— y no la tupla `CLUBES` de más arriba: esa tupla se
+ * armó para el filo del CTA con otros ejemplos de "naranja" y "casi blanco" (`#f89625`/`#ffffff`). El
+ * hex exacto que representa a cada matiz no importa —ninguna de las seis es una cuenta de
+ * producción, son extremos del white-label—, pero el 3,26 que documenta shell.scss se midió con
+ * ÉSTOS, así que hay que usar los mismos para que el pin de acá y el comentario de la hoja sigan de
+ * acuerdo.
+ */
+const SEIS_CLUBES = ['#0a8a99', '#f97316', '#ffd400', '#fafafa', '#111111', '#ff2d95'];
+
+describe('C · el lomo, que es la firma', () => {
+  /**
+   * `--c-lomo-color`, tal como está declarado en la hoja, SIN parsear. `declaracion()` nunca tira —
+   * en el peor caso devuelve `null`—, así que leer esto acá, en el cuerpo del `describe`, es seguro:
+   * corre una sola vez y no le puede tapar la ejecución a ningún `it`.
+   *
+   * El parseo con `colorMix()`, en cambio, TIRA si la declaración no tiene la forma
+   * `color-mix(in srgb, A pct%, B)` — que es exactamente lo que pasa si alguien "simplifica" el token
+   * a un `var(--court)` pelado. Por eso NO se resuelve acá arriba: si `colorMix()` se llamara en el
+   * cuerpo del `describe`, tirar abortaría el módulo entero antes de que corriera un solo `it`, y el
+   * test de más abajo que existe justo para atajar ese caso ("el lomo NO se dibuja con el color crudo
+   * del club") nunca llegaría a ejecutar su propia aserción — se caería el archivo, no el test. Cada
+   * `it` que necesita el valor parseado llama a `colorMix()` por su cuenta, así que si tira, tira
+   * DENTRO de ese test y lo deja rojo con su mensaje, no afuera de todos.
+   */
+  const LOMO_DECL = declaracion(HOJA_SHELL, '--c-lomo-color');
+
+  it('se ve con las SEIS paletas, incluida la del club casi blanco', () => {
+    // Es la restricción dura de la plantilla: si el lomo desaparece, C se queda sin lo único que la
+    // hace C. Le pasó al campo de la plantilla D con este mismo club y la hundió.
+    const LOMO = colorMix(LOMO_DECL, 'shell.scss · --c-lomo-color');
+    for (const club of SEIS_CLUBES) {
+      const r = contraste(mezcla(rgb(club), LOMO.pct, rgb(INK)), rgb(PAPER));
+      expect(r, `el lomo desaparece con el club ${club}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('el porcentaje de la hoja es un TECHO: cinco puntos más y se cae', () => {
+    // Sin esto el test de arriba pasaría con cualquier valor conservador, y nadie se enteraría de
+    // que el lomo perdió color de más. Acá se afirma que el valor elegido está en el límite: al 55%
+    // el peor caso (casi blanco) mide 2,83:1, ya debajo del piso de WCAG 1.4.11.
+    const LOMO = colorMix(LOMO_DECL, 'shell.scss · --c-lomo-color');
+    const peorMas = Math.min(
+      ...SEIS_CLUBES.map((c) => contraste(mezcla(rgb(c), LOMO.pct + 0.05, rgb(INK)), rgb(PAPER))),
+    );
+    expect(peorMas, 'el porcentaje no está en el techo: se puede subir sin romper').toBeLessThan(3);
+  });
+
+  /**
+   * EL SEGUNDO STOP DEL DEGRADADO, que es por donde se coló el defecto.
+   *
+   * El lomo no se pinta con `--c-lomo-color`: se pinta con un `linear-gradient` que VA de ese color a
+   * otro, y durante toda la fase los tests de acá arriba midieron sólo el primero. El segundo mezclaba
+   * hacia `--paper` y daba 1,02:1 con el club casi blanco — la mitad de abajo de la firma no existía,
+   * con la suite entera en verde. Medir un extremo de un degradado y creer que se midió el degradado
+   * es el agujero que este test tapa.
+   *
+   * Se lee del `background` de `:host::before` en vez de un token porque el valor vive ahí, inline: si
+   * alguien vuelve a mezclar hacia el papel, esto se pone rojo con el número real.
+   */
+  it('el otro extremo del degradado también se ve con las seis paletas', () => {
+    const decl = /:host::before\s*\{[\s\S]*?background:\s*linear-gradient\(([\s\S]*?)\);/.exec(HOJA_SHELL);
+    expect(decl, 'el lomo dejó de pintarse con un linear-gradient en :host::before').not.toBeNull();
+
+    const stops = decl![1];
+    const segundo = /color-mix\(in srgb,\s*var\(--court-2,\s*var\(--court\)\)\s*([\d.]+)%,\s*var\((--ink|--paper)\)\s*\)/
+      .exec(stops);
+    expect(segundo, 'el segundo stop del degradado cambió de forma; re-medir antes de tocar').not.toBeNull();
+
+    const [, pct, base] = segundo!;
+    // Mezclar hacia el papel es incompatible con el piso: el primer stop ya está al límite (3,26), así
+    // que aclarar sólo puede bajarlo. Que la base sea la tinta es la mitad de la garantía.
+    expect(base, 'el segundo stop mezcla hacia el papel: ahí es donde el lomo se borraba').toBe('--ink');
+
+    for (const club of SEIS_CLUBES) {
+      const r = contraste(mezcla(rgb(club), Number(pct) / 100, rgb(INK)), rgb(PAPER));
+      expect(r, `el pie del lomo desaparece con el club ${club}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
+  it('el lomo NO se dibuja con el color crudo del club', () => {
+    // La forma de romper esto sin querer es "simplificar" el color-mix a un var(--court) pelado. Este
+    // test es el que tiene que quedar ROJO cuando eso pasa —no el módulo entero abortando—, así que
+    // lee la declaración cruda (`LOMO_DECL`, que nunca tira) y no pasa por `colorMix()`: si pasara,
+    // sería el mismo problema que este test existe para resolver. Probado en rojo de verdad: con
+    // `--c-lomo-color: var(--court);` en shell.scss, este `it` falla con
+    // "Expected 'var(--court)' to contain 'color-mix'" y el resto de la suite sigue corriendo.
+    expect(LOMO_DECL).toContain('color-mix');
+    expect(LOMO_DECL).not.toMatch(/^\s*var\(--court\)\s*$/);
+  });
+});
+
+describe('C · el color no es masa (spec §6.1)', () => {
+  it('la hoja no llena ninguna superficie grande con el color del club', () => {
+    // Es EL contrato que separa a C de E. Las únicas apariciones de --court en la hoja de C son el
+    // lomo y su degradado; si aparece un `background: var(--court)` a secas, C se volvió otra cosa.
+    expect(HOJA_SHELL).not.toMatch(/background:\s*var\(--court\)\s*;/);
+  });
+
+  it('C declara su superficie y su tinta, y NUNCA un --court* (capa 2)', () => {
+    // Capa 2 es plataforma: `--court`, `--court-2`, `--court-soft`, etc. los declara
+    // `applyTenantColors` en el `:root`, y C sólo los CONSUME (ver `var(--court)` en el degradado del
+    // lomo y `var(--court-2, …)` en su `::before`). Si esta hoja alguna vez declarara uno de esos
+    // tokens —por ejemplo `--court-soft: #fff;` a mano, en vez de dejar que lo escriba plataforma—
+    // C empezaría a pisar un valor que no le toca fijar y que las otras cáscaras (y `tenant-colors.ts`)
+    // dan por sentado que viene de un solo lugar. Probado en rojo de verdad: con
+    // `--court-fake: #123456;` agregado en el bloque `:host` de shell.scss, este `it` falla con
+    // "expected … not to match /^\s*--court[a-z0-9-]*\s*:/m" y el resto de la suite sigue verde.
+    expect(HOJA_SHELL).not.toMatch(/^\s*--court[a-z0-9-]*\s*:/m);
+  });
+});
+
+describe('C · la tinta del bloque suave, que estaba abajo de AA', () => {
+  /** `--flow-soft-ink-accent: color-mix(in srgb, var(--court) N%, var(--ink))`, leído de la hoja. */
+  const SUAVE_INK = colorMix(
+    declaracion(HOJA_TOKENS, '--flow-soft-ink-accent'), '_tokens.scss · --flow-soft-ink-accent');
+
+  it('llega a 4,5:1 con las seis paletas', () => {
+    // Antes era `--court-deep` crudo: 2,98:1 con el naranja del club del demo, y el precio es lo que
+    // el visitante viene a leer.
+    for (const club of SEIS_CLUBES) {
+      const fondo = mezcla(rgb(club), COURT_SOFT.pct, rgb(COURT_SOFT.b));
+      const r = contraste(mezcla(rgb(club), SUAVE_INK.pct, rgb(INK)), fondo);
+      expect(r, `la tinta del bloque suave falla con el club ${club}`).toBeGreaterThanOrEqual(4.5);
     }
   });
 });

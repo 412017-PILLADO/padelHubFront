@@ -82,9 +82,10 @@ export class Landing {
   /**
    * La cáscara que se dibuja: manda el `@switch` del template Y el `data-tpl` del host, que tienen
    * que coincidir sí o sí. Un tenant en una plantilla que todavía no tiene cáscara (D, que el
-   * back ya acepta) se dibuja con la A **y publica `data-tpl="A"`**: si publicara su propio código,
-   * el `:host([data-tpl='A'])` de `landing.scss` no engancharía y el afiche quedaría sin su clamp
-   * de viewport, con doble scroll. Ver `shellDePlantilla()`.
+   * back ya acepta) se dibuja con la C **y publica `data-tpl="C"`**: si publicara su propio código
+   * (`data-tpl="D"`), reglas como el `:host([data-tpl='A'])` de `landing.scss` — que clava el
+   * viewport del afiche — no engancharían con la cáscara que sí se está dibujando, y esa cáscara
+   * quedaría sin su clamp, con doble scroll. Ver `shellDePlantilla()`.
    */
   readonly plantilla = computed<CodigoPlantilla>(() => shellDePlantilla(this.club.plantilla()));
   /** El texto de la política de cancelación sale de acá (`config()?.politicaCancelacion`). */

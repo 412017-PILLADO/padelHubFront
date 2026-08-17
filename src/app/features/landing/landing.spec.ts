@@ -103,30 +103,34 @@ function montarLanding(plantilla: string): HTMLElement {
 
 /**
  * El host de la landing publica el código de la cáscara que realmente se dibuja, no el que eligió
- * el club. Importa porque `landing.scss` engancha el layout por atributo:
+ * el club. Importa porque `landing.scss` engancha el layout por atributo — por ejemplo
  * `:host([data-tpl='A']) { height: 100svh; overflow: hidden }` es lo que clava el viewport del
- * afiche. El back ya acepta los cinco códigos pero D todavía no tiene cáscara: si un
- * tenant en D publicara `data-tpl="D"` y se dibujara la A, la A quedaría con su `height: 100svh`
- * adentro de un host sin clamp ni `overflow: hidden`, o sea con doble scroll.
+ * afiche —, así que si el host publicara un código distinto del que dibuja, esas reglas no
+ * engancharían. El back ya acepta los cinco códigos pero D todavía no tiene cáscara: un tenant en D
+ * se dibuja con la DEFAULT (C desde el 2026-08-16) y el host publica `data-tpl="C"`, no `"D"`.
  */
 describe('Landing — plantilla y cáscara', () => {
-  it('un tenant en D dibuja la cáscara A y el host publica data-tpl="A"', () => {
+  it('un tenant en D dibuja la cáscara C y el host publica data-tpl="C"', () => {
     const host = montarLanding('D');
 
-    expect(host.querySelector('app-shell-a')).not.toBeNull();
+    // Un tenant en una plantilla sin cáscara (D) se dibuja con la DEFAULT, que desde el 2026-08-16
+    // es C. El host publica `data-tpl="C"` y no 'D': si publicara su propio código, las reglas de
+    // layout que enganchan por `[data-tpl]` no aplicarían. Ver shellDePlantilla().
+    expect(host.querySelector('app-shell-c')).not.toBeNull();
+    expect(host.querySelector('app-shell-a')).toBeNull();
     expect(host.querySelector('app-shell-b')).toBeNull();
-    expect(host.querySelector('app-shell-c')).toBeNull();
     expect(host.querySelector('app-shell-e')).toBeNull();
-    // Lo que hace que las reglas de la A enganchen:
-    expect(host.getAttribute('data-tpl')).toBe('A');
-    expect(host.querySelector('app-shell-a')!.classList).toContain(PLANTILLAS.A.claseShell);
+    // Lo que hace que las reglas de la C enganchen:
+    expect(host.getAttribute('data-tpl')).toBe('C');
+    expect(host.querySelector('app-shell-c')!.classList).toContain(PLANTILLAS.C.claseShell);
   });
 
-  it('un código que el catálogo no conoce también cae en la A', () => {
+  it('un código que el catálogo no conoce también cae en la C', () => {
     const host = montarLanding('ZZ');
 
-    expect(host.querySelector('app-shell-a')).not.toBeNull();
-    expect(host.getAttribute('data-tpl')).toBe('A');
+    expect(host.querySelector('app-shell-c')).not.toBeNull();
+    expect(host.querySelector('app-shell-a')).toBeNull();
+    expect(host.getAttribute('data-tpl')).toBe('C');
   });
 
   /**

@@ -106,7 +106,15 @@ Un módulo sin dependencias de Angular declara, por plantilla: código (`A`–`E
 
 Cada plantilla declara qué rol cumplen `--court` y `--court-2`, entre **masa** (fondo o bloque grande), **luz** (gradientes y halos), **estructura** (reglas, bordes, numeración) y **acento** (chips, botones, estados).
 
-**Las cinco usan el color en masa** (ver §6) y las cinco le dan un rol explícito al secundario — que hoy, fuera de B, no lo usa nadie. El piso innegociable para cualquier plantilla futura: el color del club ocupa masa o luz, nunca solo acento.
+Todas le dan un rol explícito al secundario — que hoy, fuera de B, no lo usa nadie.
+
+> **CORREGIDO el 2026-08-16.** Acá decía *"las cinco usan el color en masa"* y fijaba como piso
+> innegociable que *"el color del club ocupa masa o luz, nunca solo acento"*. **C · Básica lo rompe a
+> propósito**: su identidad es el lomo —una banda delgada en el borde— más acentos, y el owner pidió
+> justamente eso (*"mandaría más a la minimalista"*). El piso real, el que sí se sostiene, es que el
+> color del club **tiene que aparecer con un rol declarado y medido**: el lomo de C no se dibuja con
+> el color crudo sino llevado hacia la tinta, porque crudo daría 1,04:1 contra el papel en un club
+> casi blanco y la firma desaparecería. Ver `2026-08-16-plantilla-c-basica-design.md` §6.
 
 ### 5.3 Dark: `inkOnAccent` recibe la tinta del shell
 
@@ -120,16 +128,38 @@ Cada plantilla declara qué rol cumplen `--court` y `--court-2`, entre **masa** 
 
 El back **nulea** la columna cuando el campo no viene: `t.setFuente(fuente == null || fuente.isBlank() ? null : fuente.trim())` (`TenantBrandingService.java:51`). El reenvío defensivo del front (`config-state.service.ts:90`) está bien puesto y **se conserva**. Con tipografía por plantilla la columna queda sin uso, pero eliminarla es front + back + migración: fuera de este trabajo.
 
+### 5.6 La plantilla por defecto
+
+**La plantilla por defecto es C desde el 2026-08-16** (antes era A). A los tenants que ya existían se
+les escribió `'A'` explícito en la base antes de moverla, así que el cambio alcanza sólo a clubes
+nuevos. Los fallbacks del contrato `--flow-*` **siguen siendo los valores de A**: protegen a una
+cáscara que se olvidó de declarar un token, que es otro problema. Ver
+`2026-08-16-plantilla-c-basica-design.md` §5.
+
+**Vive en dos lados y los dos tienen que decir lo mismo**, porque son repos distintos:
+`PLANTILLA_DEFAULT` (front, `core/landing/plantillas.ts`) y `DEFAULT_PLANTILLA` (back,
+`TenantProvisioningService`). El primero decide qué se dibuja ante un valor desconocido; el segundo,
+con qué nace un club nuevo — y es el que de verdad le llega a un cliente. Mientras estuvieron en
+desacuerdo (front C, back A) la default no le tocó a nadie durante toda la fase, con la suite en
+verde. Las puertas que lo sostienen: `altaSinPlantillaSaleEnLaDefaultDelProducto` (back) y
+`plataforma.spec.ts` (e2e, el alta que no toca el select).
+
 ---
 
-## 6. Las cinco plantillas
+## 6. Las plantillas
+
+> **El catálogo quedó en CUATRO** (A, B, C, E). La D se construyó entera y el owner la rechazó
+> mirándola: *"D de la cancha sí queda fuera, en un futuro implementaremos algunas más"* (2026-08-16).
+> Se deja en la tabla, marcada, porque su modo de falla es la lección más cara de la fase: se leía
+> bien en escritorio y **no se leía en teléfono**, que es donde se usa el producto. Las plantillas que
+> vengan serán nuevas, no un rescate de D.
 
 | | Concepto | Display + texto + datos | Rol del color | Firma |
 |---|---|---|---|---|
 | **A · Afiche** *(queda)* | Editorial, marca grande. En mobile el afiche se vuelve encabezado | Archivo expandida · Hanken Grotesk · Space Mono | primario **masa** · secundario **estructura** (filete) | la marca de agua con el nombre del club |
 | **B · Nocturna** *(oscura)* | El club de noche bajo reflectores | Anton · Inter Tight · JetBrains Mono | primario **masa teñida + luz** · secundario **luz** (halo) | el horario elegido prende como luz de cancha |
-| **C · Tarjeta** | App de consumo, pensada para el pulgar | Outfit · Inter | primario **masa** (header) + **acento** · secundario **acento** puntual | barra inferior con el recap vivo del turno |
-| **D · Cancha** | El sistema visual sale de la cancha vista de arriba | IBM Plex Sans · IBM Plex Mono | primario **masa** (el campo) · secundario **estructura** (filo del CTA) | las líneas de la cancha como estructura de página |
+| **C · Básica** *(la default)* | Sobria: blanco, hairlines, el color justo | Outfit · Inter | primario **lomo** + **acento** — nunca masa | la banda vertical del color en el borde |
+| **D · Cancha** *(DESCARTADA)* | El sistema visual sale de la cancha vista de arriba | IBM Plex Sans · IBM Plex Mono | primario **masa** (el campo) · secundario **estructura** (filo del CTA) | las líneas de la cancha como estructura de página |
 | **E · Diurna** | La hermana clara de B: vidrio apoyado sobre el campo de color | Anton · Inter Tight · JetBrains Mono | primario **masa** (campo superior) · secundario **luz** (radial del campo) | el panel de vidrio a caballo del borde del color |
 
 **El fondo oscuro de B no es negro neutro:** es el color del club oscurecido (`color-mix(in srgb, var(--court) 13%, #07090f)`), así un club rojo se siente cálido y uno teal, frío — el white-label se lee incluso en dark.
@@ -140,15 +170,14 @@ El back **nulea** la columna cuando el campo no viene: `t.setFuente(fuente == nu
 
 ### 6.1 Contrato de diferenciación C ↔ E
 
-C y E comparten esqueleto (color arriba, contenido abajo). Para que no terminen siendo primas, la diferencia queda escrita y no librada al gusto:
-
-| | C · Tarjeta | E · Diurna |
-|---|---|---|
-| Contenedor | **varias** cards opacas apiladas | **un solo** panel de vidrio |
-| Tipografía | Outfit, redonda, minúscula | Anton, condensada, mayúscula |
-| Forma | radios 20–26px, sombras suaves | radio 18px, borde especular |
-| CTA | barra anclada abajo (pulgar) | dentro del flujo |
-| Tono del copy | cercano ("¿Cuándo jugás?") | imperativo ("Jugá hoy mismo") |
+> **REESCRITO el 2026-08-16.** La versión que estaba acá separaba C de E por "varias cards apiladas"
+> contra "un solo panel de vidrio" y por "CTA anclado abajo" contra "CTA dentro del flujo". El owner
+> descartó las cards y el CTA anclado, así que **las dos mitades que definían a C dejaron de existir**
+> y el contrato quedó sin sentido.
+>
+> **El contrato vigente está en `2026-08-16-plantilla-c-basica-design.md`, §4.** En una línea: la
+> diferencia es **lomo + hairlines** contra **campo de color + vidrio**, o sea que C no usa el color
+> como masa y E sí.
 
 ### 6.2 Tipografía por plantilla
 
@@ -160,8 +189,13 @@ El `<link>` de fuentes sale de `index.html:49` y pasa a inyectarse por área: el
 
 El `<select>` de `tab-club.html:35` se reemplaza por:
 
-1. **Grilla de 5 miniaturas tokenizadas** (`<plantilla-thumb>`): HTML chico que usa `var(--court)`/`var(--court-2)`, así el club se ve con **sus** colores en las cinco antes de elegir. Sin imágenes ni iframes múltiples.
-2. **Preview vivo del seleccionado**: iframe a `/?plantilla=<X>&color=%23RRGGBB` (mismo origen), aprovechando los params que ya existen en `landing.ts:126-131`. **Arranca en marco de teléfono (390px)** con toggle a escritorio, porque el producto se usa mayormente en mobile.
+1. **Grilla de miniaturas tokenizadas** (`<plantilla-thumb>`): HTML chico que usa `var(--court)`/`var(--court-2)`, así el club se ve con **sus** colores en todas antes de elegir. Sin imágenes ni iframes múltiples. **La lista sale de `CODIGOS_CON_SHELL`, nunca escrita a mano** — hoy son cuatro; escribirla a mano ya dejó una plantilla construida e inalcanzable cinco veces.
+2. **Preview vivo del seleccionado**: iframe a `/?plantilla=<X>&color=%23RRGGBB`, aprovechando los params que ya existen en `landing.ts:126-131`. **Arranca en marco de teléfono (390px)** con toggle a escritorio, porque el producto se usa mayormente en mobile.
+
+> **CORREGIDO el 2026-08-16:** acá decía que el iframe era de **mismo origen**. Es cierto en
+> producción y **falso en desarrollo**: el panel corre en `localhost` sin subdominio y `tenantHostMatch`
+> manda `/` a la landing de *marketing*, no a la del club. Por eso el `src` sale de la función pura
+> `urlPreviewLanding()` y no de un string relativo.
 
 La selección sigue llamando a `setMarcaPlantilla()`: guardado y aviso de cambios sin guardar (`unsaved-changes.service.ts`) funcionan igual que hoy.
 
@@ -204,7 +238,7 @@ En vez de afirmar que el producto es personalizable, lo demuestra: swatches de c
 - Registry: cada plantilla declara esquema, tinta base, fuentes y shell.
 
 **e2e (Playwright)**
-- `plantillas.spec.ts` se extiende de 3 a **5 tenants** (uno por plantilla), conservando el helper `reservar()`: es la prueba de que el flujo único sobrevive a las cinco pieles.
+- `plantillas.spec.ts` se extiende a **un tenant por plantilla con cáscara** (hoy cuatro: acepadel/costapadel/urbanpadel/solpadel), conservando el helper `reservar()`: es la prueba de que el flujo único sobrevive a todas las pieles.
 - `preview.spec.ts` cubre `?plantilla=D` y `?plantilla=E`.
 - `config.spec.ts` cubre elegir plantilla **desde la galería** y que persista.
 
@@ -241,7 +275,7 @@ Orden de la fase 3 deliberado: B primero porque es la que más cambia y la que v
 | `X-Frame-Options`/`frame-ancestors` bloquean el preview | verificar **en la primera hora** de la fase 4. Plan B: preview en pestaña nueva y solo miniaturas en el panel |
 | Regresión del flujo durante la extracción | fase 0 sin cambios de pixel + specs existentes sin tocar |
 | Tenants vivos (`demo`, `riopadel`) están en A | A se toca al final, en fase 6 |
-| Animaciones (haz de B, resplandores) molestan | `prefers-reduced-motion` respetado en las cinco |
+| Animaciones (haz de B, resplandores) molestan | `prefers-reduced-motion` respetado en todas |
 | C y E convergen visualmente | contrato de §6.1, verificable mirando las dos miniaturas juntas |
 
 ---

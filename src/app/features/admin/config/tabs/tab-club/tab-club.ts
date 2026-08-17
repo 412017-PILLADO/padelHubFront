@@ -36,7 +36,7 @@ export class TabClubComponent {
    * volverse la nocturna.
    *
    * `CODIGOS_CON_SHELL` y no `CODIGOS_PLANTILLA`: el catálogo lista las cinco porque el back las
-   * acepta, pero D todavía no tiene cáscara y `shellDePlantilla()` la manda a la A. Ofrecerla sería
+   * acepta, pero D todavía no tiene cáscara y `shellDePlantilla()` la manda a la C. Ofrecerla sería
    * dejar que el dueño elija algo que se ve como otra cosa. Cuando D exista, aparece sola.
    */
   readonly plantillas = CODIGOS_CON_SHELL.map((c) => ({
@@ -61,14 +61,14 @@ export class TabClubComponent {
    * Qué miniatura sale marcada. **No es `marcaPlantilla()` crudo, y la diferencia es un caso real y
    * no hipotético:** el tenant `demo` quedó guardado en `D`, la plantilla que el owner descartó y
    * que ya no tiene cáscara. Con el valor crudo, NINGUNA de las cuatro matcheaba y la galería salía
-   * **sin nada seleccionado** — mientras la landing pública dibujaba la A, porque `shellDePlantilla()`
+   * **sin nada seleccionado** — mientras la landing pública dibujaba la C, porque `shellDePlantilla()`
    * la manda ahí. O sea que el panel no le decía al dueño qué está viendo su jugador.
    *
    * `shellDePlantilla()` es exactamente la función que decide qué cáscara se dibuja, así que marcar
    * lo que ella devuelve es marcar LA VERDAD. El `<select>` viejo tenía el mismo agujero y lo
    * mostraba como un desplegable en blanco.
    *
-   * No se toca el valor guardado: mostrar A no lo persiste. Si el dueño guarda sin elegir, sigue
+   * No se toca el valor guardado: mostrar C no lo persiste. Si el dueño guarda sin elegir, sigue
    * guardado lo que había — reescribirle en silencio la plantilla al cargar la pantalla sería
    * cambiarle un dato por haber entrado a mirar.
    */
