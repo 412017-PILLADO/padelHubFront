@@ -49,6 +49,18 @@ test('plataforma: alta con plantilla, edición y baja de un club', async ({ page
   await editRow.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.locator('.tr', { hasText: nombre })).toContainText('plantilla C', { timeout: 15_000 });
 
+  // La default del producto es C desde el 2026-08-16 (spec de la plantilla C básica, §5.1). Un club
+  // recién creado tiene que salir en C. No sirve buscar "un tenant sin plantilla": la migración
+  // V18 le escribió 'A' explícito a todos los que ya existían, justamente para que a ninguno le
+  // cambiara la página.
+  await page.goto(`http://${slug}.localhost:4400/`);
+  await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C', { timeout: 10_000 });
+
+  // El subdominio del tenant es OTRO origin que el panel de plataforma (`localhost:4400` a secas):
+  // hay que volver para poder borrar el club. La sesión de plataforma sigue viva porque las cookies
+  // de ese origin no se tocaron al navegar afuera.
+  await page.goto('/plataforma/tenants');
+
   // ── Baja con confirmación ──
   const row2 = page.locator('.tr', { hasText: nombre });
   await row2.getByRole('button', { name: 'Borrar' }).click();
