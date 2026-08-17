@@ -45,10 +45,10 @@
      cuenta y te da 3,27, no está mal: es la versión sin redondeo, no otra medición. Ver
      `.superpowers/sdd/medir-lomo-c.mjs` para reproducir (el script todavía tiene la tinta vieja,
      `#10151f`, sin actualizar).
-     TODAVÍA NO HAY TEST QUE LO PINEE: `contraste.spec.ts` de esta cáscara hoy sólo mide el filo del
-     CTA (`--flow-cta-edge`) y no toca `--c-lomo-color` ni `--c-lomo-ancho`. Agregar ese pin es tarea
-     de un paso posterior; hasta entonces nada impide que alguien afloje este 50% sin que un test se
-     entere. */
+     ESTÁ PINEADO: `contraste.spec.ts` de esta cáscara mide el lomo con las seis paletas (piso 3:1),
+     afirma que el 50% es un TECHO —al 55% el peor club cae a 2,83— y tiene un tripwire para que
+     nadie "simplifique" el token a un `var(--court)` pelado. Si tocás este porcentaje, esos tres
+     tests son los que se van a poner rojos. */
   --c-lomo-ancho: clamp(6px, 0.8vw, 11px);
   --c-lomo-color: color-mix(in srgb, var(--court) 50%, var(--ink));
 }

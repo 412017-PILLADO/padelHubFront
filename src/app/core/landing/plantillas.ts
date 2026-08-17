@@ -81,8 +81,13 @@ export const CODIGOS_CON_SHELL: readonly CodigoConShell[] =
  * los tres decían cosas distintas: el front dibujaba C y el alta estampaba 'A', o sea que **ningún
  * club nuevo salía nunca en C** y la default era una decisión escrita que no llegaba a nadie. El
  * back tiene su propia copia por estar en otro repo; ésta manda de este lado.
+ *
+ * El tipo es `CodigoConShell` y no `CodigoPlantilla`, y no es un detalle: la default tiene que ser
+ * una plantilla **que se pueda dibujar**. Si alguien la mueve a un código del catálogo sin cáscara
+ * —D lo estuvo—, `shellDePlantilla()` se quedaría sin nada que devolver; con este tipo, eso no
+ * compila en vez de fallar en runtime.
  */
-export const PLANTILLA_DEFAULT: CodigoPlantilla = 'C';
+export const PLANTILLA_DEFAULT: CodigoConShell = 'C';
 
 /** Normaliza a un código válido; cualquier cosa rara cae en {@link PLANTILLA_DEFAULT}. */
 export function normalizarPlantilla(v: string | null | undefined): CodigoPlantilla {
@@ -104,7 +109,7 @@ export function normalizarPlantilla(v: string | null | undefined): CodigoPlantil
  */
 export function shellDePlantilla(v: string | null | undefined): CodigoPlantilla {
   const codigo = normalizarPlantilla(v);
-  return CODIGOS_CON_SHELL.some((c) => c === codigo) ? codigo : 'C';
+  return CODIGOS_CON_SHELL.some((c) => c === codigo) ? codigo : PLANTILLA_DEFAULT;
 }
 
 /**
