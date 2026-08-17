@@ -74,11 +74,13 @@ export async function elegirDiaYSlot(page: Page): Promise<void> {
   const dias = page.locator('.days .chip', { hasNot: page.locator('.c-label', { hasText: 'Otra' }) });
   const slot = page.locator('.times .slot:not([disabled])').first();
   const n = await dias.count();
+  let diasConSlots = 0;
   for (let i = 0; i < n; i++) {
     await dias.nth(i).click();
     // waitFor y no isVisible(): isVisible no espera (devuelve el estado del momento).
     const hay = await slot.waitFor({ state: 'visible', timeout: 5_000 }).then(() => true, () => false);
     if (!hay) continue;
+    diasConSlots++;
     try {
       await expect(async () => {
         await slot.click({ timeout: 2_000 });
@@ -88,6 +90,17 @@ export async function elegirDiaYSlot(page: Page): Promise<void> {
     } catch {
       // La grilla del día quedó vacía tras el refresh: probar el siguiente día.
     }
+  }
+  // Los dos modos de falla salen por el mismo lado del bucle, y confundirlos ya costó horas: con
+  // "no hay slots" se buscó agotamiento de datos durante una sesión entera cuando lo que pasaba era
+  // que el paso de cancha no se dibujaba. Si hubo slots, el problema no son los datos.
+  if (diasConSlots > 0) {
+    throw new Error(
+      `hubo slots libres en ${diasConSlots} día(s) pero el paso de cancha nunca apareció. ` +
+        'Causa conocida: el club tiene autoasignacion=true y el flujo saltea ese paso ' +
+        '(PUT /api/v1/agenda/autoasignacion {"autoasignacion":false} lo restaura). ' +
+        'Si no es eso, el selector .ccard.any cambió.',
+    );
   }
   throw new Error('ningún día de la semana tiene slots libres');
 }
