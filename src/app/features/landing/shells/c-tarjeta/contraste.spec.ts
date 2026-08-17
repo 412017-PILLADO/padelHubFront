@@ -328,12 +328,26 @@ const COURT_SOFT = derivadoDelClub('--court-soft');
 const SEIS_CLUBES = ['#0a8a99', '#f97316', '#ffd400', '#fafafa', '#111111', '#ff2d95'];
 
 describe('C · el lomo, que es la firma', () => {
-  /** `--c-lomo-color: color-mix(in srgb, var(--court) N%, var(--ink))`, leído de la hoja. */
-  const LOMO = colorMix(declaracion(HOJA_SHELL, '--c-lomo-color'), 'shell.scss · --c-lomo-color');
+  /**
+   * `--c-lomo-color`, tal como está declarado en la hoja, SIN parsear. `declaracion()` nunca tira —
+   * en el peor caso devuelve `null`—, así que leer esto acá, en el cuerpo del `describe`, es seguro:
+   * corre una sola vez y no le puede tapar la ejecución a ningún `it`.
+   *
+   * El parseo con `colorMix()`, en cambio, TIRA si la declaración no tiene la forma
+   * `color-mix(in srgb, A pct%, B)` — que es exactamente lo que pasa si alguien "simplifica" el token
+   * a un `var(--court)` pelado. Por eso NO se resuelve acá arriba: si `colorMix()` se llamara en el
+   * cuerpo del `describe`, tirar abortaría el módulo entero antes de que corriera un solo `it`, y el
+   * test de más abajo que existe justo para atajar ese caso ("el lomo NO se dibuja con el color crudo
+   * del club") nunca llegaría a ejecutar su propia aserción — se caería el archivo, no el test. Cada
+   * `it` que necesita el valor parseado llama a `colorMix()` por su cuenta, así que si tira, tira
+   * DENTRO de ese test y lo deja rojo con su mensaje, no afuera de todos.
+   */
+  const LOMO_DECL = declaracion(HOJA_SHELL, '--c-lomo-color');
 
   it('se ve con las SEIS paletas, incluida la del club casi blanco', () => {
     // Es la restricción dura de la plantilla: si el lomo desaparece, C se queda sin lo único que la
     // hace C. Le pasó al campo de la plantilla D con este mismo club y la hundió.
+    const LOMO = colorMix(LOMO_DECL, 'shell.scss · --c-lomo-color');
     for (const club of SEIS_CLUBES) {
       const r = contraste(mezcla(rgb(club), LOMO.pct, rgb(INK)), rgb(PAPER));
       expect(r, `el lomo desaparece con el club ${club}`).toBeGreaterThanOrEqual(3);
@@ -344,6 +358,7 @@ describe('C · el lomo, que es la firma', () => {
     // Sin esto el test de arriba pasaría con cualquier valor conservador, y nadie se enteraría de
     // que el lomo perdió color de más. Acá se afirma que el valor elegido está en el límite: al 55%
     // el peor caso (casi blanco) mide 2,83:1, ya debajo del piso de WCAG 1.4.11.
+    const LOMO = colorMix(LOMO_DECL, 'shell.scss · --c-lomo-color');
     const peorMas = Math.min(
       ...SEIS_CLUBES.map((c) => contraste(mezcla(rgb(c), LOMO.pct + 0.05, rgb(INK)), rgb(PAPER))),
     );
@@ -351,9 +366,14 @@ describe('C · el lomo, que es la firma', () => {
   });
 
   it('el lomo NO se dibuja con el color crudo del club', () => {
-    // La forma de romper esto sin querer es "simplificar" el color-mix a un var(--court) pelado.
-    expect(declaracion(HOJA_SHELL, '--c-lomo-color')).toContain('color-mix');
-    expect(declaracion(HOJA_SHELL, '--c-lomo-color')).not.toMatch(/^\s*var\(--court\)\s*$/);
+    // La forma de romper esto sin querer es "simplificar" el color-mix a un var(--court) pelado. Este
+    // test es el que tiene que quedar ROJO cuando eso pasa —no el módulo entero abortando—, así que
+    // lee la declaración cruda (`LOMO_DECL`, que nunca tira) y no pasa por `colorMix()`: si pasara,
+    // sería el mismo problema que este test existe para resolver. Probado en rojo de verdad: con
+    // `--c-lomo-color: var(--court);` en shell.scss, este `it` falla con
+    // "Expected 'var(--court)' to contain 'color-mix'" y el resto de la suite sigue corriendo.
+    expect(LOMO_DECL).toContain('color-mix');
+    expect(LOMO_DECL).not.toMatch(/^\s*var\(--court\)\s*$/);
   });
 });
 
@@ -365,6 +385,14 @@ describe('C · el color no es masa (spec §6.1)', () => {
   });
 
   it('C declara su superficie y su tinta, y NUNCA un --court* (capa 2)', () => {
+    // Capa 2 es plataforma: `--court`, `--court-2`, `--court-soft`, etc. los declara
+    // `applyTenantColors` en el `:root`, y C sólo los CONSUME (ver `var(--court)` en el degradado del
+    // lomo y `var(--court-2, …)` en su `::before`). Si esta hoja alguna vez declarara uno de esos
+    // tokens —por ejemplo `--court-soft: #fff;` a mano, en vez de dejar que lo escriba plataforma—
+    // C empezaría a pisar un valor que no le toca fijar y que las otras cáscaras (y `tenant-colors.ts`)
+    // dan por sentado que viene de un solo lugar. Probado en rojo de verdad: con
+    // `--court-fake: #123456;` agregado en el bloque `:host` de shell.scss, este `it` falla con
+    // "expected … not to match /^\s*--court[a-z0-9-]*\s*:/m" y el resto de la suite sigue verde.
     expect(HOJA_SHELL).not.toMatch(/^\s*--court[a-z0-9-]*\s*:/m);
   });
 });
