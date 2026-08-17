@@ -49,10 +49,7 @@ test('plataforma: alta con plantilla, edición y baja de un club', async ({ page
   await editRow.getByRole('button', { name: 'Guardar' }).click();
   await expect(page.locator('.tr', { hasText: nombre })).toContainText('plantilla C', { timeout: 15_000 });
 
-  // La default del producto es C desde el 2026-08-16 (spec de la plantilla C básica, §5.1). Un club
-  // recién creado tiene que salir en C. No sirve buscar "un tenant sin plantilla": la migración
-  // V18 le escribió 'A' explícito a todos los que ya existían, justamente para que a ninguno le
-  // cambiara la página.
+  // La edición llega hasta la landing pública, no sólo hasta la fila de la tabla.
   await page.goto(`http://${slug}.localhost:4400/`);
   await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C', { timeout: 10_000 });
 
@@ -66,6 +63,45 @@ test('plataforma: alta con plantilla, edición y baja de un club', async ({ page
   await row2.getByRole('button', { name: 'Borrar' }).click();
   await row2.getByRole('button', { name: 'Sí, borrar' }).click();
   await expect(page.locator('.tr', { hasText: nombre })).toHaveCount(0, { timeout: 15_000 });
+});
+
+/**
+ * La default de producto es C desde el 2026-08-16 (spec de la plantilla C básica, §5.1): un club
+ * que no elige plantilla tiene que salir en C.
+ *
+ * Va en un test propio y NO pegada al de arriba: aquél crea el club eligiendo B a mano y después lo
+ * edita a C, así que afirmar "la default es C" ahí era una tautología —pasaba igual con la default
+ * en A— y de hecho pasó en verde durante toda la fase mientras el alta estampaba 'A'. Acá el select
+ * de plantilla no se toca: lo que se mide es con qué nace un club cuando nadie elige.
+ */
+test('plataforma: un club dado de alta sin elegir plantilla sale en la default', async ({ page }) => {
+  await loginPlataforma(page);
+
+  const slug = `e2edef${Date.now().toString().slice(-6)}`;
+  const nombre = `E2E ${slug}`;
+
+  await page.getByRole('button', { name: '+ Nuevo club' }).click();
+  const form = page.locator('.card.form');
+  await form.getByPlaceholder('riopadel', { exact: true }).fill(slug);
+  await form.getByPlaceholder('Rio Padel Club').fill(nombre);
+  await form.getByPlaceholder('owner@club.com').fill(`owner@${slug}.com`);
+  await form.getByPlaceholder('mínimo 6').fill('padel123');
+  // El select de plantilla queda como viene: ese es justamente el caso bajo prueba.
+  await page.getByRole('button', { name: 'Crear club' }).click();
+  await expect(page.locator('.tr', { hasText: nombre })).toBeVisible({ timeout: 15_000 });
+
+  try {
+    await page.goto(`http://${slug}.localhost:4400/`);
+    await expect(page.locator('[data-tpl]')).toHaveAttribute('data-tpl', 'C', { timeout: 10_000 });
+  } finally {
+    // La baja va en finally: si la aserción falla, el club igual se borra y la próxima corrida no
+    // arranca con basura (el slug lleva timestamp, pero el host no se puede repetir).
+    await page.goto('/plataforma/tenants');
+    const row = page.locator('.tr', { hasText: nombre });
+    await row.getByRole('button', { name: 'Borrar' }).click();
+    await row.getByRole('button', { name: 'Sí, borrar' }).click();
+    await expect(page.locator('.tr', { hasText: nombre })).toHaveCount(0, { timeout: 15_000 });
+  }
 });
 
 test('owner: cambia la plantilla de su landing desde la config', async ({ page }) => {

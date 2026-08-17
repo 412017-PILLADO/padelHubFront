@@ -69,16 +69,25 @@ export const CODIGOS_CON_SHELL: readonly CodigoConShell[] =
   Object.keys(DIR_SHELL) as CodigoConShell[];
 
 /**
- * Normaliza a un código válido; cualquier cosa rara cae en la plantilla por defecto.
+ * La plantilla que le toca a un club que no eligió ninguna.
  *
- * LA DEFAULT ES C DESDE EL 2026-08-16, y antes era A. El cambio es de producto, no de código: C es
- * la sobria, la que le sirve a un club que no quiere elegir. A los tenants que ya existían se les
- * escribió `'A'` explícito en la base antes de mover esto (migración `V18__plantilla_explicita.sql`),
- * así que este cambio sólo alcanza a los clubes nuevos.
+ * ES C DESDE EL 2026-08-16, y antes era A. El cambio es de producto, no de código: C es la sobria,
+ * la que le sirve a un club que no quiere elegir. A los tenants que ya existían se les escribió
+ * `'A'` explícito en la base antes de mover esto (migración `V18__plantilla_explicita.sql`), así que
+ * el cambio sólo alcanza a los clubes nuevos.
+ *
+ * Está acá arriba y exportada porque el valor viajaba escrito a mano en tres lugares —el fallback de
+ * `normalizarPlantilla()`, el form de alta del panel de plataforma y `DEFAULT_PLANTILLA` del back— y
+ * los tres decían cosas distintas: el front dibujaba C y el alta estampaba 'A', o sea que **ningún
+ * club nuevo salía nunca en C** y la default era una decisión escrita que no llegaba a nadie. El
+ * back tiene su propia copia por estar en otro repo; ésta manda de este lado.
  */
+export const PLANTILLA_DEFAULT: CodigoPlantilla = 'C';
+
+/** Normaliza a un código válido; cualquier cosa rara cae en {@link PLANTILLA_DEFAULT}. */
 export function normalizarPlantilla(v: string | null | undefined): CodigoPlantilla {
   const up = (v ?? '').trim().toUpperCase();
-  return CODIGOS_PLANTILLA.some((c) => c === up) ? (up as CodigoPlantilla) : 'C';
+  return CODIGOS_PLANTILLA.some((c) => c === up) ? (up as CodigoPlantilla) : PLANTILLA_DEFAULT;
 }
 
 /**
