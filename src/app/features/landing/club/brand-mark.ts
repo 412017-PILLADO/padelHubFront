@@ -52,9 +52,16 @@ import { ClubStore } from '../club.store';
        - Invertirlo sería peor: \`invert(1) brightness(1.6)\` lleva ese teal a un salmón
          rgb(255,178,147). Eso no es el logo de Padel Hub en oscuro, es otro logo. */
 
-    :host-context(.c-brandline) .tpl-mark { width: 30px; height: 30px; }
-    /* El logo cede ancho: el nombre va al lado siempre, y en el rail de 280px hay que repartir. */
-    :host-context(.c-brandline) .tpl-logo img { height: 30px; max-width: 104px; }
+    /* C NO tiene ajuste propio, y eso es el arreglo: tenía \`height: 30px; max-width: 104px\`, el
+       tamaño más chico de todas, porque su marca vivía en un rail lateral de 280px y había que
+       repartir el ancho con el nombre. El rediseño de C se llevó el rail: hoy \`.c-brandline\` vive en
+       \`.c-head\`, que mide hasta 860px, y el nombre acompañó el cambio (\`.c-brandname\` pasó de
+       1.02rem fijo a \`clamp(1.05rem, 2.2vw, 1.35rem)\`). El logo se había quedado atrás: el club veía
+       su marca recortada a 104px al lado de un nombre bastante más grande, en una cabecera con lugar
+       de sobra — y C es la plantilla por defecto, o sea la que más clubes van a mostrar.
+       Al no declarar nada toma el tamaño base de este componente (40px / 160px), que es el de una
+       marca en encabezado de página y el mismo que usa E, que tiene la misma forma de cabecera. B sí
+       conserva el suyo porque su marca va en una barra de navegación, que es otra cosa. */
   `,
 })
 export class BrandMarkComponent {

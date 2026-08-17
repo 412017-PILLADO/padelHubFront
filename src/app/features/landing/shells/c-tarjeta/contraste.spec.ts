@@ -365,6 +365,38 @@ describe('C · el lomo, que es la firma', () => {
     expect(peorMas, 'el porcentaje no está en el techo: se puede subir sin romper').toBeLessThan(3);
   });
 
+  /**
+   * EL SEGUNDO STOP DEL DEGRADADO, que es por donde se coló el defecto.
+   *
+   * El lomo no se pinta con `--c-lomo-color`: se pinta con un `linear-gradient` que VA de ese color a
+   * otro, y durante toda la fase los tests de acá arriba midieron sólo el primero. El segundo mezclaba
+   * hacia `--paper` y daba 1,02:1 con el club casi blanco — la mitad de abajo de la firma no existía,
+   * con la suite entera en verde. Medir un extremo de un degradado y creer que se midió el degradado
+   * es el agujero que este test tapa.
+   *
+   * Se lee del `background` de `:host::before` en vez de un token porque el valor vive ahí, inline: si
+   * alguien vuelve a mezclar hacia el papel, esto se pone rojo con el número real.
+   */
+  it('el otro extremo del degradado también se ve con las seis paletas', () => {
+    const decl = /:host::before\s*\{[\s\S]*?background:\s*linear-gradient\(([\s\S]*?)\);/.exec(HOJA_SHELL);
+    expect(decl, 'el lomo dejó de pintarse con un linear-gradient en :host::before').not.toBeNull();
+
+    const stops = decl![1];
+    const segundo = /color-mix\(in srgb,\s*var\(--court-2,\s*var\(--court\)\)\s*([\d.]+)%,\s*var\((--ink|--paper)\)\s*\)/
+      .exec(stops);
+    expect(segundo, 'el segundo stop del degradado cambió de forma; re-medir antes de tocar').not.toBeNull();
+
+    const [, pct, base] = segundo!;
+    // Mezclar hacia el papel es incompatible con el piso: el primer stop ya está al límite (3,26), así
+    // que aclarar sólo puede bajarlo. Que la base sea la tinta es la mitad de la garantía.
+    expect(base, 'el segundo stop mezcla hacia el papel: ahí es donde el lomo se borraba').toBe('--ink');
+
+    for (const club of SEIS_CLUBES) {
+      const r = contraste(mezcla(rgb(club), Number(pct) / 100, rgb(INK)), rgb(PAPER));
+      expect(r, `el pie del lomo desaparece con el club ${club}`).toBeGreaterThanOrEqual(3);
+    }
+  });
+
   it('el lomo NO se dibuja con el color crudo del club', () => {
     // La forma de romper esto sin querer es "simplificar" el color-mix a un var(--court) pelado. Este
     // test es el que tiene que quedar ROJO cuando eso pasa —no el módulo entero abortando—, así que

@@ -60,12 +60,24 @@
   top: 0;
   bottom: 0;
   width: var(--c-lomo-ancho);
-  /* Degradado hacia su versión clara: le da al lomo la profundidad de un canto real sin agregar una
-     segunda idea. `--court-2` cae al primario si el club no tiene secundario. */
+  /* Degradado hacia su versión OSCURA: le da al lomo la profundidad de un canto real sin agregar una
+     segunda idea. `--court-2` cae al primario si el club no tiene secundario, así que un club con
+     secundario ve además el corrimiento de un color al otro.
+
+     VA HACIA LA TINTA Y NO HACIA EL PAPEL, y esto es la misma restricción dura que fija el 50% de
+     arriba, no una preferencia estética. Antes el segundo stop era
+     `color-mix(--court-2 55%, --paper)` y el piso de 3:1 sólo lo cumplía el extremo de ARRIBA: medido
+     contra `--paper`, el de abajo daba teal 2,01 · naranja 1,72 · amarillo 1,19 · casi blanco 1,02 ·
+     fucsia 2,08 — o sea que la mitad inferior de la firma se borraba con cinco de las seis paletas de
+     la casa, y con el club casi blanco directamente no estaba. Es el modo de falla que hundió a la
+     plantilla D, adentro de la plantilla que existe para no tenerlo.
+     Mezclar hacia el papel es incompatible con el piso: el extremo de arriba ya está AL LÍMITE
+     (3,26:1 con el club casi blanco), así que cualquier aclarado lo cruza para abajo. Por eso el
+     degradado va al otro lado. Al 30% el peor caso es 6,32:1, con margen de sobra. */
   background: linear-gradient(
     180deg,
     var(--c-lomo-color),
-    color-mix(in srgb, var(--court-2, var(--court)) 55%, var(--paper))
+    color-mix(in srgb, var(--court-2, var(--court)) 30%, var(--ink))
   );
   z-index: 3;
   pointer-events: none;
