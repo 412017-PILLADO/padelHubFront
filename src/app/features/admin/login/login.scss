@@ -86,16 +86,6 @@
 .confirm:hover:not(:disabled) { background: var(--court-deep); transform: translateY(-1px); }
 .confirm:disabled { background: var(--line-strong); color: var(--ink-faint); box-shadow: none; cursor: not-allowed; }
 
-.dev-hint {
-  margin-top: 18px; font-size: 0.78rem; color: var(--ink-faint);
-  display: flex; align-items: center; gap: 8px;
-}
-.dh-tag {
-  background: var(--court-soft); color: var(--court-deep);
-  padding: 2px 7px; border-radius: 4px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.05em;
-}
-
 /* ===== Mobile: marca compacta arriba + formulario CENTRADO en el resto =====
    (va al final para ganarle por orden de fuente a las reglas base de arriba). */
 @media (max-width: 859px) {
