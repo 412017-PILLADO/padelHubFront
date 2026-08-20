@@ -9,7 +9,9 @@ export interface Turno {
   fin: string;
   duracionMinutos: number;
   clienteNombre: string;
-  clienteWhatsapp: string;
+  /** null en las reservas manuales: el dueño puede cargar un turno sin teléfono. */
+  clienteWhatsapp: string | null;
+  canchaId: number;
   canchaNombre: string;
   estado: 'CONFIRMADO' | 'PENDIENTE';
 }
@@ -26,7 +28,7 @@ export interface Pendiente {
   hora: string;
   fin: string;
   clienteNombre: string;
-  clienteWhatsapp: string;
+  clienteWhatsapp: string | null;
   canchaNombre: string;
   duracionMinutos: number;
   expiraEn: string | null;

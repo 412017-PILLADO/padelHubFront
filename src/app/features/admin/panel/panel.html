@@ -95,9 +95,12 @@
             <span class="pb-expira mono">vence {{ pendExpira(p) }}</span>
           </div>
           <div class="pb-actions">
-            <a class="pb-wa" [href]="'https://wa.me/' + (p.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
-              <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
-            </a>
+            <!-- El club puede no pedir teléfono: sin número el link va a wa.me pelado. -->
+            @if (p.clienteWhatsapp) {
+              <a class="pb-wa" [href]="'https://wa.me/' + (p.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+                <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
+              </a>
+            }
             <button type="button" class="pb-ok" (click)="confirmarSena(p)">Confirmar</button>
             <button type="button" class="pb-no" (click)="askRechazarSena(p)">Rechazar</button>
           </div>
@@ -182,9 +185,9 @@
           <div class="days cf-chips">
             <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === null"
               (click)="setCanchaFilter(null)">Todas</button>
-            @for (c of canchas(); track c) {
-              <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === c"
-                (click)="setCanchaFilter(c)">{{ c }}</button>
+            @for (c of canchas(); track c.id) {
+              <button type="button" class="chip sm" [attr.aria-pressed]="canchaFilter() === c.id"
+                (click)="setCanchaFilter(c.id)">{{ c.nombre }}</button>
             }
           </div>
         </div>
@@ -221,8 +224,10 @@
             [style.grid-template-rows]="'auto repeat(' + grid()!.rows.length + ', 46px)'">
             <div class="g-corner"></div>
             @for (c of grid()!.cols; track c.id; let ci = $index) {
-              <div class="g-colhead" [style.grid-column]="ci + 2" [style.grid-row]="1">
+              <div class="g-colhead" [class.off]="!c.activa" [style.grid-column]="ci + 2" [style.grid-row]="1">
                 <span class="g-dot" [style.background]="c.color"></span>{{ c.nombre }}
+                <!-- La cancha ya no se ofrece (inactiva o dada de baja) pero conserva estos turnos. -->
+                @if (!c.activa) { <span class="g-off" title="Esta cancha ya no se ofrece: quedan turnos tomados">fuera de servicio</span> }
               </div>
             }
             @for (r of grid()!.rows; track r.min; let ri = $index) {
@@ -252,7 +257,7 @@
     } @else if (empty()) {
       <p class="state-msg empty">No hay turnos para este día.</p>
     } @else if (noMatch()) {
-      <p class="state-msg empty">No hay turnos en {{ canchaFilter() }}.</p>
+      <p class="state-msg empty">No hay turnos en {{ canchaFilterLabel() }}.</p>
     } @else if (ordered().length === 0) {
       <p class="state-msg empty">Ningún turno coincide con «{{ query() }}».</p>
     } @else {
@@ -279,9 +284,12 @@
                     (click)="askDevolverSena(t)">{{ devolviendo() === t.id ? 'Devolviendo…' : 'Devolver seña' }}</button>
                 }
               }
-              <a class="act wa" [href]="'https://wa.me/' + (t.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Avisar por WhatsApp">
-                <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
-              </a>
+              <!-- Las reservas manuales pueden no tener teléfono: sin número el link va a wa.me pelado. -->
+              @if (t.clienteWhatsapp) {
+                <a class="act wa" [href]="'https://wa.me/' + (t.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Avisar por WhatsApp">
+                  <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
+                </a>
+              }
               <button type="button" class="act cancel" (click)="askCancel(t)" aria-label="Cancelar turno">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>

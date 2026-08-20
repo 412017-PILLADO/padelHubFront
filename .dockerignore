@@ -1,0 +1,13 @@
+# Lo que NO tiene que viajar al build de la imagen. Sin esto, `COPY . .` manda node_modules entero
+# (cientos de MB) y la caché de Angular, y encima pisa el `npm ci` de la capa anterior.
+node_modules
+dist
+.angular
+.git
+.vscode
+.claude
+.superpowers
+e2e
+test-results
+playwright-report
+*.log

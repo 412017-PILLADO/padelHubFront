@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  isDevMode,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -36,7 +30,6 @@ export class LoginComponent {
   readonly email = signal('');
   readonly password = signal('');
   readonly loading = signal(false);
-  readonly isDev = isDevMode();
 
   /** Logo del club (marca del tenant) para el panel de marca del login. */
   readonly logoSrc = this.branding.logoSrc;
