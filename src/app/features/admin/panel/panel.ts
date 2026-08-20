@@ -77,12 +77,22 @@ interface GridBlock {
   rowSpan: number;
   turno: Turno;
 }
+/** Una columna de la grilla. `activa:false` = la cancha ya no se ofrece (inactiva o dada de baja)
+ *  pero tiene turnos ese día, así que la columna existe igual y se marca. */
+interface GridCol {
+  id: number;
+  nombre: string;
+  color: string;
+  activa: boolean;
+}
 interface GridData {
   open: boolean;
   rows: { label: string; min: number }[];
-  cols: { id: number; nombre: string; color: string }[];
+  cols: GridCol[];
   blocks: GridBlock[];
 }
+
+const COLOR_CANCHA_DEFAULT = '#0a8a99';
 
 @Component({
   selector: 'app-admin-panel',
@@ -169,16 +179,25 @@ export class PanelComponent {
   readonly mesLabel = computed(() => MES_ABBR[this.selectedDay().getMonth()]);
   readonly dowLabel = computed(() => DOWS[this.selectedDay().getDay()]);
 
-  /** Filtro por cancha (null = todas). */
-  readonly canchaFilter = signal<string | null>(null);
+  /** Filtro por cancha, por id (null = todas). Por id y no por nombre: dos canchas pueden llamarse
+   *  igual, y el nombre no alcanza para distinguirlas ni acá ni en la grilla. */
+  readonly canchaFilter = signal<number | null>(null);
 
   /** Canchas presentes en los turnos del día (para armar el filtro), ordenadas naturalmente. */
   readonly canchas = computed(() => {
-    const set = new Set<string>();
+    const porId = new Map<number, string>();
     for (const t of this.list()) {
-      if (t.canchaNombre) set.add(t.canchaNombre);
+      if (t.canchaNombre) porId.set(t.canchaId, t.canchaNombre);
     }
-    return [...set].sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+    return [...porId]
+      .map(([id, nombre]) => ({ id, nombre }))
+      .sort((a, b) => a.nombre.localeCompare(b.nombre, 'es', { numeric: true }));
+  });
+
+  /** Nombre de la cancha filtrada (para el cartel de "no hay turnos en …"). */
+  readonly canchaFilterLabel = computed(() => {
+    const f = this.canchaFilter();
+    return this.canchas().find((c) => c.id === f)?.nombre ?? '';
   });
 
   /** Turnos visibles: filtrados por cancha + buscador, ordenados por hora y luego cancha. */
@@ -186,7 +205,7 @@ export class PanelComponent {
     const f = this.canchaFilter();
     const q = norm(this.query().trim());
     return this.list()
-      .filter((t) => !f || t.canchaNombre === f)
+      .filter((t) => f === null || t.canchaId === f)
       .filter((t) => !q || norm(t.clienteNombre).includes(q))
       .sort(
         (a, b) =>
@@ -199,6 +218,11 @@ export class PanelComponent {
    * Grilla canchas × franjas horarias para el día elegido. Usa el horario/paso/canchas de la
    * config; cada turno se ubica en su columna (cancha) y ocupa tantas filas como su duración.
    * `null` si todavía no cargó la config; `open:false` si el club no abre ese día.
+   *
+   * Regla de oro acá: **todo turno del día tiene que dibujarse**. La grilla es la vista con la que
+   * el dueño se para en el mostrador, así que un turno que existe y no aparece es peor que no tener
+   * grilla. Por eso las columnas y las filas se estiran a lo que haya (canchas que ya no se ofrecen,
+   * horarios fuera de la ventana del club) en vez de descartar lo que no encaja.
    */
   readonly grid = computed<GridData | null>(() => {
     const cfg = this.agenda();
@@ -208,28 +232,59 @@ export class PanelComponent {
     if (!dia || !dia.open) return { open: false, rows: [], cols: [], blocks: [] };
 
     const paso = cfg.pasoMinutos > 0 ? cfg.pasoMinutos : 30;
-    const fromMin = hhmmToMin(dia.from);
-    const toMin = hhmmToMin(dia.to);
-    const rows: { label: string; min: number }[] = [];
-    for (let m = fromMin; m < toMin; m += paso) rows.push({ label: minToHhmm(m), min: m });
+    const q = norm(this.query().trim());
+    const filtro = this.canchaFilter();
+    const visibles = this.list().filter(
+      (t) => (!q || norm(t.clienteNombre).includes(q)) && (filtro === null || t.canchaId === filtro)
+    );
 
-    const cols = [...cfg.canchas]
+    // Columnas: las canchas que hoy se ofrecen, en su orden. Más las que ya no se ofrecen (inactivas
+    // o dadas de baja) pero tienen turnos ese día: la baja conserva las reservas, así que el club
+    // igual las tiene que jugar. Van al final y marcadas, no escondidas.
+    const cols: GridCol[] = [...cfg.canchas]
       .filter((c) => c.estado === 'ACTIVO')
       .sort((a, b) => a.orden - b.orden)
-      .map((c) => ({ id: c.id, nombre: c.nombre, color: c.color || '#0a8a99' }));
-
-    const q = norm(this.query().trim());
-    const blocks: GridBlock[] = [];
+      .map((c) => ({ id: c.id, nombre: c.nombre, color: c.color || COLOR_CANCHA_DEFAULT, activa: true }));
+    // Las extra salen de TODOS los turnos del día, no de los visibles: así el juego de columnas no
+    // depende de lo que esté tipeado en el buscador, y filtrar por una cancha fuera de servicio
+    // sigue encontrando su columna.
     for (const t of this.list()) {
-      if (q && !norm(t.clienteNombre).includes(q)) continue;
-      const col = cols.findIndex((c) => c.nombre === t.canchaNombre);
+      if (!cols.some((c) => c.id === t.canchaId)) {
+        cols.push({
+          id: t.canchaId,
+          nombre: t.canchaNombre,
+          color: cfg.canchas.find((c) => c.id === t.canchaId)?.color || COLOR_CANCHA_DEFAULT,
+          activa: false,
+        });
+      }
+    }
+    const colsVisibles = filtro === null ? cols : cols.filter((c) => c.id === filtro);
+
+    // Filas: la ventana del club, estirada para cubrir cualquier turno que haya quedado afuera (el
+    // club recortó su horario después de tomada la reserva, por ejemplo). "00:00" como cierre es
+    // medianoche = 24:00, igual que en la pantalla de configuración: leerlo como 0 dejaba la grilla
+    // entera sin filas.
+    const abre = hhmmToMin(dia.from);
+    const cierra = dia.to === '00:00' ? 24 * 60 : hhmmToMin(dia.to);
+    let desde = abre;
+    let hasta = Math.max(cierra, abre + paso);
+    for (const t of visibles) {
+      const ini = hhmmToMin(t.hora);
+      if (ini < desde) desde -= Math.ceil((desde - ini) / paso) * paso;
+      hasta = Math.max(hasta, ini + Math.max(t.duracionMinutos, paso));
+    }
+    const rows: { label: string; min: number }[] = [];
+    for (let m = desde; m < hasta; m += paso) rows.push({ label: minToHhmm(m), min: m });
+
+    const blocks: GridBlock[] = [];
+    for (const t of visibles) {
+      const col = colsVisibles.findIndex((c) => c.id === t.canchaId);
       if (col < 0) continue;
-      const rowStart = Math.round((hhmmToMin(t.hora) - fromMin) / paso);
-      if (rowStart < 0 || rowStart >= rows.length) continue;
+      const rowStart = Math.round((hhmmToMin(t.hora) - desde) / paso);
       const span = Math.max(1, Math.round(t.duracionMinutos / paso));
       blocks.push({ col, rowStart, rowSpan: Math.min(span, rows.length - rowStart), turno: t });
     }
-    return { open: true, rows, cols, blocks };
+    return { open: true, rows, cols: colsVisibles, blocks };
   });
 
   /** Cantidad de turnos visibles (para el resumen del sidebar). */
@@ -241,7 +296,7 @@ export class PanelComponent {
       && this.canchaFilter() !== null && this.ordered().length === 0
   );
 
-  setCanchaFilter(c: string | null): void {
+  setCanchaFilter(c: number | null): void {
     this.canchaFilter.set(c);
   }
 
