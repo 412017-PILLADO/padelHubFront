@@ -58,7 +58,9 @@ export interface PrecioFranjaInput {
 
 /** Config de agenda devuelta por `GET /api/v1/agenda/config`. */
 export interface AgendaConfig {
-  nombre: string;
+  /** Nombre del complejo. El back lo manda como `nombreComplejo`; el nombre de acá tiene que
+   *  coincidir con el del JSON o el campo llega `undefined` sin que nada avise. */
+  nombreComplejo: string;
   contacto: Contacto;
   pasoMinutos: number;
   duraciones: number[];
