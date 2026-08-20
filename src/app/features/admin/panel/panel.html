@@ -95,9 +95,12 @@
             <span class="pb-expira mono">vence {{ pendExpira(p) }}</span>
           </div>
           <div class="pb-actions">
-            <a class="pb-wa" [href]="'https://wa.me/' + (p.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
-              <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
-            </a>
+            <!-- El club puede no pedir teléfono: sin número el link va a wa.me pelado. -->
+            @if (p.clienteWhatsapp) {
+              <a class="pb-wa" [href]="'https://wa.me/' + (p.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Escribir por WhatsApp">
+                <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
+              </a>
+            }
             <button type="button" class="pb-ok" (click)="confirmarSena(p)">Confirmar</button>
             <button type="button" class="pb-no" (click)="askRechazarSena(p)">Rechazar</button>
           </div>
@@ -281,9 +284,12 @@
                     (click)="askDevolverSena(t)">{{ devolviendo() === t.id ? 'Devolviendo…' : 'Devolver seña' }}</button>
                 }
               }
-              <a class="act wa" [href]="'https://wa.me/' + (t.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Avisar por WhatsApp">
-                <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
-              </a>
+              <!-- Las reservas manuales pueden no tener teléfono: sin número el link va a wa.me pelado. -->
+              @if (t.clienteWhatsapp) {
+                <a class="act wa" [href]="'https://wa.me/' + (t.clienteWhatsapp | waAr)" target="_blank" rel="noopener" aria-label="Avisar por WhatsApp">
+                  <svg class="wa-ic" aria-hidden="true"><use href="#waIcon"/></svg>
+                </a>
+              }
               <button type="button" class="act cancel" (click)="askCancel(t)" aria-label="Cancelar turno">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
               </button>

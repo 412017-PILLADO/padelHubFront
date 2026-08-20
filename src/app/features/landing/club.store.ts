@@ -9,6 +9,7 @@ import {
   CodigoPlantilla,
   normalizarPlantilla,
 } from '../../core/landing/plantillas';
+import { toWhatsappAr } from '../../shared/whatsapp-ar.pipe';
 import { environment } from '../../../environments/environment';
 
 /** diaSemana 0..6 → Lunes..Domingo (matchea el contrato de /public/config). */
@@ -102,10 +103,14 @@ export class ClubStore {
   readonly direccion = computed(() => this.config()?.complejo.direccion ?? null);
   readonly mapaUrl = computed(() => this.config()?.complejo.mapaUrl ?? null);
   readonly whatsappRaw = computed(() => this.config()?.complejo.whatsapp ?? null);
+  /** El dueño carga su WhatsApp a mano en el panel: el campo pide el formato internacional, pero
+   *  nada le impide escribir "0351 750-5281". Sacarle los no-dígitos y mandarlo así a wa.me deja el
+   *  botón más visible de la landing apuntando a un número que no existe, así que se normaliza con
+   *  la misma regla AR que usa el panel (idempotente sobre un número ya bien cargado). */
   readonly whatsappUrl = computed(() => {
-    const wa = this.whatsappRaw();
+    const wa = toWhatsappAr(this.whatsappRaw());
     return wa
-      ? `https://wa.me/${wa.replace(/\D/g, '')}?text=` +
+      ? `https://wa.me/${wa}?text=` +
           encodeURIComponent('¡Hola! Quería consultar por un turno de pádel.')
       : null;
   });

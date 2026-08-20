@@ -6,6 +6,7 @@ import { catchError } from 'rxjs/operators';
 
 import { BookingService, CanchaLibre, Slot } from '../../../core/api/booking.service';
 import { ClubStore } from '../club.store';
+import { toWhatsappAr } from '../../../shared/whatsapp-ar.pipe';
 
 const MES_ABBR = [
   'ene', 'feb', 'mar', 'abr', 'may', 'jun',
@@ -129,13 +130,15 @@ export class BookingStore {
 
   /** Link de WhatsApp para mandar el comprobante de la seña (usa el turno recién reservado). */
   readonly whatsappSenaUrl = computed(() => {
-    const wa = this.club.whatsappRaw();
+    // Mismo normalizado AR que el resto de la app: el número lo carga el dueño a mano y este link es
+    // por donde le llega el comprobante, así que no puede depender de que lo haya escrito perfecto.
+    const wa = toWhatsappAr(this.club.whatsappRaw());
     const d = this.successData();
     if (!wa || !d) return null;
     const msg =
       `¡Hola! Soy ${d.nombreCompleto}. Te paso el comprobante de la seña ` +
       `de mi turno: ${d.cancha}, ${d.dia} a las ${d.hora}.`;
-    return `https://wa.me/${wa.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${wa}?text=${encodeURIComponent(msg)}`;
   });
 
   // ── Day chips ─────────────────────────────────────────────────────
